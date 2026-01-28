@@ -6,6 +6,7 @@ import '../../../application/controllers/invoice_controller.dart';
 import '../../../domain/response/InvoicesResponse.dart';
 import '../../domain/response/sales_invoice.dart';
 import '../../../domain/response/Customer.dart';
+import 'invoice_detail_page.dart'; // ✅ Ajouté
 
 class InvoicePage extends StatefulWidget {
   final String customerCode;
@@ -186,9 +187,35 @@ class _InvoicePageState extends State<InvoicePage> {
 
   Widget buildTabContent() {
     if (selectedTab == 0) {
-      return InvoiceList(invoiceType: "sales", items: filteredSalesItems);
+      return InvoiceList(
+        invoiceType: "sales",
+        items: filteredSalesItems,
+        onInvoiceTap: (item) { // ✅ Ajouté
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => InvoiceDetailPage(
+                invoiceName: item.title,
+              ),
+            ),
+          );
+        },
+      );
     }
-    return InvoiceList(invoiceType: "pos", items: filteredPOSItems);
+    return InvoiceList(
+      invoiceType: "pos",
+      items: filteredPOSItems,
+      onInvoiceTap: (item) { // ✅ Ajouté
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => InvoiceDetailPage(
+              invoiceName: item.title,
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -281,11 +308,11 @@ class _InvoicePageState extends State<InvoicePage> {
               child: isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : (salesInvoices.isEmpty && posInvoices.isEmpty)
-                  ? const Center(child: Text('No invoices found'))
-                  : SingleChildScrollView(
-                      controller: scrollController,
-                      child: buildTabContent(),
-                    ),
+                      ? const Center(child: Text('No invoices found'))
+                      : SingleChildScrollView(
+                          controller: scrollController,
+                          child: buildTabContent(),
+                        ),
             ),
           ),
         ],

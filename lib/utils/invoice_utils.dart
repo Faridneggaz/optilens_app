@@ -21,11 +21,13 @@ class InvoiceItemData {
 class InvoiceList extends StatelessWidget {
   final List<InvoiceItemData> items;
   final String invoiceType;
+  final Function(InvoiceItemData)? onInvoiceTap; // ✅ Ajouté
 
   const InvoiceList({
     super.key,
     required this.items,
     required this.invoiceType,
+    this.onInvoiceTap, // ✅ Ajouté
   });
 
   @override
@@ -36,84 +38,87 @@ class InvoiceList extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ...items.map((item) {
-            return Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        invoiceType == "pos" ? "${item.title}" : item.title,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        item.postingDate,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey.shade700,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        "${item.price.toStringAsFixed(2)} DA",
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-
-                      if (item.ttc != 0)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 4,
-                            horizontal: 8,
+            return GestureDetector( // ✅ Ajouté
+              onTap: () => onInvoiceTap?.call(item), // ✅ Ajouté
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          invoiceType == "pos" ? "${item.title}" : item.title,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
                           ),
-                          decoration: BoxDecoration(
-                            color: getStatusColor(item.status).withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(6),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          item.postingDate,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey.shade700,
                           ),
-                          child: Text(
-                            "Debt: ${item.ttc.toStringAsFixed(2)} DA",
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: getStatusColor(item.status),
+                        ),
+                      ],
+                    ),
+
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          "${item.price.toStringAsFixed(2)} DA",
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+
+                        if (item.ttc != 0)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 4,
+                              horizontal: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: getStatusColor(item.status).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              "Debt: ${item.ttc.toStringAsFixed(2)} DA",
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: getStatusColor(item.status),
+                              ),
                             ),
                           ),
-                        ),
-                      const SizedBox(height: 6),
+                        const SizedBox(height: 6),
 
-                      Text(
-                        "● ${item.status}",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: getStatusColor(item.status),
+                        Text(
+                          "● ${item.status}",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: getStatusColor(item.status),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
             );
           }).toList(),

@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import '../../domain/response/PaymentResponse.dart';
 
 class PaymentController {
-  static const String baseUrl = " http://172.26.46.70:8000/api/method/";
+  static const String baseUrl = "http://192.168.100.20:8000/api/method/";
   static const String getPaymentsByCustomerCode =
       "mobile_app.api.get_payments_by_customer_code";
 

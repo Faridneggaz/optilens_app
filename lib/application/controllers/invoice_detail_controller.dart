@@ -3,40 +3,38 @@ import 'package:http/http.dart' as http;
 import '../../domain/response/invoice_detail_response.dart';
 
 class InvoiceDetailController {
+  // L'URL de base s'arrête déjà à /api/method/
   static const String baseUrl = "http://192.168.100.20:8000/api/method/";
-  static const String getInvoiceDetailsEndpoint = "mobile_app.api.get_single_invoice_details";
-
-  Future<InvoiceDetailResponse?> fetchInvoiceDetails({
+  
+  Future<InvoiceDetailResponse?> getInvoiceDetails({
     required String invoiceName,
-    String invoiceType = "Sales Invoice",
+    String invoiceType = "Sales Invoice", // Optionnel car Python gère la détection
   }) async {
-    final url = Uri.parse(
-      "$baseUrl$getInvoiceDetailsEndpoint?invoice_name=$invoiceName",
-    );
-
     try {
-      final response = await http.get(url);
+      // ERREUR CORRIGÉE : L'URL ne doit pas répéter "/api/method/" et doit utiliser le bon nom de fonction
+      final url = Uri.parse('${baseUrl}mobile_app.api.get_single_invoice_details');
+      
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'invoice_name': invoiceName, // Paramètre attendu par votre def dans api.py
+        }),
+      );
+
+      print('Status Code: ${response.statusCode}'); // Debug
+      print('Response Body: ${response.body}'); // Debug
 
       if (response.statusCode == 200) {
-        final jsonData = json.decode(response.body);
-        
-        if (jsonData['message'] != null) {
-          // Vérifier si c'est une erreur
-          if (jsonData['message']['error'] != null) {
-            print('API Error: ${jsonData['message']['error']}');
-            return null;
-          }
-          
-          return InvoiceDetailResponse.fromJson(jsonData['message']);
+        final data = jsonDecode(response.body);
+        // Frappe/ERPNext renvoie toujours les données dans l'objet 'message'
+        if (data['message'] != null) {
+          return InvoiceDetailResponse.fromJson(data['message']);
         }
-        
-        return null;
-      } else {
-        print('Erreur serveur: ${response.statusCode}');
-        return null;
       }
+      return null;
     } catch (e) {
-      print('Erreur réseau: $e');
+      print('Error fetching invoice details: $e');
       return null;
     }
   }

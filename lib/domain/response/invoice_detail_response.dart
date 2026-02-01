@@ -25,6 +25,7 @@ class InvoiceDetail {
   final double outstandingAmount;
   final String status;
   final double totalQty;
+  final String? customer;
 
   InvoiceDetail({
     required this.name,
@@ -32,6 +33,7 @@ class InvoiceDetail {
     required this.grandTotal,
     required this.outstandingAmount,
     required this.status,
+    this.customer,
     this.totalQty = 0,
   });
 
@@ -43,6 +45,7 @@ class InvoiceDetail {
       outstandingAmount: _toDouble(json['outstanding_amount']),
       status: json['status'] ?? '',
       totalQty: _toDouble(json['total_qty']),
+      customer: json['customer'],
     );
   }
 
@@ -61,6 +64,7 @@ class InvoiceItem {
   final double qty;
   final double rate;
   final double amount;
+  
 
   InvoiceItem({
     required this.itemCode,

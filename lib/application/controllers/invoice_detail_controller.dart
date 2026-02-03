@@ -3,15 +3,14 @@ import 'package:http/http.dart' as http;
 import '../../domain/response/invoice_detail_response.dart';
 
 class InvoiceDetailController {
-  // L'URL de base s'arrête déjà à /api/method/
-  static const String baseUrl = "http://192.168.100.20:8000/api/method/";
+  static const String baseUrl = "https://optilens.jethings.com//api/method/";
   
   Future<InvoiceDetailResponse?> getInvoiceDetails({
     required String invoiceName,
-    String invoiceType = "Sales Invoice", // Optionnel car Python gère la détection
+    String invoiceType = "Sales Invoice",
   }) async {
     try {
-      // ERREUR CORRIGÉE : L'URL ne doit pas répéter "/api/method/" et doit utiliser le bon nom de fonction
+     
       final url = Uri.parse('${baseUrl}mobile_app.api.get_single_invoice_details');
       
       final response = await http.post(

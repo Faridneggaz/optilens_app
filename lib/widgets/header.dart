@@ -6,12 +6,14 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final dynamic customer;
   final String customerCode;
+  final VoidCallback? onMenuTap; // ← AJOUTÉ
 
   const AppHeader({
     super.key,
     required this.title,
     required this.customer,
     required this.customerCode,
+    this.onMenuTap, // ← AJOUTÉ
   });
 
   @override
@@ -55,7 +57,11 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
               bottom: 0,
               child: InkWell(
                 onTap: () {
-                  ZoomDrawer.of(context)?.toggle();
+                  if (onMenuTap != null) {
+                    onMenuTap!(); // ← APPELLE LE CALLBACK
+                  } else {
+                    ZoomDrawer.of(context)?.toggle();
+                  }
                 },
                 child: Center(
                   child: Image.asset(

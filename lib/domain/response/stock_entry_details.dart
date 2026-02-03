@@ -4,7 +4,7 @@ class StockEntryDetails {
   final String from_warehouse;
   final String to_warehouse;
   final String company;
-  final String status;
+  String status;
 
   StockEntryDetails({
     required this.name,

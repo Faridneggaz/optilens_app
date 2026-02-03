@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_zoom_drawer/flutter_zoom_drawer.dart';
 import '../widgets/drawer_screen.dart';
-import '../main.dart';
+import '../main.dart'; 
 import '../domain/response/Customer.dart';
 import '../views/user/user_dashboard.dart';
 
 class ZoomDrawerPage extends StatefulWidget {
-  final Customer? customer;
+  final Customer? customer; // Requis pour MainPage
   final bool isUser;
   final String? userName;
   final String? token;
 
   const ZoomDrawerPage({
     super.key,
-    this.token,
-    this.customer,
     required this.isUser,
+    this.customer,
     this.userName,
+    this.token,
   });
 
   @override
@@ -24,10 +24,16 @@ class ZoomDrawerPage extends StatefulWidget {
 }
 
 class _ZoomDrawerPageState extends State<ZoomDrawerPage> {
+  final GlobalKey<UserDashboardPageState> _userPageKey = GlobalKey();
   final GlobalKey<MainPageState> _mainPageKey = GlobalKey();
+  final ZoomDrawerController _drawerController = ZoomDrawerController();
 
   void openPage(int index) {
-    if (!widget.isUser) {
+    if (widget.isUser) {
+      // Pilote la navigation interne du User
+      _userPageKey.currentState?.setPage(index);
+    } else {
+      // Pilote la navigation interne du Client
       _mainPageKey.currentState?.setPage(index);
     }
   }
@@ -35,13 +41,22 @@ class _ZoomDrawerPageState extends State<ZoomDrawerPage> {
   @override
   Widget build(BuildContext context) {
     return ZoomDrawer(
-      menuScreen: DrawerScreen(onSelectPage: openPage),
+      controller: _drawerController,
+      menuScreen: DrawerScreen(
+        onSelectPage: openPage, 
+        isUser: widget.isUser, // Transmet le rôle au menu
+      ),
       mainScreen: widget.isUser
           ? UserDashboardPage(
+              key: _userPageKey,
               userName: widget.userName ?? '',
               token: widget.token!,
+              drawerController: _drawerController, 
             )
-          : MainPage(key: _mainPageKey, customer: widget.customer!),
+          : MainPage(
+              key: _mainPageKey, 
+              customer: widget.customer!, 
+            ),
       borderRadius: 28,
       showShadow: true,
       angle: 0.0,

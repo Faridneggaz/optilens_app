@@ -3,64 +3,53 @@ import 'package:flutter_zoom_drawer/flutter_zoom_drawer.dart';
 
 class DrawerScreen extends StatelessWidget {
   final Function(int) onSelectPage;
+  final bool isUser;
 
-  const DrawerScreen({super.key, required this.onSelectPage});
+  const DrawerScreen({super.key, required this.onSelectPage, required this.isUser});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color.fromARGB(255, 254, 255, 255),
+      backgroundColor: const Color.fromARGB(255, 254, 255, 255),
       body: SafeArea(
         child: Column(
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 15),
-              child: Column(
-                children: [
-                  Image.asset(
-                    'assets/images/optilensss.png',
-                    height: 100,
-                    fit: BoxFit.contain,
-                  ),
-                ],
-              ),
+              child: Image.asset('assets/images/optilensss.png', height: 100),
             ),
-
             Expanded(
               child: Column(
                 children: [
                   ListTile(
-                    leading: const Icon(
-                      Icons.home,
-                      color: Color.fromARGB(255, 59, 173, 162),
-                    ),
-                    title: const Text(
-                      "Home",
-                      style: TextStyle(color: Colors.black45, fontSize: 16),
-                    ),
+                    leading: const Icon(Icons.home, color: Color(0xFF3BADA2)),
+                    title: const Text("Home"),
                     onTap: () {
-                      onSelectPage(0);
+                      onSelectPage(0); // Dashboard vide pour User, Home pour Client
                       ZoomDrawer.of(context)?.close();
                     },
                   ),
-
                   ListTile(
-                    leading: const Icon(
-                      Icons.notifications,
-                      color: Color.fromARGB(255, 59, 173, 162),
-                    ),
-                    title: const Text(
-                      "Notifications",
-                      style: TextStyle(color: Colors.black45, fontSize: 16),
-                    ),
+                    leading: const Icon(Icons.notifications, color: Color(0xFF3BADA2)),
+                    title: const Text("Notifications"),
                     onTap: () {
+                      onSelectPage(1); // Page notifications pour les deux
                       ZoomDrawer.of(context)?.close();
                     },
                   ),
+                  if (isUser) // Option Stock uniquement pour l'employé
+                    ListTile(
+                      leading: const Icon(Icons.inventory_2, color: Color(0xFF3BADA2)),
+                      title: const Text("Stock "),
+                      onTap: () {
+                        onSelectPage(2); // Page de stock dédiée
+                        ZoomDrawer.of(context)?.close();
+                      },
+                    ),
                 ],
               ),
             ),
-            Padding(
+                    Padding(
               padding: const EdgeInsets.only(bottom: 24, left: 30, right: 12),
               child: Center(
                 child: FittedBox(

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../application/controllers/CustomerController.dart';
 import '../../widgets/zoom_drawer_page.dart';
-import '../user/user_dashboard.dart';
 import '../../../application/controllers/login_controller.dart';
 
 class LoginPage extends StatefulWidget {
@@ -21,7 +20,12 @@ class _LoginPageState extends State<LoginPage> {
 
   void loginClient() async {
     final code = _clientCodeController.text.trim();
-    if (code.isEmpty) return;
+    if (code.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Veuillez entrer le code client")),
+      );
+      return;
+    }
 
     setState(() => isLoading = true);
 
@@ -35,6 +39,13 @@ class _LoginPageState extends State<LoginPage> {
                 ZoomDrawerPage(customer: response.customer, isUser: false),
           ),
         );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Code client invalide"),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     } finally {
       setState(() => isLoading = false);
@@ -45,31 +56,58 @@ class _LoginPageState extends State<LoginPage> {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
-    if (email.isEmpty || password.isEmpty) return;
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Email et mot de passe requis")),
+      );
+      return;
+    }
+
+    print("🔵 Tentative de login avec email: $email");
 
     setState(() => isLoading = true);
 
-    final response = await LoginController().login(
-      email: email,
-      password: password,
-    );
+    try {
+      final response = await LoginController().login(
+        email: email,
+        password: password,
+      );
 
-    setState(() => isLoading = false);
+      setState(() => isLoading = false);
 
-    if (response != null) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => UserDashboardPage(
-            userName: response.full_name,
-            token: response.user.sid,
+      if (response != null) {
+        print("🟢 Login réussi - Username: ${response.user.name}");
+        print("🟢 Token: ${response.user.sid}");
+        
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ZoomDrawerPage(
+              isUser: true,
+              userName: response.user.name,
+              token: response.user.sid,
+            ),
           ),
+        );
+      } else {
+        print("🔴 Login échoué");
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Identifiants invalides - Vérifiez votre email et mot de passe"),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 4),
+          ),
+        );
+      }
+    } catch (e) {
+      print("🔴 Exception dans loginUser: $e");
+      setState(() => isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Erreur de connexion: $e"),
+          backgroundColor: Colors.red,
         ),
       );
-    } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Login failed")));
     }
   }
 
@@ -150,6 +188,7 @@ class _LoginPageState extends State<LoginPage> {
                           if (isUserLogin) ...[
                             TextField(
                               controller: _emailController,
+                              keyboardType: TextInputType.emailAddress,
                               decoration: InputDecoration(
                                 hintText: 'Email',
                                 border: OutlineInputBorder(
@@ -188,7 +227,16 @@ class _LoginPageState extends State<LoginPage> {
                                 backgroundColor: Colors.teal,
                                 foregroundColor: Colors.white,
                               ),
-                              child: const Text('LOGIN'),
+                              child: isLoading
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Text('LOGIN'),
                             ),
                           ),
                         ],

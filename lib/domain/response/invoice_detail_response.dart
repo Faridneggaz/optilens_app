@@ -26,6 +26,7 @@ class InvoiceDetail {
   final String status;
   final double totalQty;
   final String? customer;
+  
 
   InvoiceDetail({
     required this.name,

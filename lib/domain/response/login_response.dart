@@ -2,14 +2,18 @@ import 'user.dart';
 
 class LoginResponse {
   final User user;
-  final String full_name;
 
-  LoginResponse({required this.user, required this.full_name});
+  LoginResponse({required this.user});
 
-  static LoginResponse fromJson(Map<String, dynamic> json) {
+  factory LoginResponse.fromJson(Map<String, dynamic> json) {
+    final message = json['message'];
+
+    if (message is! Map<String, dynamic>) {
+      throw Exception('Login failed');
+    }
+
     return LoginResponse(
-      user: User.fromJson(json["message"]["user"]),
-      full_name: json["full_name"],
+      user: User.fromJson(message),
     );
   }
 }

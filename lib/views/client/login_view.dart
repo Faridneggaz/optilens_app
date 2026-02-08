@@ -77,7 +77,25 @@ class _LoginPageState extends State<LoginPage> {
 
       if (response != null) {
         print("🟢 Login réussi - Username: ${response.user.name}");
-        print("🟢 Token: ${response.user.sid}");
+        print("🟢 Token reçu: ${response.user.sid}");
+        print("🟢 Token length: ${response.user.sid?.length ?? 0}");
+        print("🟢 Token is null? ${response.user.sid == null}");
+        print("🟢 Token is empty? ${response.user.sid?.isEmpty ?? true}");
+        
+        // ✅ Vérification critique avant navigation
+        if (response.user.sid == null || response.user.sid!.isEmpty) {
+          print("❌ ERREUR CRITIQUE: Le serveur a renvoyé un token vide ou null!");
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Erreur: Token manquant dans la réponse du serveur. Contactez l'administrateur."),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 5),
+            ),
+          );
+          return;
+        }
+        
+        print("✅ Navigation vers ZoomDrawerPage avec token: ${response.user.sid}");
         
         Navigator.pushReplacement(
           context,
@@ -90,7 +108,7 @@ class _LoginPageState extends State<LoginPage> {
           ),
         );
       } else {
-        print("🔴 Login échoué");
+        print("🔴 Login échoué - response est null");
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text("Identifiants invalides - Vérifiez votre email et mot de passe"),

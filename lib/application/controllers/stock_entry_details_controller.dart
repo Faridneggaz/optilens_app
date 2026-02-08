@@ -27,36 +27,7 @@ class StockEntryDetailsController {
     return null;
   }
 
-  Future<bool> manageStockEntry({
-    required String token,
-    required String name,
-    required String items,
-    required String action,
-  }) async {
-    final url = Uri.parse("$baseUrl$manageEndpoint");
-    try {
-      final response = await http.post(
-        url,
-        headers: {"Content-Type": "application/x-www-form-urlencoded"},
-        body: {
-          "token": token,
-          "name": name,
-          "items": items,
-          "action": action,
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final result = json.decode(response.body);
-        return result["message"] == "Success";
-      }
-    } catch (e) {
-      print("Erreur manageStockEntry: $e");
-    }
-    return false;
-  }
-
-  // ✅ MÉTHODE CORRIGÉE avec POST JSON (comme InvoiceDetailController)
+  // ✅ SOLUTION FINALE: Token dans le body ET dans l'URL
   Future<Map<String, dynamic>> approveStockEntry({
     required String name,
     required String token,
@@ -64,48 +35,48 @@ class StockEntryDetailsController {
     required String action,
   }) async {
     try {
-      final url = Uri.parse("$baseUrl$manageEndpoint");
+      // ✅ Garder le token dans l'URL aussi (au cas où)
+      final url = Uri.parse("$baseUrl$manageEndpoint?token=$token");
+      
+      print('=== DEBUG APPROVE REQUEST ===');
+      print('URL: $url');
+      print('Token length: ${token.length}');
       
       final response = await http.post(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: jsonEncode({
           'name': name,
-          'items': items,  // ✅ Directement la liste, pas json.encode()
+          'items': items,
           'action': action,
+          'token': token, // ✅ IMPORTANT: Token aussi dans le body
         }),
       );
 
-      print('Status Code: ${response.statusCode}'); // Debug
-      print('Response Body: ${response.body}'); // Debug
+      print('Status Code: ${response.statusCode}');
+      print('Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         
-        // ✅ Frappe renvoie dans 'message'
-        if (data['message'] != null) {
-          final result = data['message'];
-          
-          if (result is Map && result["message"] == "Success") {
-            return {
-              "message": "Success",
-              "detail": result["detail"] ?? "Operation completed"
-            };
-          } else if (result is Map && result["error"] != null) {
-            return {"error": result["error"]};
-          }
+        // Frappe encapsule souvent la réponse dans 'message'
+        var resData = data['message'] ?? data;
+
+        if (resData["message"] == "Success") {
+          return {
+            "message": "Success",
+            "detail": resData["detail"] ?? "Operation completed successfully"
+          };
+        } else if (resData["error"] != null) {
+          return {"error": resData["error"]};
         }
         
-        // Si pas de 'message', vérifier directement
-        if (data["message"] == "Success") {
-          return {"message": "Success", "detail": data["detail"] ?? ""};
-        }
-        if (data["error"] != null) {
-          return {"error": data["error"]};
-        }
+        return {"error": "Unknown response format"};
+      } else {
+        return {"error": "Server error: ${response.statusCode} - ${response.body}"};
       }
-      
-      return {"error": "Server error: ${response.statusCode}"};
       
     } catch (e) {
       print("Erreur approveStockEntry: $e");
@@ -122,12 +93,20 @@ class StockEntryDetailsController {
       final response = await http.get(url);
       if (response.statusCode == 200) {
         final decoded = json.decode(response.body);
-        if (decoded is List) {
-          return decoded.map<Map<String, String>>((e) => {
-            "item_code": e["item_code"] ?? "",
-            "item_name": e["item_name"] ?? ""
-          }).toList();
+        
+        List itemsList;
+        if (decoded is Map && decoded['message'] != null) {
+          itemsList = decoded['message'] as List;
+        } else if (decoded is List) {
+          itemsList = decoded;
+        } else {
+          return [];
         }
+        
+        return itemsList.map<Map<String, String>>((e) => {
+          "item_code": e["item_code"]?.toString() ?? "",
+          "item_name": e["item_name"]?.toString() ?? ""
+        }).toList();
       }
     } catch (e) {
       print("Erreur searchItems: $e");

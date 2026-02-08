@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import '../../domain/response/invoice_detail_response.dart';
 
 class InvoiceDetailController {
-  static const String baseUrl = "https://optilens.jethings.com//api/method/";
+  static const String baseUrl = "http://192.168.100.20:8000/api/method/";
   
   Future<InvoiceDetailResponse?> getInvoiceDetails({
     required String invoiceName,
@@ -17,7 +17,7 @@ class InvoiceDetailController {
         url,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'invoice_name': invoiceName, // Paramètre attendu par votre def dans api.py
+          'invoice_name': invoiceName, 
         }),
       );
 

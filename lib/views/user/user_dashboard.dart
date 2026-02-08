@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_zoom_drawer/flutter_zoom_drawer.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../widgets/header.dart';
 import '../../../application/controllers/StockEntryController.dart';
 import '../../../domain/response/StockEntry.dart';
@@ -27,11 +28,42 @@ class UserDashboardPageState extends State<UserDashboardPage> {
   List<StockEntry> stockEntries = [];
   bool isLoading = true;
   int _currentPageIndex = 0;
+  
+  // ✅ Variable pour stocker le token réel
+  String _actualToken = '';
 
   @override
   void initState() {
     super.initState();
-    fetchStockEntries(); // Charge les données dès le début
+    // ✅ DEBUG et récupération du token
+    print('=== DEBUG USER DASHBOARD INIT ===');
+    print('Token reçu en paramètre: ${widget.token}');
+    print('Token length: ${widget.token.length}');
+    print('Token vide? ${widget.token.isEmpty}');
+    
+    _loadToken();
+  }
+
+  // ✅ Fonction pour charger le token depuis SharedPreferences si nécessaire
+  Future<void> _loadToken() async {
+    if (widget.token.isNotEmpty) {
+      // Si le token est passé en paramètre, l'utiliser
+      _actualToken = widget.token;
+      print('Token utilisé depuis paramètre: $_actualToken');
+    } else {
+      // Sinon, essayer de le récupérer depuis SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      _actualToken = prefs.getString('token') ?? '';
+      print('Token récupéré depuis SharedPreferences: $_actualToken');
+      
+      if (_actualToken.isEmpty) {
+        print('❌ ERREUR: Aucun token disponible!');
+        // Vous pouvez rediriger vers la page de login ici
+      }
+    }
+    
+    // Charger les données une fois qu'on a le token
+    fetchStockEntries();
   }
 
   void setPage(int index) {
@@ -39,8 +71,11 @@ class UserDashboardPageState extends State<UserDashboardPage> {
   }
 
   void fetchStockEntries() async {
+    print('=== FETCH STOCK ENTRIES ===');
+    print('Token utilisé pour fetch: $_actualToken');
+    
     final StockEntryResponse? response = await controller.fetchLastStockEntries(
-      token: widget.token,
+      token: _actualToken,
       limit: 10,
     );
 
@@ -147,12 +182,17 @@ class UserDashboardPageState extends State<UserDashboardPage> {
                         child: InkWell(
                           borderRadius: BorderRadius.circular(16),
                           onTap: () {
+                            // ✅ DEBUG avant navigation
+                            print('=== NAVIGATION VERS STOCK ENTRY ===');
+                            print('Token passé: $_actualToken');
+                            print('Stock Entry Name: ${entry.name}');
+                            
                             Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (_) => StockEntryPage(
                                   stockEntryName: entry.name,
-                                  token: widget.token,
+                                  token: _actualToken, // ✅ Utiliser _actualToken au lieu de widget.token
                                 ),
                               ),
                             );

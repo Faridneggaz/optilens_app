@@ -15,14 +15,27 @@ class LoginController {
     );
 
     try {
+      print('🔵 LOGIN REQUEST: $url');
       final response = await http.get(url);
+      
+      print('🔵 Status Code: ${response.statusCode}');
+      print('🔵 Response Body RAW: ${response.body}');
+      
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
-        return LoginResponse.fromJson(jsonData);
+        print('🔵 JSON Decoded: $jsonData');
+        
+        final loginResponse = LoginResponse.fromJson(jsonData);
+        print('🔵 LoginResponse créé - Username: ${loginResponse.user.name}');
+        print('🔵 LoginResponse créé - SID: ${loginResponse.user.sid}');
+        
+        return loginResponse;
       } else {
+        print('❌ Erreur HTTP: ${response.statusCode}');
         return null;
       }
-    } catch (_) {
+    } catch (e) {
+      print('❌ Exception dans login: $e');
       return null;
     }
   }

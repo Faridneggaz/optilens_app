@@ -63,54 +63,175 @@ class _StockEntryPageState extends State<StockEntryPage> {
     return itemsReady && warehousesReady;
   }
 
-  void _addNewItem() {
-    String code = "";
+  // ✅ NOUVELLE FONCTION AVEC RECHERCHE D'ITEMS
+  void _addNewItem() async {
+    String? selectedItemCode;
+    String? selectedItemName;
     int qty = 1;
-    showDialog(
+    List<Map<String, String>> searchResults = [];
+    bool isSearching = false;
+    TextEditingController searchController = TextEditingController();
+
+    await showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Add Item"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(decoration: const InputDecoration(labelText: "Item Code"), onChanged: (val) => code = val),
-            TextField(decoration: const InputDecoration(labelText: "Quantity"), keyboardType: TextInputType.number, onChanged: (val) => qty = int.tryParse(val) ?? 1),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
-          ElevatedButton(
-            onPressed: () {
-              if (code.isNotEmpty) {
-                setState(() {
-                  data!.items.add(model.StockEntryItem(
-                    id: "", 
-                    idx: data!.items.length + 1, 
-                    item_code: code, 
-                    item_name: code, 
-                    from_warehouse: data!.stock_entry.from_warehouse, 
-                    to_warehouse: data!.stock_entry.to_warehouse, 
-                    quantity: qty
-                  ));
-                });
-              }
-              Navigator.pop(context);
-            },
-            child: const Text("Add"),
-          )
-        ],
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: const Text("Add Item"),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Champ de recherche
+                  TextField(
+                    controller: searchController,
+                    decoration: InputDecoration(
+                      labelText: "Search Item",
+                      suffixIcon: isSearching
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.search),
+                    ),
+                    onChanged: (val) async {
+                      if (val.isEmpty) {
+                        setDialogState(() {
+                          searchResults = [];
+                        });
+                        return;
+                      }
+
+                      setDialogState(() {
+                        isSearching = true;
+                      });
+
+                      // Appel API pour rechercher les items
+                      final results = await StockEntryDetailsController().searchItems(
+                        token: widget.token,
+                        searchText: val,
+                      );
+
+                      setDialogState(() {
+                        searchResults = results;
+                        isSearching = false;
+                      });
+                    },
+                  ),
+                  
+                  const SizedBox(height: 10),
+
+                  // Liste des résultats
+                  if (searchResults.isNotEmpty)
+                    Container(
+                      constraints: const BoxConstraints(maxHeight: 200),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: searchResults.length,
+                        itemBuilder: (context, index) {
+                          final item = searchResults[index];
+                          return ListTile(
+                            title: Text(item['item_name'] ?? ''),
+                            subtitle: Text(item['item_code'] ?? ''),
+                            onTap: () {
+                              setDialogState(() {
+                                selectedItemCode = item['item_code'];
+                                selectedItemName = item['item_name'];
+                                searchController.text = item['item_name'] ?? '';
+                                searchResults = [];
+                              });
+                            },
+                          );
+                        },
+                      ),
+                    ),
+
+                  const SizedBox(height: 10),
+
+                  // Champ quantité
+                  TextField(
+                    decoration: const InputDecoration(labelText: "Quantity"),
+                    keyboardType: TextInputType.number,
+                    onChanged: (val) => qty = int.tryParse(val) ?? 1,
+                    controller: TextEditingController(text: '1'),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Cancel"),
+              ),
+              ElevatedButton(
+                onPressed: selectedItemCode != null
+                    ? () {
+                        setState(() {
+                          data!.items.add(model.StockEntryItem(
+                            id: "",
+                            idx: data!.items.length + 1,
+                            item_code: selectedItemCode!,
+                            item_name: selectedItemName ?? selectedItemCode!,
+                            from_warehouse: data!.stock_entry.from_warehouse,
+                            to_warehouse: data!.stock_entry.to_warehouse,
+                            quantity: qty,
+                          ));
+                        });
+                        Navigator.pop(context);
+                      }
+                    : null,
+                child: const Text("Add"),
+              )
+            ],
+          );
+        },
       ),
     );
   }
 
+  // ✅ FONCTION D'APPROBATION CORRIGÉE
   Future<void> handleApprove() async {
     setState(() => isSubmitting = true);
-    String itemsJson = jsonEncode(data!.items.map((e) => e.toJson()).toList());
-    final success = await StockEntryDetailsController().manageStockEntry(
-      token: widget.token, name: widget.stockEntryName, items: itemsJson, action: "approve",
+
+    // Préparer les items au bon format
+    final itemsToSend = data!.items.map((e) => {
+      "itemName": e.item_code,
+      "quantity": e.quantity,
+      "fromWarehouse": e.from_warehouse,
+      "toWarehouse": e.to_warehouse,
+    }).toList();
+
+    // Utiliser la nouvelle méthode approveStockEntry
+    final result = await StockEntryDetailsController().approveStockEntry(
+      name: widget.stockEntryName,
+      token: widget.token,
+      items: itemsToSend,
+      action: "approve",
     );
-    if (success && mounted) { Navigator.pop(context); } 
-    else { setState(() => isSubmitting = false); }
+
+    if (!mounted) return;
+
+    if (result["message"] == "Success") {
+      // Succès - retour à la page précédente
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result["detail"] ?? "Stock Entry approved successfully"),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.pop(context);
+    } else {
+      // Erreur - afficher le message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result["error"] ?? "Failed to approve"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      setState(() => isSubmitting = false);
+    }
   }
 
   Widget warehouseBox({required String title, required String value, required bool isValidated, required VoidCallback onTap}) {
@@ -161,14 +282,7 @@ class _StockEntryPageState extends State<StockEntryPage> {
                   if (data!.stock_entry.to_warehouse.isNotEmpty) warehouseBox(title: 'To', value: data!.stock_entry.to_warehouse, isValidated: toWarehouseValidated, onTap: () => setState(() => toWarehouseValidated = !toWarehouseValidated)),
                   
                   const SizedBox(height: 25),
-                  
-                  // Section Titre "Items" principal
-                  Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                    const Text('Items', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                    if (isPending) IconButton(icon: const Icon(Icons.add_circle, color: Colors.teal, size: 28), onPressed: _addNewItem),
-                  ]),
-                  
-                  const SizedBox(height: 15),
+           
                   
                   
                   // Section Titre "Items" principal
@@ -179,20 +293,18 @@ class _StockEntryPageState extends State<StockEntryPage> {
                   
                   const SizedBox(height: 15),
                   
-                  // EN-TÊTES DE COLONNES CORRIGÉS
+                  // EN-TÊTES DE COLONNES
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 0.0), // On enlève le padding pour coller au bord
+                    padding: const EdgeInsets.symmetric(horizontal: 0.0),
                     child: Row(
                       children: [
-                        // Cet espace vide de 40px est CRUCIAL pour l'alignement 
-                        // Il simule la place de l'icône poubelle rouge 
                         if (isPending) const SizedBox(width: 40), 
                         
                         const Expanded(
                           flex: 4, 
                           child: Text(
                             'Item Name', 
-                            textAlign: TextAlign.left, // Aligné à gauche
+                            textAlign: TextAlign.left,
                             style: headerStyle,
                           )
                         ),
@@ -216,7 +328,7 @@ class _StockEntryPageState extends State<StockEntryPage> {
                     ),
                   ),
                   const Divider(thickness: 1.0, color: Colors.black26),
-                  const Divider(thickness: 1.0, color: Colors.black26),
+              
                   
                   ...data!.items.asMap().entries.map((entry) {
                     int index = entry.key;

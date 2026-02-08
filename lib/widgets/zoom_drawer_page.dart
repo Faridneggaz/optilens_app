@@ -28,6 +28,22 @@ class _ZoomDrawerPageState extends State<ZoomDrawerPage> {
   final GlobalKey<MainPageState> _mainPageKey = GlobalKey();
   final ZoomDrawerController _drawerController = ZoomDrawerController();
 
+  @override
+  void initState() {
+    super.initState();
+    // ✅ DEBUG: Vérifier le token à l'initialisation
+    print('=== DEBUG ZOOM DRAWER PAGE ===');
+    print('isUser: ${widget.isUser}');
+    print('userName: ${widget.userName}');
+    print('token: ${widget.token}');
+    print('token is null? ${widget.token == null}');
+    print('token length: ${widget.token?.length ?? 0}');
+    
+    if (widget.isUser && (widget.token == null || widget.token!.isEmpty)) {
+      print('❌ ERREUR CRITIQUE: Token null ou vide pour un user!');
+    }
+  }
+
   void openPage(int index) {
     if (widget.isUser) {
       // Pilote la navigation interne du User
@@ -50,7 +66,7 @@ class _ZoomDrawerPageState extends State<ZoomDrawerPage> {
           ? UserDashboardPage(
               key: _userPageKey,
               userName: widget.userName ?? '',
-              token: widget.token!,
+              token: widget.token ?? '', // ✅ Utiliser ?? au lieu de !
               drawerController: _drawerController, 
             )
           : MainPage(

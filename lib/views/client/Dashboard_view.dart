@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+// --- Imports existants ---
 import '../../widgets/header.dart';
 import '../../utils/announcement_utils.dart';
 import '../../../application/controllers/invoice_controller.dart';
@@ -6,6 +7,10 @@ import '../../../domain/response/InvoicesResponse.dart';
 import '../../domain/response/sales_invoice.dart';
 import '../../../domain/response/Customer.dart';
 import '../../utils/card_utils.dart';
+
+// --- Nouveaux Imports (Ajustez les chemins selon vos dossiers) ---
+import '../../../application/controllers/announcement_controller.dart';
+import '../../../domain/response/announcement.dart';
 
 class DashboardPage extends StatefulWidget {
   final Customer customer;
@@ -17,57 +22,114 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  final InvoiceController controller = InvoiceController();
+  // Controllers
+  final InvoiceController invoiceController = InvoiceController();
+  final AnnouncementController announcementController = AnnouncementController();
+
+  // Data Lists
   List<SalesInvoice> invoices = [];
-  bool isLoading = true;
+  List<Announcement> announcements = [];
+
+  // Loading States
+  bool isInvoiceLoading = true;
+  bool isAnnouncementsLoading = true;
   double totalOutstanding = 0;
 
   @override
   void initState() {
     super.initState();
     fetchInvoices();
+    fetchAnnouncements();
   }
+
+  // --- API CALLS ---
 
   void fetchInvoices() async {
-    setState(() => isLoading = true);
-
-    final InvoicesResponse? response = await controller.fetchInvoices(
+    setState(() => isInvoiceLoading = true);
+    final InvoicesResponse? response = await invoiceController.fetchInvoices(
       widget.customer.code,
     );
-
-    setState(() {
-      if (response != null) {
-        invoices = response.sales_invoices;
-        totalOutstanding = invoices.fold(
-          0,
-          (sum, item) => sum + item.outstanding_amount,
-        );
-      }
-      isLoading = false;
-    });
+    if (mounted) {
+      setState(() {
+        if (response != null) {
+          invoices = response.sales_invoices;
+          totalOutstanding = invoices.fold(0, (sum, item) => sum + item.outstanding_amount);
+        }
+        isInvoiceLoading = false;
+      });
+    }
   }
+
+  void fetchAnnouncements() async {
+    setState(() => isAnnouncementsLoading = true);
+    
+    // On utilise le nom du client comme ID pour le filtrage API
+    // Si vous avez l'email dans l'objet Customer, utilisez widget.customer.email
+    final String userId = widget.customer.code; // ou widget.customer.name
+    
+    final result = await announcementController.fetchAnnouncements(userId);
+    
+    if (mounted) {
+      setState(() {
+        announcements = result;
+        isAnnouncementsLoading = false;
+      });
+    }
+  }
+
+  // --- HELPERS (Conversion String -> Flutter Object) ---
+
+  IconData _getIcon(String iconName) {
+    switch (iconName) {
+      case 'local_offer': return Icons.local_offer;
+      case 'warning': return Icons.warning_amber_rounded;
+      case 'event': return Icons.event;
+      case 'info': return Icons.info_outline;
+      case 'campaign': return Icons.campaign;
+      default: return Icons.notifications;
+    }
+  }
+
+  Color _parseColor(String hexColor) {
+    try {
+      hexColor = hexColor.replaceAll('#', '');
+      if (hexColor.length == 6) {
+        hexColor = "FF$hexColor"; // Ajouter opacité max si absente
+      }
+      return Color(int.parse("0x$hexColor"));
+    } catch (e) {
+      return const Color.fromRGBO(0, 169, 157, 1); // Vert par défaut
+    }
+  }
+
+  // --- UI BUILD ---
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: isLoading
+      body: isInvoiceLoading
           ? const Center(child: CircularProgressIndicator())
           : Container(
               color: const Color.fromARGB(255, 246, 255, 253),
               child: ListView(
                 padding: const EdgeInsets.only(bottom: 20),
                 children: [
+                  // HEADER
                   AppHeader(
                     title: 'Dashboard',
                     customer: widget.customer,
                     customerCode: widget.customer.code,
                   ),
+                  
                   const SizedBox(height: 20),
+                  
+                  // OUTSTANDING CARD
                   Container(
                     margin: const EdgeInsets.symmetric(horizontal: 20),
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: const Color.fromRGBO(221, 244, 242, 11),
+                      // Correction: Opacité 1.0 (et non 11)
+                      color: const Color.fromRGBO(221, 244, 242, 1.0),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: const Color.fromRGBO(0, 168, 156, 1),
@@ -76,7 +138,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     ),
                     child: Column(
                       children: [
-                        Text(
+                        const Text(
                           "OutStanding Amount",
                           style: TextStyle(
                             fontSize: 20,
@@ -87,7 +149,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         const SizedBox(height: 10),
                         Text(
                           '${widget.customer.debt.toStringAsFixed(2)} DA',
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 32,
                             color: Color.fromRGBO(31, 40, 55, 1),
                             fontWeight: FontWeight.w900,
@@ -98,6 +160,8 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
 
                   const SizedBox(height: 25),
+                  
+                  // DASHBOARD SECTION
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Column(
@@ -117,19 +181,17 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
 
                   buildSimpleCard("Price List", "PL-Standard"),
-
                   const SizedBox(height: 16),
-
                   buildSimpleCard("TTC/Month", "350.00 DA"),
-
                   const SizedBox(height: 20),
 
+                  // ANNOUNCEMENTS SECTION (DYNAMIQUE)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        Text(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
                           "Announcements",
                           style: TextStyle(
                             fontSize: 20,
@@ -137,37 +199,48 @@ class _DashboardPageState extends State<DashboardPage> {
                             color: Color.fromRGBO(31, 40, 55, 1),
                           ),
                         ),
-                        SizedBox(height: 12),
+                        if (isAnnouncementsLoading)
+                          const SizedBox(
+                            height: 20, 
+                            width: 20, 
+                            child: CircularProgressIndicator(strokeWidth: 2)
+                          ),
                       ],
                     ),
                   ),
+                  const SizedBox(height: 10),
 
-                  const AnnouncementCard(
-                    icon: Icons.campaign,
-                    title: "New Product Launch",
-                    subtitle:
-                        "We're excited to announce our latest collection of premium lenses, available starting next month!",
-                    postedTime: "Posted 2 hours ago",
-                    isNew: true,
-                  ),
-
-                  const AnnouncementCard(
-                    icon: Icons.calendar_month,
-                    title: "Holiday Hours Update",
-                    subtitle:
-                        "Please note that we will be closed for the upcoming public holiday on May 1st.",
-                    postedTime: "Posted 3 days ago",
-                    isNew: false,
-                  ),
+                  // LISTE DYNAMIQUE DES ANNONCES
+                  if (!isAnnouncementsLoading && announcements.isEmpty)
+                     Padding(
+                       padding: const EdgeInsets.all(20.0),
+                       child: Center(child: Text("No new announcements", style: TextStyle(color: Colors.grey.shade500))),
+                     )
+                  else
+                    ...announcements.map((ann) => AnnouncementCard(
+                      icon: _getIcon(ann.icon),
+                      title: ann.title,
+                      subtitle: ann.subtitle,
+                      postedTime: "Posted ${ann.postedTime}",
+                      // On compare la date du jour avec la date de l'annonce pour le tag "NEW"
+                      isNew: ann.postedTime == DateTime.now().toString().split(' ')[0], 
+                      themeColor: _parseColor(ann.color),
+                    )),
 
                   const SizedBox(height: 12),
+                  
                   Center(
-                    child: Text(
-                      "View All",
-                      style: TextStyle(
-                        color: Colors.teal.shade600,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16,
+                    child: TextButton(
+                      onPressed: () {
+                         // Action voir tout
+                      },
+                      child: Text(
+                        "View All",
+                        style: TextStyle(
+                          color: Colors.teal.shade600,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                        ),
                       ),
                     ),
                   ),

@@ -69,7 +69,7 @@ class MainPageState extends State<MainPage> {
       ProfilePage(
         customer: widget.customer,
         customerCode: widget.customer.code,
-        logout: () => LogoutDialog.show(context),
+       
       ),
     ];
   }

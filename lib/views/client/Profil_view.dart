@@ -5,13 +5,13 @@ import '../../../domain/response/Customer.dart';
 class ProfilePage extends StatelessWidget {
   final Customer customer;
   final String customerCode;
-  final VoidCallback logout;
+  // Removed final VoidCallback logout;
 
   const ProfilePage({
     super.key,
     required this.customer,
     required this.customerCode,
-    required this.logout,
+    // Removed required this.logout,
   });
 
   Widget sectionTitle(String title) {
@@ -76,7 +76,7 @@ class ProfilePage extends StatelessWidget {
                     ),
                     child: Row(
                       children: [
-                        CircleAvatar(
+                        const CircleAvatar(
                           radius: 25,
                           backgroundImage: NetworkImage(
                             'https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png',
@@ -97,11 +97,6 @@ class ProfilePage extends StatelessWidget {
                                         fontWeight: FontWeight.w700,
                                       ),
                                     ),
-                                  ),
-                                  const Icon(
-                                    Icons.edit,
-                                    size: 25,
-                                    color: Colors.grey,
                                   ),
                                 ],
                               ),
@@ -134,61 +129,8 @@ class ProfilePage extends StatelessWidget {
                     Icons.help_outline,
                     onTap: () {},
                   ),
-                  const SizedBox(height: 30),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: InkWell(
-                      onTap: logout,
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        decoration: BoxDecoration(
-                          color: const Color.fromARGB(255, 255, 226, 227),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        alignment: Alignment.center,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(
-                              Icons.logout,
-                              color: Color.fromARGB(255, 223, 54, 38),
-                            ),
-                            SizedBox(width: 10),
-                            Text(
-                              "Log Out",
-                              style: TextStyle(
-                                color: Color.fromARGB(255, 223, 54, 38),
-                                fontWeight: FontWeight.w700,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 25),
-                  Text.rich(
-                    const TextSpan(
-                      text: "Powered by ",
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      children: [
-                        TextSpan(
-                          text: "Jethings",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black54,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                
+                  const SizedBox(height: 20),
                 ],
               ),
             ),

@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_zoom_drawer/flutter_zoom_drawer.dart';
+import 'package:shared_preferences/shared_preferences.dart'; 
 import '../widgets/drawer_screen.dart';
 import '../main.dart'; 
 import '../domain/response/Customer.dart';
 import '../views/user/user_dashboard.dart';
+import '../views/client/login_view.dart'; 
 
 class ZoomDrawerPage extends StatefulWidget {
-  final Customer? customer; // Requis pour MainPage
+  final Customer? customer;
   final bool isUser;
   final String? userName;
   final String? token;
@@ -31,25 +33,28 @@ class _ZoomDrawerPageState extends State<ZoomDrawerPage> {
   @override
   void initState() {
     super.initState();
-    // ✅ DEBUG: Vérifier le token à l'initialisation
-    print('=== DEBUG ZOOM DRAWER PAGE ===');
-    print('isUser: ${widget.isUser}');
-    print('userName: ${widget.userName}');
-    print('token: ${widget.token}');
-    print('token is null? ${widget.token == null}');
-    print('token length: ${widget.token?.length ?? 0}');
-    
-    if (widget.isUser && (widget.token == null || widget.token!.isEmpty)) {
-      print('❌ ERREUR CRITIQUE: Token null ou vide pour un user!');
-    }
+    // ... vos logs de debug ...
+  }
+
+  // 3. Ajouter la fonction de déconnexion ici
+  Future<void> _handleLogout() async {
+    // Vider les préférences (Token, User info, etc.)
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+
+    if (!mounted) return;
+
+    // Rediriger vers la page de Login et effacer l'historique de navigation
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const LoginPage()), // Assurez-vous que LoginPage est bien importé
+      (route) => false,
+    );
   }
 
   void openPage(int index) {
     if (widget.isUser) {
-      // Pilote la navigation interne du User
       _userPageKey.currentState?.setPage(index);
     } else {
-      // Pilote la navigation interne du Client
       _mainPageKey.currentState?.setPage(index);
     }
   }
@@ -60,13 +65,14 @@ class _ZoomDrawerPageState extends State<ZoomDrawerPage> {
       controller: _drawerController,
       menuScreen: DrawerScreen(
         onSelectPage: openPage, 
-        isUser: widget.isUser, // Transmet le rôle au menu
+        isUser: widget.isUser,
+        onLogout: _handleLogout, // Passer la fonction de déconnexion au DrawerScreen
       ),
       mainScreen: widget.isUser
           ? UserDashboardPage(
               key: _userPageKey,
               userName: widget.userName ?? '',
-              token: widget.token ?? '', // ✅ Utiliser ?? au lieu de !
+              token: widget.token ?? '',
               drawerController: _drawerController, 
             )
           : MainPage(

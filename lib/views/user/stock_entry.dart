@@ -394,7 +394,7 @@ class _StockEntryPageState extends State<StockEntryPage> {
               child: ElevatedButton(
                 onPressed: (canApprove && !isSubmitting) ? handleApprove : (isPending ? null : () => Navigator.pop(context)),
                 style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14), backgroundColor: (isPending && !canApprove) ? Colors.grey.shade400 : Colors.teal, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                child: isSubmitting ? const CircularProgressIndicator(color: Colors.white) : Text(isPending ? 'APPROVE' : 'DONE', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                child: isSubmitting ? const CircularProgressIndicator(color: Colors.white) : Text(isPending ? 'APPROVE' : 'APPROVED', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               ),
             ),
           ),

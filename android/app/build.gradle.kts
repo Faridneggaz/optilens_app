@@ -15,7 +15,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    compileSdk = 34
+    compileSdk = 36
     buildToolsVersion = "34.0.0"
     namespace = "com.example.test_project"
     ndkVersion = flutter.ndkVersion

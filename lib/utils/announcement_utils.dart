@@ -6,6 +6,7 @@ class AnnouncementCard extends StatelessWidget {
   final String subtitle;
   final String postedTime;
   final bool isNew;
+  final Color themeColor; // Nouveau champ pour la couleur dynamique
 
   const AnnouncementCard({
     super.key,
@@ -14,18 +15,21 @@ class AnnouncementCard extends StatelessWidget {
     required this.subtitle,
     required this.postedTime,
     this.isNew = false,
+    this.themeColor = const Color.fromRGBO(0, 169, 157, 1), // Vert par défaut
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 18, vertical: 5),
+      margin: const EdgeInsets.symmetric(horizontal: 18, vertical: 8), // Un peu plus d'espace vertical
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color.fromRGBO(221, 244, 242, 1),
+        // Fond très pâle basé sur la couleur du thème (opacité 10%)
+        color: themeColor.withOpacity(0.08), 
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color.fromRGBO(181, 230, 224, 1),
+          // Bordure pâle basée sur la couleur du thème (opacité 30%)
+          color: themeColor.withOpacity(0.3),
           width: 1.2,
         ),
       ),
@@ -34,7 +38,8 @@ class AnnouncementCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, color: const Color.fromRGBO(0, 169, 157, 1), size: 24),
+              // L'icône prend la couleur forte
+              Icon(icon, color: themeColor, size: 28),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -48,19 +53,16 @@ class AnnouncementCard extends StatelessWidget {
               ),
               if (isNew)
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.redAccent.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Text(
-                    "New",
+                    "NEW",
                     style: TextStyle(
                       color: Colors.red,
-                      fontSize: 12,
+                      fontSize: 10,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -73,9 +75,14 @@ class AnnouncementCard extends StatelessWidget {
             style: TextStyle(color: Colors.grey.shade700, height: 1.3),
           ),
           const SizedBox(height: 10),
-          Text(
-            postedTime,
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Text(
+                postedTime,
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade500, fontStyle: FontStyle.italic),
+              ),
+            ],
           ),
         ],
       ),

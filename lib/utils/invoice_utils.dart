@@ -21,13 +21,13 @@ class InvoiceItemData {
 class InvoiceList extends StatelessWidget {
   final List<InvoiceItemData> items;
   final String invoiceType;
-  final Function(InvoiceItemData)? onInvoiceTap; // ✅ Ajouté
+  final Function(InvoiceItemData)? onInvoiceTap;
 
   const InvoiceList({
     super.key,
     required this.items,
     required this.invoiceType,
-    this.onInvoiceTap, // ✅ Ajouté
+    this.onInvoiceTap,
   });
 
   @override
@@ -38,8 +38,8 @@ class InvoiceList extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ...items.map((item) {
-            return GestureDetector( // ✅ Ajouté
-              onTap: () => onInvoiceTap?.call(item), // ✅ Ajouté
+            return GestureDetector(
+              onTap: () => onInvoiceTap?.call(item),
               child: Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
@@ -51,28 +51,38 @@ class InvoiceList extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          invoiceType == "pos" ? "${item.title}" : item.title,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
+                    // --- MODIFICATION 1 : Expanded ajouté ici ---
+                    Expanded( 
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            invoiceType == "pos" ? "${item.title}" : item.title,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                            // --- MODIFICATION 2 : Gestion du texte trop long ---
+                            maxLines: 1, 
+                            overflow: TextOverflow.ellipsis, 
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          item.postingDate,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey.shade700,
+                          const SizedBox(height: 4),
+                          Text(
+                            item.postingDate,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey.shade700,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
+                    
+                    // Petit espace de sécurité entre les deux colonnes
+                    const SizedBox(width: 10), 
 
+                    // Colonne de Droite (Prix, Debt, Status)
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
@@ -126,16 +136,4 @@ class InvoiceList extends StatelessWidget {
       ),
     );
   }
-}
-
-List<InvoiceItemData> convertToInvoiceItemData(List<SalesInvoice> invoices) {
-  return invoices.map((invoice) {
-    return InvoiceItemData(
-      title: invoice.name,
-      postingDate: invoice.posting_date,
-      ttc: invoice.outstanding_amount,
-      price: invoice.grand_total,
-      status: invoice.status,
-    );
-  }).toList();
 }

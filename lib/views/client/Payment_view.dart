@@ -68,48 +68,6 @@ class _PaymentPageState extends State<PaymentPage> {
             customerCode: widget.customerCode,
           ),
           const SizedBox(height: 12),
-
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: GestureDetector(
-              onTap: () {
-                print("Make a new payment tapped");
-              },
-              child: Card(
-                color: const Color.fromARGB(255, 197, 236, 233),
-                elevation: 2,
-                shadowColor: Colors.black.withOpacity(0.2),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const SizedBox(
-                  height: 60,
-                  child: Center(
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.credit_card,
-                          size: 28,
-                          color: Color.fromRGBO(0, 166, 154, 1),
-                        ),
-                        SizedBox(width: 12),
-                        Text(
-                          "Make a New Payment",
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Color.fromRGBO(0, 166, 154, 1),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-
           Expanded(
             child: isLoading
                 ? const Center(child: CircularProgressIndicator())

@@ -3,13 +3,16 @@ import 'package:http/http.dart' as http;
 import '../../domain/response/InvoicesResponse.dart';
 
 class InvoiceController {
-  static const String baseUrl = "http://192.168.100.20:8000/api/method/";
-  static const String getInvoicesByCustomerCode =
-      "mobile_app.api.get_invoices_by_customer_code";
+  static const String baseUrl = "https://optilens.jethings.com/api/method/";
+  static const String getInvoicesByCustomerCode = "mobile_app.api.get_invoices_by_customer_code";
 
-  Future<InvoicesResponse?> fetchInvoices(String customerCode) async {
+  Future<InvoicesResponse?> fetchInvoices(
+    String customerCode, {
+    int limit = 20,
+    int offset = 0, 
+  }) async {
     final url = Uri.parse(
-      "$baseUrl$getInvoicesByCustomerCode?code=$customerCode",
+      "$baseUrl$getInvoicesByCustomerCode?code=$customerCode&limit=$limit&offset=$offset",
     );
 
     try {

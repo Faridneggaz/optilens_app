@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import '../../domain/response/stock_entry_details_response.dart';
 
 class StockEntryDetailsController {
-  static const String baseUrl = "http://192.168.100.20:8000/api/method/";
+  static const String baseUrl = "https://optilens.jethings.com/api/method/";
   
   static const String fetchEndpoint = "mobile_app.api.get_stock_entry_details_by_name";
   static const String manageEndpoint = "mobile_app.api.manage_stock_entry";
@@ -51,7 +51,7 @@ class StockEntryDetailsController {
           'name': name,
           'items': items,
           'action': action,
-          'token': token, // ✅ IMPORTANT: Token aussi dans le body
+          'token': token, 
         }),
       );
 

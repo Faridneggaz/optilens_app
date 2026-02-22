@@ -3,16 +3,16 @@ import 'package:http/http.dart' as http;
 import '../../domain/response/StockEntryResponse.dart';
 
 class StockEntryController {
-  static const String baseUrl = "http://192.168.100.20:8000/api/method/";
-  static const String getLastStockEntries =
-      "mobile_app.api.get_last_stock_entries";
+  static const String baseUrl = "https://optilens.jethings.com/api/method/";
+  static const String getLastStockEntries = "mobile_app.api.get_last_stock_entries";
 
   Future<StockEntryResponse?> fetchLastStockEntries({
     required String token,
     int limit = 20,
+    int offset = 0 
   }) async {
     final url = Uri.parse(
-      "$baseUrl$getLastStockEntries?token=$token&limit=$limit",
+      "$baseUrl$getLastStockEntries?token=$token&limit=$limit&offset=$offset",
     );
 
     try {

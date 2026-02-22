@@ -56,24 +56,33 @@ class _PaymentListState extends State<PaymentList> {
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
           ),
+        
         ...List.generate(widget.items.length, (index) {
           final item = widget.items[index];
           final isExpanded = expandedIndex == index;
 
-          return Column(
-            children: [
-              GestureDetector(
-                onTap: () => toggleExpand(index),
-                child: Card(
-                  color: const Color.fromRGBO(254, 255, 255, 1),
-                  elevation: 2,
-                  shadowColor: Colors.black.withOpacity(0.2),
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+          // LE CHANGEMENT PRINCIPAL EST ICI :
+          // Une seule Card qui contient tout (Header + Liste)
+          return Card(
+            color: const Color.fromRGBO(254, 255, 255, 1),
+            elevation: 2,
+            shadowColor: Colors.black.withOpacity(0.1),
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              // Optionnel : bordure verte si ouvert
+              side: isExpanded 
+                  ? const BorderSide(color: Color(0xFF00A89C), width: 1.5) 
+                  : BorderSide.none,
+            ),
+            child: Column(
+              children: [
+                // 1. LE HEADER (Toujours visible)
+                InkWell( // Rend toute la zone cliquable
+                  onTap: () => toggleExpand(index),
+                  borderRadius: BorderRadius.vertical(
+                    top: const Radius.circular(12),
+                    bottom: Radius.circular(isExpanded ? 0 : 12),
                   ),
                   child: Padding(
                     padding: const EdgeInsets.all(16),
@@ -94,7 +103,7 @@ class _PaymentListState extends State<PaymentList> {
                               Text(
                                 ' ${item.date}',
                                 style: const TextStyle(
-                                  fontSize: 15,
+                                  fontSize: 14,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.grey,
                                 ),
@@ -102,113 +111,114 @@ class _PaymentListState extends State<PaymentList> {
                             ],
                           ),
                         ),
+                        // Montant Global
                         Text(
-                          '${item.totalAmount.toStringAsFixed(2)} DA',
+                          '${item.totalAmount.toStringAsFixed(0)} DA',
                           style: const TextStyle(
-                            fontSize: 17,
+                            fontSize: 18,
                             fontWeight: FontWeight.w900,
-                            color: Colors.black87,
+                            color: Color(0xFF004D40),
                           ),
                         ),
                         const SizedBox(width: 8),
+                        // Flèche animée
                         AnimatedRotation(
                           turns: isExpanded ? 0.5 : 0,
                           duration: const Duration(milliseconds: 200),
-                          child: const Icon(
-                            Icons.keyboard_arrow_down,
-                            color: Colors.grey,
-                          ),
+                          child: const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
                         ),
                       ],
                     ),
                   ),
                 ),
-              ),
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
-                child: isExpanded
-                    ? Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Container(
-                          padding: const EdgeInsets.all(14),
-                          margin: const EdgeInsets.only(bottom: 10),
-                          decoration: BoxDecoration(
-                            color: const Color.fromRGBO(254, 255, 255, 1),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: const Color.fromRGBO(254, 255, 255, 1),
-                            ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                "Invoices Paid",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color.fromRGBO(0, 168, 156, 1),
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              ..._buildPaidInvoices(item),
-                            ],
-                          ),
-                        ),
-                      )
-                    : const SizedBox(),
-              ),
-            ],
+
+                // 2. LA LISTE (Visible seulement si isExpanded = true)
+                // Elle est MAINTENANT À L'INTÉRIEUR de la Card
+                if (isExpanded)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    child: Column(
+                      children: [
+                        // Une petite ligne de séparation optionnelle
+                        Divider(color: Colors.grey.withOpacity(0.2)), 
+                        const SizedBox(height: 10),
+                        
+                        // Appel de la fonction de timeline
+                        ..._buildTimelineInvoices(item),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
           );
         }),
       ],
     );
   }
 
-  List<Widget> _buildPaidInvoices(PaymentItemData item) {
-    return item.invoices.map((invoice) {
-      return Card(
-        color: const Color.fromRGBO(249, 250, 251, 1),
-        margin: const EdgeInsets.symmetric(vertical: 4),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        elevation: 0,
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+  // --- MÊME STYLE QUE PRÉCÉDEMMENT (Timeline, Gris, Orange) ---
+  List<Widget> _buildTimelineInvoices(PaymentItemData item) {
+    return List.generate(item.invoices.length, (i) {
+      final invoice = item.invoices[i];
+      final isLast = i == item.invoices.length - 1;
+
+      return IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Ligne et point
+            SizedBox(
+              width: 30,
+              child: Stack(
+                alignment: Alignment.topCenter,
                 children: [
-                  Text(
-                    invoice.invoiceId,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
+                  if (!isLast)
+                    Positioned(
+                      top: 12, bottom: 0, left: 14,
+                      child: Container(width: 2, color: Colors.grey.withOpacity(0.3)),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    "Due: ${item.date}",
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey,
-                      fontWeight: FontWeight.bold,
+                  Container(
+                    margin: const EdgeInsets.only(top: 8),
+                    width: 12, height: 12,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.withOpacity(0.4),
+                      shape: BoxShape.circle,
                     ),
                   ),
                 ],
               ),
-              Text(
-                "${invoice.amount.toStringAsFixed(2)} DA",
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.green,
+            ),
+            // Texte (INV et Montant)
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 20, left: 10),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      invoice.invoiceId,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[600],
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                    Text(
+                      "${invoice.amount.toStringAsFixed(0)}",
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.orange,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       );
-    }).toList();
+    });
   }
 }

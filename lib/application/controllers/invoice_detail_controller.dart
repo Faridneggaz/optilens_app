@@ -21,12 +21,11 @@ class InvoiceDetailController {
         }),
       );
 
-      print('Status Code: ${response.statusCode}'); // Debug
-      print('Response Body: ${response.body}'); // Debug
+      print('Status Code: ${response.statusCode}'); 
+      print('Response Body: ${response.body}'); 
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        // Frappe/ERPNext renvoie toujours les données dans l'objet 'message'
         if (data['message'] != null) {
           return InvoiceDetailResponse.fromJson(data['message']);
         }

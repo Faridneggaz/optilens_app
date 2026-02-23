@@ -63,7 +63,6 @@ class _StockEntryPageState extends State<StockEntryPage> {
     return itemsReady && warehousesReady;
   }
 
-  // ✅ NOUVELLE FONCTION AVEC RECHERCHE D'ITEMS
   void _addNewItem() async {
     String? selectedItemCode;
     String? selectedItemName;
@@ -108,7 +107,6 @@ class _StockEntryPageState extends State<StockEntryPage> {
                         isSearching = true;
                       });
 
-                      // Appel API pour rechercher les items
                       final results = await StockEntryDetailsController().searchItems(
                         token: widget.token,
                         searchText: val,
@@ -260,7 +258,6 @@ class _StockEntryPageState extends State<StockEntryPage> {
   Widget build(BuildContext context) {
     if (loading) return const Scaffold(body: Center(child: CircularProgressIndicator(color: Colors.teal)));
     
-
     const headerStyle = TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black);
 
     return Scaffold(
@@ -283,8 +280,6 @@ class _StockEntryPageState extends State<StockEntryPage> {
                   
                   const SizedBox(height: 25),
            
-                  
-                  
                   // Section Titre "Items" principal
                   Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                     const Text('Items', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
@@ -329,7 +324,6 @@ class _StockEntryPageState extends State<StockEntryPage> {
                   ),
                   const Divider(thickness: 1.0, color: Colors.black26),
               
-                  
                   ...data!.items.asMap().entries.map((entry) {
                     int index = entry.key;
                     var item = entry.value;

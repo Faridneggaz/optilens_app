@@ -21,32 +21,32 @@ class LoginController {
       print('🔵 LOGIN REQUEST: $url');
       final response = await http.get(url);
 
-      print('🔵 Status Code: ${response.statusCode}');
-      print('🔵 Response Body RAW: ${response.body}');
+      print('Status Code: ${response.statusCode}');
+      print('Response Body RAW: ${response.body}');
 
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
-        print('🔵 JSON Decoded: $jsonData');
+        print('JSON Decoded: $jsonData');
 
         final message = jsonData['message'];
 
         if (message == null || message['ok'] == false) {
           final error = message?['error'] ?? 'Erreur inconnue';
-          print('❌ Échec login: $error');
+          print(' Échec login: $error');
           return null;
         }
 
         final loginResponse = LoginResponse.fromJson(jsonData);
-        print('🔵 LoginResponse créé - Username: ${loginResponse.user.name}');
-        print('🔵 LoginResponse créé - SID: ${loginResponse.user.sid}');
+        print('LoginResponse créé - Username: ${loginResponse.user.name}');
+        print('LoginResponse créé - SID: ${loginResponse.user.sid}');
 
         return loginResponse;
       } else {
-        print('❌ Erreur HTTP: ${response.statusCode}');
+        print(' Erreur HTTP: ${response.statusCode}');
         return null;
       }
     } catch (e) {
-      print('❌ Exception dans login: $e');
+      print(' Exception dans login: $e');
       return null;
     }
   }

@@ -6,6 +6,7 @@ import '../../../application/controllers/StockEntryController.dart';
 import '../../../domain/response/StockEntry.dart';
 import '../../../domain/response/StockEntryResponse.dart';
 import 'stock_entry.dart';
+import '../../utils/responsive_utils.dart';
 
 class UserDashboardPage extends StatefulWidget {
   final String userName;
@@ -28,7 +29,7 @@ class UserDashboardPageState extends State<UserDashboardPage> {
 
   List<StockEntry> stockEntries = [];
   
-  // États de chargement et pagination (Comme Invoice)
+  // États de chargement et pagination
   bool isLoading = true;         // Chargement initial ou Refresh complet
   bool isLoadingMore = false;    // Chargement du bouton "Voir plus"
   bool hasMore = true;           // Reste-t-il des données ?
@@ -37,6 +38,10 @@ class UserDashboardPageState extends State<UserDashboardPage> {
   
   int _currentPageIndex = 0;
   String _actualToken = '';
+
+  // --- NOUVEAUX ÉTATS POUR LA RECHERCHE ET LE FILTRE ---
+  String _searchQuery = '';
+  String _selectedStatus = 'All';
 
   @override
   void initState() {
@@ -54,13 +59,15 @@ class UserDashboardPageState extends State<UserDashboardPage> {
     fetchStockEntries(); // Chargement initial
   }
 
-  // Action Refresh (Tirer vers le bas)
   Future<void> _onRefresh() async {
     setState(() {
       isLoading = true;
       hasMore = true;
       _offset = 0;
-      stockEntries.clear(); // On vide la liste pour recharger propre
+      stockEntries.clear(); 
+      // Réinitialiser les filtres au rafraîchissement si vous le souhaitez
+      // _searchQuery = '';
+      // _selectedStatus = 'All';
     });
     await fetchStockEntries(isLoadMore: false);
   }
@@ -102,7 +109,7 @@ class UserDashboardPageState extends State<UserDashboardPage> {
             if (response.stockEntries.length < _limit) {
               hasMore = false;
             } else {
-              _offset += _limit; // On prépare l'offset pour la prochaine page
+              _offset += _limit;
             }
           }
           isLoading = false;
@@ -128,7 +135,18 @@ class UserDashboardPageState extends State<UserDashboardPage> {
 
   Color statusColor(String status) {
     if (status.toLowerCase() == "approved") return Colors.teal;
-    return Colors.orange;
+    if (status.toLowerCase() == "pending") return Colors.orange;
+    if (status.toLowerCase() == "draft") return Colors.grey;
+    return Colors.black;
+  }
+
+  // --- LOGIQUE DE FILTRAGE ---
+  List<StockEntry> get _filteredEntries {
+    return stockEntries.where((entry) {
+      final matchesSearch = entry.name.toLowerCase().contains(_searchQuery.toLowerCase());
+      final matchesStatus = _selectedStatus == 'All' || entry.status.toLowerCase() == _selectedStatus.toLowerCase();
+      return matchesSearch && matchesStatus;
+    }).toList();
   }
 
   @override
@@ -170,43 +188,98 @@ class UserDashboardPageState extends State<UserDashboardPage> {
   Widget _buildStockManagement() {
     return Column(
       children: [
-        AppHeader(title: 'Stock ', customer: null, customerCode: '', onMenuTap: () => widget.drawerController.toggle!()),
+        AppHeader(title: 'Stock', customer: null, customerCode: '', onMenuTap: () => widget.drawerController.toggle!()),
+        
+        // --- INTÉGRATION DE LA BARRE DE FILTRE CENTRÉE ---
+        Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1000), // Empêche l'étirement sur PC/Tablette
+            child: StockFilterBar(
+              selectedStatus: _selectedStatus,
+              onSearchChanged: (val) => setState(() => _searchQuery = val),
+              onStatusChanged: (val) {
+                if (val != null) setState(() => _selectedStatus = val);
+              },
+            ),
+          ),
+        ),
+        
         Expanded(
-          child: RefreshIndicator(
-            onRefresh: _onRefresh,
-            color: Colors.teal,
-            child: isLoading && !isLoadingMore
-                ? const Center(child: CircularProgressIndicator())
-                : stockEntries.isEmpty
-                    ? ListView( // ListView permet le refresh même vide
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        children: const [
-                          SizedBox(height: 100),
-                          Center(child: Text("No stock entries found")),
-                        ],
-                      )
-                    : ListView.builder(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.symmetric(vertical: 20),
-                        // +1 pour le bouton en bas
-                        itemCount: stockEntries.length + 1,
-                        itemBuilder: (context, index) {
-                          if (index < stockEntries.length) {
-                            return _buildStockItem(stockEntries[index]);
-                          } else {
-                            // Zone du bouton en bas
-                            return _buildLoadMoreButton();
-                          }
-                        },
-                      ),
+          // --- CENTRAGE DE LA LISTE / GRILLE ---
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1000), // Même contrainte que la barre
+              child: RefreshIndicator(
+                onRefresh: _onRefresh,
+                color: Colors.teal,
+                child: isLoading && !isLoadingMore
+                    ? const Center(child: CircularProgressIndicator())
+                    : _filteredEntries.isEmpty
+                        ? ListView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            children: const [
+                              SizedBox(height: 100),
+                              Center(child: Text("No stock entries found")),
+                            ],
+                          )
+                        // Utilisation du ResponsiveLayout pour choisir entre Liste et Grille
+                        : ResponsiveLayout.isMobile(context) 
+                            ? _buildStockList()
+                            : _buildStockGrid(),
+              ),
+            ),
           ),
         ),
       ],
     );
   }
 
+  // --- AFFICHAGE TÉLÉPHONE (LISTE) ---
+  Widget _buildStockList() {
+    return ListView.builder(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      itemCount: _filteredEntries.length + 1,
+      itemBuilder: (context, index) {
+        if (index < _filteredEntries.length) {
+          return _buildStockItem(_filteredEntries[index]);
+        } else {
+          return _buildLoadMoreButton();
+        }
+      },
+    );
+  }
+
+  // --- AFFICHAGE TABLETTE (GRILLE 2 COLONNES) ---
+  Widget _buildStockGrid() {
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      child: Column(
+        children: [
+          Wrap(
+            alignment: WrapAlignment.center,
+            children: List.generate(_filteredEntries.length, (index) {
+              return SizedBox(
+                // On s'assure de prendre un peu moins de la moitié pour gérer les marges
+                width: ResponsiveLayout.isDesktop(context) ? 450 : 350, 
+                child: _buildStockItem(_filteredEntries[index]),
+              );
+            }),
+          ),
+          const SizedBox(height: 20),
+          _buildLoadMoreButton(),
+        ],
+      ),
+    );
+  }
+
   Widget _buildLoadMoreButton() {
-    // Si tout est chargé
+    // Si une recherche est en cours, cacher le bouton "Load More" est une bonne pratique
+    if (_searchQuery.isNotEmpty || _selectedStatus != 'All') {
+      return const SizedBox.shrink();
+    }
+
     if (!hasMore && stockEntries.isNotEmpty) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 20),
@@ -214,7 +287,6 @@ class UserDashboardPageState extends State<UserDashboardPage> {
       );
     }
     
-    // Si on est en train de charger la suite
     if (isLoadingMore) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 20),
@@ -222,7 +294,6 @@ class UserDashboardPageState extends State<UserDashboardPage> {
       );
     }
 
-    // Bouton pour charger la suite
     if (hasMore && stockEntries.isNotEmpty) {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -270,6 +341,13 @@ class UserDashboardPageState extends State<UserDashboardPage> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Row(
             children: [
@@ -303,6 +381,101 @@ class UserDashboardPageState extends State<UserDashboardPage> {
         AppHeader(title: 'Notifications', customer: null, customerCode: '', onMenuTap: () => widget.drawerController.toggle!()),
         const Expanded(child: Center(child: Text("No new notifications"))),
       ],
+    );
+  }
+}
+
+// =========================================================================
+// WIDGET ADAPTÉ DE VOTRE INVOICE FILTER BAR (spécial Stock Entry)
+// =========================================================================
+
+class StockFilterBar extends StatefulWidget {
+  final void Function(String) onSearchChanged;
+  final void Function(String?) onStatusChanged;
+  final String selectedStatus;
+
+  const StockFilterBar({
+    super.key,
+    required this.onSearchChanged,
+    required this.onStatusChanged,
+    required this.selectedStatus,
+  });
+
+  @override
+  State<StockFilterBar> createState() => _StockFilterBarState();
+}
+
+class _StockFilterBarState extends State<StockFilterBar> {
+  late TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: const Color.fromARGB(255, 247, 255, 254), // Raccord avec le fond
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.teal.shade100, width: 1),
+              ),
+              child: TextField(
+                controller: _controller,
+                onChanged: widget.onSearchChanged,
+                decoration: const InputDecoration(
+                  hintText: 'Search MAT-STE...',
+                  prefixIcon: Icon(Icons.search, color: Colors.teal),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(width: 12),
+
+          // Menu déroulant pour le statut
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.teal.shade100, width: 1),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                icon: const Icon(Icons.filter_list, color: Colors.teal),
+                value: widget.selectedStatus,
+                items: ['All', 'Approved', 'Pending', 'Draft']
+                    .map(
+                      (status) =>
+                          DropdownMenuItem(value: status, child: Text(status)),
+                    )
+                    .toList(),
+                onChanged: widget.onStatusChanged,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

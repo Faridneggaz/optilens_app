@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-// --- Imports existants ---
 import '../../widgets/header.dart';
 import '../../utils/announcement_utils.dart';
 import '../../../application/controllers/invoice_controller.dart';
@@ -8,7 +7,6 @@ import '../../domain/response/sales_invoice.dart';
 import '../../../domain/response/Customer.dart';
 import '../../utils/card_utils.dart';
 
-// --- Nouveaux Imports (Ajustez les chemins selon vos dossiers) ---
 import '../../../application/controllers/announcement_controller.dart';
 import '../../../domain/response/announcement.dart';
 
@@ -65,7 +63,7 @@ class _DashboardPageState extends State<DashboardPage> {
     
     // On utilise le nom du client comme ID pour le filtrage API
     // Si vous avez l'email dans l'objet Customer, utilisez widget.customer.email
-    final String userId = widget.customer.code; // ou widget.customer.name
+    final String userId = widget.customer.code; 
     
     final result = await announcementController.fetchAnnouncements(userId);
     

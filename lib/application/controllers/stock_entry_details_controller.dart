@@ -27,7 +27,6 @@ class StockEntryDetailsController {
     return null;
   }
 
-  // ✅ SOLUTION FINALE: Token dans le body ET dans l'URL
   Future<Map<String, dynamic>> approveStockEntry({
     required String name,
     required String token,
@@ -35,7 +34,6 @@ class StockEntryDetailsController {
     required String action,
   }) async {
     try {
-      // ✅ Garder le token dans l'URL aussi (au cas où)
       final url = Uri.parse("$baseUrl$manageEndpoint?token=$token");
       
       print('=== DEBUG APPROVE REQUEST ===');
@@ -61,7 +59,6 @@ class StockEntryDetailsController {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         
-        // Frappe encapsule souvent la réponse dans 'message'
         var resData = data['message'] ?? data;
 
         if (resData["message"] == "Success") {

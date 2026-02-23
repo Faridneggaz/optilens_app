@@ -33,7 +33,7 @@ class _ZoomDrawerPageState extends State<ZoomDrawerPage> {
   @override
   void initState() {
     super.initState();
-    // ... vos logs de debug ...
+
   }
 
   // 3. Ajouter la fonction de déconnexion ici
@@ -46,7 +46,7 @@ class _ZoomDrawerPageState extends State<ZoomDrawerPage> {
 
     // Rediriger vers la page de Login et effacer l'historique de navigation
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (context) => const LoginPage()), // Assurez-vous que LoginPage est bien importé
+      MaterialPageRoute(builder: (context) => const LoginPage()), 
       (route) => false,
     );
   }
@@ -66,7 +66,7 @@ class _ZoomDrawerPageState extends State<ZoomDrawerPage> {
       menuScreen: DrawerScreen(
         onSelectPage: openPage, 
         isUser: widget.isUser,
-        onLogout: _handleLogout, // Passer la fonction de déconnexion au DrawerScreen
+        onLogout: _handleLogout, 
       ),
       mainScreen: widget.isUser
           ? UserDashboardPage(
@@ -83,7 +83,10 @@ class _ZoomDrawerPageState extends State<ZoomDrawerPage> {
       showShadow: true,
       angle: 0.0,
       drawerShadowsBackgroundColor: const Color.fromARGB(255, 47, 142, 138),
-      slideWidth: MediaQuery.of(context).size.width * 0.80,
+      slideWidth: MediaQuery.of(context).size.width > 600 
+          ? 350.0 
+          : MediaQuery.of(context).size.width * 0.80,
+          
       menuBackgroundColor: Colors.white,
     );
   }

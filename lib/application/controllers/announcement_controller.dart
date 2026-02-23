@@ -10,7 +10,7 @@ class AnnouncementController {
     
       final Uri url = Uri.parse("$baseUrl?user=$userId");
       
-      print("🚀 Envoi requête Annonce: $url"); 
+      print("Envoi requête Annonce: $url"); 
 
       final response = await http.get(url);
 
@@ -22,11 +22,11 @@ class AnnouncementController {
           return list.map((item) => Announcement.fromJson(item)).toList();
         }
       } else {
-        print("❌ Erreur Serveur: ${response.statusCode}");
+        print("Erreur Serveur: ${response.statusCode}");
       }
       return [];
     } catch (e) {
-      print("❌ Erreur Exception: $e");
+      print("Erreur Exception: $e");
       return [];
     }
   }

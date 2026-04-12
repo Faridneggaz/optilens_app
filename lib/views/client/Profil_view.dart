@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import '../../widgets/header.dart';
 import '../../../domain/response/Customer.dart';
+import 'complaint_form_view.dart';
+// N'oublie pas d'importer ta page d'historique ici :
+import '../../views/client/order_history_page.dart'; 
 
 class ProfilePage extends StatelessWidget {
   final Customer customer;
   final String customerCode;
-  // Removed final VoidCallback logout;
 
   const ProfilePage({
     super.key,
     required this.customer,
     required this.customerCode,
-    // Removed required this.logout,
   });
 
   Widget sectionTitle(String title) {
@@ -87,18 +88,12 @@ class ProfilePage extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      customer.name,
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                              Text(
+                                customer.name,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                               const SizedBox(height: 4),
                               Text(
@@ -114,15 +109,46 @@ class ProfilePage extends StatelessWidget {
                       ],
                     ),
                   ),
+
+                
+                  sectionTitle("Activités"),
+                  settingItem(
+                    "Mes Commandes", 
+                    Icons.shopping_bag_outlined, 
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => OrderHistoryPage(),
+                        ),
+                      );
+                    },
+                  ),
+
                   sectionTitle("Security Settings"),
                   settingItem("Change Password", Icons.lock, onTap: () {}),
+                  
                   sectionTitle("Notification Preferences"),
                   settingItem(
                     "Manage Notifications",
                     Icons.notifications,
                     onTap: () {},
                   ),
+
                   sectionTitle("Support"),
+                  settingItem(
+                    "Déposer une réclamation", 
+                    Icons.assignment_late_outlined, 
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ComplaintFormPage(customer: customer),
+                        ),
+                      );
+                    },
+                  ),
+                  
                   settingItem("About Us", Icons.info_outline, onTap: () {}),
                   settingItem(
                     "Help & Support",

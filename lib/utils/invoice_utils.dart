@@ -63,7 +63,7 @@ class InvoiceList extends StatelessWidget {
                               fontWeight: FontWeight.bold,
                               color: Colors.black87,
                             ),
-                            // --- MODIFICATION 2 : Gestion du texte trop long ---
+                          
                             maxLines: 1, 
                             overflow: TextOverflow.ellipsis, 
                           ),

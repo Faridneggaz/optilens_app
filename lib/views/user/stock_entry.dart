@@ -76,6 +76,7 @@ class _StockEntryPageState extends State<StockEntryPage> {
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) {
           return AlertDialog(
+            scrollable: true,
             title: const Text("Add Item"),
             content: SizedBox(
               width: double.maxFinite,
@@ -125,24 +126,23 @@ class _StockEntryPageState extends State<StockEntryPage> {
                   if (searchResults.isNotEmpty)
                     Container(
                       constraints: const BoxConstraints(maxHeight: 200),
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: searchResults.length,
-                        itemBuilder: (context, index) {
-                          final item = searchResults[index];
-                          return ListTile(
-                            title: Text(item['item_name'] ?? ''),
-                            subtitle: Text(item['item_code'] ?? ''),
-                            onTap: () {
-                              setDialogState(() {
-                                selectedItemCode = item['item_code'];
-                                selectedItemName = item['item_name'];
-                                searchController.text = item['item_name'] ?? '';
-                                searchResults = [];
-                              });
-                            },
-                          );
-                        },
+                      child: SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: searchResults.map((item) {
+                            return ListTile(
+                              title: Text(item['item_code'] ?? ''),
+                              onTap: () {
+                                setDialogState(() {
+                                  selectedItemCode = item['item_code'];
+                                  selectedItemName = item['item_code'];
+                                  searchController.text = item['item_code'] ?? '';
+                                  searchResults = [];
+                                });
+                              },
+                            );
+                          }).toList(),
+                        ),
                       ),
                     ),
 
@@ -189,7 +189,6 @@ class _StockEntryPageState extends State<StockEntryPage> {
     );
   }
 
-  // ✅ FONCTION D'APPROBATION CORRIGÉE
   Future<void> handleApprove() async {
     setState(() => isSubmitting = true);
 
@@ -347,10 +346,16 @@ class _StockEntryPageState extends State<StockEntryPage> {
                                           .toSet();
                                     }),
                                   )
-                                : const SizedBox(), 
+                                : const SizedBox(),
                             ),
 
-                          Expanded(flex: 4, child: Text(item.item_name, style: const TextStyle(fontSize: 14))),
+                          Expanded(
+                            flex: 4,
+                            child: Text(
+                              item.item_code.isNotEmpty ? item.item_code : item.item_name,
+                              style: const TextStyle(fontSize: 14)
+                            )
+                          ),
                           Expanded(
                             flex: 2, 
                             child: (isValidated || !isPending) 

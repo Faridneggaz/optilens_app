@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../application/controllers/CustomerController.dart';
 import '../../widgets/zoom_drawer_page.dart';
 import '../../../application/controllers/login_controller.dart';
@@ -17,6 +18,7 @@ class _LoginPageState extends State<LoginPage> {
 
   bool isLoading = false;
   bool isUserLogin = false;
+  bool _isObscure = true;
 
   void loginClient() async {
     final code = _clientCodeController.text.trim();
@@ -32,6 +34,12 @@ class _LoginPageState extends State<LoginPage> {
     try {
       final response = await CustomerController().fetchCustomer(code);
       if (response != null) {
+
+        // ✅ FIX PRINCIPAL : Sauvegarde le code client dans SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('custom_customer_code', code);
+        print("✅ custom_customer_code sauvegardé: $code");
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -78,25 +86,30 @@ class _LoginPageState extends State<LoginPage> {
       if (response != null) {
         print("🟢 Login réussi - Username: ${response.user.name}");
         print("🟢 Token reçu: ${response.user.sid}");
-        print("🟢 Token length: ${response.user.sid?.length ?? 0}");
-        print("🟢 Token is null? ${response.user.sid == null}");
-        print("🟢 Token is empty? ${response.user.sid?.isEmpty ?? true}");
-        
-        // ✅ Vérification critique avant navigation
+
         if (response.user.sid == null || response.user.sid!.isEmpty) {
-          print("❌ ERREUR CRITIQUE: Le serveur a renvoyé un token vide ou null!");
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text("Erreur: Token manquant dans la réponse du serveur. Contactez l'administrateur."),
+              content: Text("Erreur: Token manquant dans la réponse du serveur."),
               backgroundColor: Colors.red,
               duration: Duration(seconds: 5),
             ),
           );
           return;
         }
-        
-        print("✅ Navigation vers ZoomDrawerPage avec token: ${response.user.sid}");
-        
+
+        // ✅ Sauvegarde aussi le sid et email pour les Users
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('sid', response.user.sid!);
+        if (response.user.email != null) {
+          await prefs.setString('email', response.user.email!);
+        }
+        if (response.user.name != null) {
+          await prefs.setString('name', response.user.name!);
+        }
+
+        print("✅ Navigation vers ZoomDrawerPage");
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -111,7 +124,7 @@ class _LoginPageState extends State<LoginPage> {
         print("🔴 Login échoué - response est null");
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("Identifiants invalides - Vérifiez votre email et mot de passe"),
+            content: Text("Identifiants invalides"),
             backgroundColor: Colors.red,
             duration: Duration(seconds: 4),
           ),
@@ -217,11 +230,22 @@ class _LoginPageState extends State<LoginPage> {
                             const SizedBox(height: 16),
                             TextField(
                               controller: _passwordController,
-                              obscureText: true,
+                              obscureText: _isObscure,
                               decoration: InputDecoration(
                                 hintText: 'Password',
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
+                                ),
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _isObscure
+                                        ? Icons.visibility_off
+                                        : Icons.visibility,
+                                    color: Colors.grey,
+                                  ),
+                                  onPressed: () {
+                                    setState(() => _isObscure = !_isObscure);
+                                  },
                                 ),
                               ),
                             ),
@@ -233,12 +257,11 @@ class _LoginPageState extends State<LoginPage> {
                               onPressed: isLoading
                                   ? null
                                   : isUserLogin
-                                  ? loginUser
-                                  : loginClient,
+                                      ? loginUser
+                                      : loginClient,
                               style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
-                                ),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -265,9 +288,7 @@ class _LoginPageState extends State<LoginPage> {
 
                     GestureDetector(
                       onTap: () {
-                        setState(() {
-                          isUserLogin = !isUserLogin;
-                        });
+                        setState(() => isUserLogin = !isUserLogin);
                       },
                       child: Text(
                         isUserLogin ? 'Log-in as client' : 'Log-in as user',

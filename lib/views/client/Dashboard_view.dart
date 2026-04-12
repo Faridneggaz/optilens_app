@@ -39,9 +39,6 @@ class _DashboardPageState extends State<DashboardPage> {
     fetchInvoices();
     fetchAnnouncements();
   }
-
-  // --- API CALLS ---
-
   void fetchInvoices() async {
     setState(() => isInvoiceLoading = true);
     final InvoicesResponse? response = await invoiceController.fetchInvoices(
@@ -92,11 +89,11 @@ class _DashboardPageState extends State<DashboardPage> {
     try {
       hexColor = hexColor.replaceAll('#', '');
       if (hexColor.length == 6) {
-        hexColor = "FF$hexColor"; // Ajouter opacité max si absente
+        hexColor = "FF$hexColor"; 
       }
       return Color(int.parse("0x$hexColor"));
     } catch (e) {
-      return const Color.fromRGBO(0, 169, 157, 1); // Vert par défaut
+      return const Color.fromRGBO(0, 169, 157, 1); 
     }
   }
 
@@ -126,7 +123,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     margin: const EdgeInsets.symmetric(horizontal: 20),
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      // Correction: Opacité 1.0 (et non 11)
+                    
                       color: const Color.fromRGBO(221, 244, 242, 1.0),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
@@ -230,7 +227,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   Center(
                     child: TextButton(
                       onPressed: () {
-                         // Action voir tout
+                         
                       },
                       child: Text(
                         "View All",

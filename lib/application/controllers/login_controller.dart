@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import '../../domain/response/login_response.dart';
 
 class LoginController {
-  static const String baseUrl = "https://optilens.jethings.com/api/method/";
+  static const String baseUrl = "http://192.168.0.100:8000/api/method/";
   static const String loginEndpoint = "mobile_app.api.login";
 
   Future<LoginResponse?> login({

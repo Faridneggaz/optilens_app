@@ -6,7 +6,7 @@ class CustomerController {
   Future<CustomerResponse?> fetchCustomer(String code) async {
     try {
       final uri = Uri.parse(
-        'https://optilens.jethings.com/api/method/mobile_app.api.get_client_by_code?code=$code',
+        'http://192.168.0.100:8000/api/method/mobile_app.api.get_client_by_code?code=$code',
       );
       final response = await http.get(uri);
 

@@ -31,7 +31,7 @@ class Announcement {
     return Announcement(
       id: json['id'] ?? "",
       title: json['title'] ?? "",
-      subtitle: json['subtitle'] ?? "",
+      subtitle: json['subtitle'] ?? json['description']??"",
       type: json['type'] ?? "Information",
       priority: json['priority'] ?? "Medium",
       icon: json['icon'] ?? "campaign",

@@ -268,7 +268,7 @@ class _InvoicePageState extends State<InvoicePage> {
       body: Column(
         children: [
           AppHeader(
-            title: 'Invoices',
+            title: '',
             customer: widget.customer,
             customerCode: widget.customer.code,
           ),

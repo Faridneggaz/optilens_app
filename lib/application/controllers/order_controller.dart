@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class OrderController {
   // Utilisation de l'IP .107 comme dans votre fichier actuel
-  final String baseUrl = "http://192.168.0.104:8000/api/method/mobile_app.api";
+  final String baseUrl = "http://192.168.0.100:8000/api/method/mobile_app.api";
 
   Future<bool> submitOrder(List items) async {
     try {

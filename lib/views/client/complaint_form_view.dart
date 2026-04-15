@@ -46,7 +46,7 @@ class _ComplaintFormPageState extends State<ComplaintFormPage> {
       backgroundColor: const Color.fromARGB(255, 247, 255, 253),
       body: Column(
         children: [
-          AppHeader(title: "Réclamation", customer: widget.customer, customerCode: widget.customer.code),
+          AppHeader(title: "", customer: widget.customer, customerCode: widget.customer.code),
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),

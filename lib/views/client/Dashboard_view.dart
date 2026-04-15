@@ -5,10 +5,9 @@ import '../../../application/controllers/invoice_controller.dart';
 import '../../../domain/response/InvoicesResponse.dart';
 import '../../domain/response/sales_invoice.dart';
 import '../../../domain/response/Customer.dart';
-import '../../utils/card_utils.dart';
-
 import '../../../application/controllers/announcement_controller.dart';
 import '../../../domain/response/announcement.dart';
+import 'announcement_detail_view.dart'; 
 
 class DashboardPage extends StatefulWidget {
   final Customer customer;
@@ -20,15 +19,12 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  // Controllers
   final InvoiceController invoiceController = InvoiceController();
   final AnnouncementController announcementController = AnnouncementController();
 
-  // Data Lists
   List<SalesInvoice> invoices = [];
   List<Announcement> announcements = [];
 
-  // Loading States
   bool isInvoiceLoading = true;
   bool isAnnouncementsLoading = true;
   double totalOutstanding = 0;
@@ -39,11 +35,10 @@ class _DashboardPageState extends State<DashboardPage> {
     fetchInvoices();
     fetchAnnouncements();
   }
+
   void fetchInvoices() async {
     setState(() => isInvoiceLoading = true);
-    final InvoicesResponse? response = await invoiceController.fetchInvoices(
-      widget.customer.code,
-    );
+    final InvoicesResponse? response = await invoiceController.fetchInvoices(widget.customer.code);
     if (mounted) {
       setState(() {
         if (response != null) {
@@ -57,11 +52,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   void fetchAnnouncements() async {
     setState(() => isAnnouncementsLoading = true);
-
-    final String userId = widget.customer.code; 
-    
-    final result = await announcementController.fetchAnnouncements(userId);
-    
+    final result = await announcementController.fetchAnnouncements(widget.customer.code);
     if (mounted) {
       setState(() {
         announcements = result;
@@ -70,29 +61,25 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
-  IconData _getIcon(String iconName) {
-    switch (iconName) {
-      case 'local_offer': return Icons.local_offer;
-      case 'warning': return Icons.warning_amber_rounded;
-      case 'event': return Icons.event;
-      case 'info': return Icons.info_outline;
-      case 'campaign': return Icons.campaign;
-      default: return Icons.notifications;
-    }
+  // --- Helper pour les petites cartes Dashboard ---
+  Widget buildSimpleCard(String title, String value) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+          Text(value, style: const TextStyle(color: Colors.teal, fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
   }
-
-  Color _parseColor(String hexColor) {
-    try {
-      hexColor = hexColor.replaceAll('#', '');
-      if (hexColor.length == 6) {
-        hexColor = "FF$hexColor"; 
-      }
-      return Color(int.parse("0x$hexColor"));
-    } catch (e) {
-      return const Color.fromRGBO(0, 169, 157, 1); 
-    }
-  }
-
 
   @override
   Widget build(BuildContext context) {
@@ -104,133 +91,81 @@ class _DashboardPageState extends State<DashboardPage> {
               child: ListView(
                 padding: const EdgeInsets.only(bottom: 20),
                 children: [
-                  // HEADER
                   AppHeader(
                     title: '',
                     customer: widget.customer,
                     customerCode: widget.customer.code,
                   ),
-                  
                   const SizedBox(height: 20),
                   
-                  // OUTSTANDING CARD
+                  // CARTE OUTSTANDING
                   Container(
                     margin: const EdgeInsets.symmetric(horizontal: 20),
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                    
                       color: const Color.fromRGBO(221, 244, 242, 1.0),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: const Color.fromRGBO(0, 168, 156, 1),
-                        width: 4,
-                      ),
+                      border: Border.all(color: const Color.fromRGBO(0, 168, 156, 1), width: 4),
                     ),
                     child: Column(
                       children: [
-                        const Text(
-                          "OutStanding Amount",
-                          style: TextStyle(
-                            fontSize: 20,
-                            color: Color.fromRGBO(1, 169, 156, 1),
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
+                        const Text("OutStanding Amount",
+                            style: TextStyle(fontSize: 20, color: Color.fromRGBO(1, 169, 156, 1), fontWeight: FontWeight.w900)),
                         const SizedBox(height: 10),
-                        Text(
-                          '${widget.customer.debt.toStringAsFixed(2)} DA',
-                          style: const TextStyle(
-                            fontSize: 32,
-                            color: Color.fromRGBO(31, 40, 55, 1),
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
+                        Text('${widget.customer.debt.toStringAsFixed(2)} DA',
+                            style: const TextStyle(fontSize: 32, color: Color.fromRGBO(31, 40, 55, 1), fontWeight: FontWeight.w900)),
                       ],
                     ),
                   ),
 
                   const SizedBox(height: 25),
-                  
-                  // DASHBOARD SECTION
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        Text(
-                          "Dashboard",
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                            color: Color.fromRGBO(31, 40, 55, 1),
-                          ),
-                        ),
-                        SizedBox(height: 12),
-                      ],
-                    ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20),
+                    child: Text("Dashboard", style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
                   ),
+                  const SizedBox(height: 12),
 
                   buildSimpleCard("Price List", "PL-Standard"),
                   const SizedBox(height: 16),
                   buildSimpleCard("TTC/Month", "350.00 DA"),
-                  const SizedBox(height: 20),
+                  
+                  const SizedBox(height: 25),
 
-                  // ANNOUNCEMENTS SECTION (DYNAMIQUE)
+                  // SECTION ANNOUNCEMENTS
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          "Announcements",
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                            color: Color.fromRGBO(31, 40, 55, 1),
-                          ),
-                        ),
-                        if (isAnnouncementsLoading)
-                          const SizedBox(
-                            height: 20, 
-                            width: 20, 
-                            child: CircularProgressIndicator(strokeWidth: 2)
-                          ),
+                        const Text("Announcements", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                        if (isAnnouncementsLoading) const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
                       ],
                     ),
                   ),
+                  
                   const SizedBox(height: 10),
 
-                  // LISTE DYNAMIQUE DES ANNONCES
                   if (!isAnnouncementsLoading && announcements.isEmpty)
-                     Padding(
-                       padding: const EdgeInsets.all(20.0),
-                       child: Center(child: Text("No new announcements", style: TextStyle(color: Colors.grey.shade500))),
-                     )
+                    const Center(child: Padding(padding: EdgeInsets.all(20), child: Text("No new announcements")))
                   else
                     ...announcements.map((ann) => AnnouncementCard(
-                      icon: _getIcon(ann.icon),
-                      title: ann.title,
-                      subtitle: ann.subtitle,
-                      postedTime: "Posted ${ann.postedTime}",
-                      // On compare la date du jour avec la date de l'annonce pour le tag "NEW"
-                      isNew: ann.postedTime == DateTime.now().toString().split(' ')[0], 
-                      themeColor: _parseColor(ann.color),
-                    )),
+                          announcement: ann,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => AnnouncementDetailPage(announcement: ann)),
+                            );
+                          },
+                        )),
 
                   const SizedBox(height: 12),
                   
                   Center(
                     child: TextButton(
-                      onPressed: () {
-                         
-                      },
-                      child: Text(
+                      onPressed: () {},
+                      child: const Text(
                         "View All",
-                        style: TextStyle(
-                          color: Colors.teal.shade600,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
-                        ),
+                        style: TextStyle(color: Colors.teal, fontWeight: FontWeight.w600, fontSize: 16),
                       ),
                     ),
                   ),

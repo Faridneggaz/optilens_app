@@ -58,7 +58,7 @@ class ProfilePage extends StatelessWidget {
       body: Column(
         children: [
           AppHeader(
-            title: "Profile",
+            title: "",
             customer: customer,
             customerCode: customerCode,
           ),

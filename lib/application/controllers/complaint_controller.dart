@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 
 class ComplaintController {
  
-  static const String baseUrl = "http://192.168.0.104:8000/api/method/mobile_app.api.";
+  static const String baseUrl = "http://192.168.0.100:8000/api/method/mobile_app.api.";
 
   Future<bool> submitComplaint({
     required String client,

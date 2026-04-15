@@ -4,43 +4,36 @@ class Announcement {
   final String subtitle;
   final String type;
   final String priority;
-  final String icon;
   final String color;
   final String postedTime;
-  final bool isNew;
   final String? image;
-  final String? actionLabel;
-  final String? actionRoute;
 
   Announcement({
-    required this.id,
-    required this.title,
-    required this.subtitle,
-    required this.type,
-    required this.priority,
-    required this.icon,
-    required this.color,
-    required this.postedTime,
-    required this.isNew,
-    this.image,
-    this.actionLabel,
-    this.actionRoute,
+    required this.id, required this.title, required this.subtitle,
+    required this.type, required this.priority, required this.color,
+    required this.postedTime, this.image,
   });
 
+  // METS TON IP ICI (Celle de ton serveur ERPNext)
+  static const String baseUrl = "http://192.168.0.100:8000";
+
   factory Announcement.fromJson(Map<String, dynamic> json) {
+    String? rawImage = json['image'] ?? json['banner_image']; // Gère les deux noms
+    
+    String? fullImageUrl;
+    if (rawImage != null && rawImage.isNotEmpty) {
+      fullImageUrl = rawImage.startsWith('http') ? rawImage : "$baseUrl$rawImage";
+    }
+
     return Announcement(
-      id: json['id'] ?? "",
+      id: json['id'] ?? json['name'] ?? "",
       title: json['title'] ?? "",
-      subtitle: json['subtitle'] ?? json['description']??"",
-      type: json['type'] ?? "Information",
+      subtitle: json['subtitle'] ?? json['description'] ?? "",
+      type: json['type'] ?? json['announcement_typ'] ?? "Info",
       priority: json['priority'] ?? "Medium",
-      icon: json['icon'] ?? "campaign",
       color: json['color'] ?? "#00A89C",
-      postedTime: json['postedTime'] ?? "",
-      isNew: json['isNew'] == 1,
-      image: json['image'],
-      actionLabel: json['actionLabel'],
-      actionRoute: json['actionRoute'],
+      postedTime: json['postedTime'] ?? json['publish_date'] ?? "",
+      image: fullImageUrl,
     );
   }
 }

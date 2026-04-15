@@ -23,7 +23,7 @@ class _OrderPageState extends State<OrderPage> {
   Future<List<dynamic>> _searchItems(String query) async {
     if (query.length < 2) return [];
     try {
-      final String url = "http://192.168.0.104:8000/api/method/mobile_app.api.search_items?search_text=$query";
+      final String url = "http://192.168.0.100:8000/api/method/mobile_app.api.search_items?search_text=$query";
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);

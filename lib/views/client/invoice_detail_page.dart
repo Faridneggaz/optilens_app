@@ -247,7 +247,7 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text(
-          "Invoice",
+          "",
           style: TextStyle(color: Color(0xFF00A69C), fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.white,

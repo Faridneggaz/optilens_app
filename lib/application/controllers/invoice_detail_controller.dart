@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import '../../domain/response/invoice_detail_response.dart';
 
 class InvoiceDetailController {
-  static const String baseUrl = "http://192.168.0.100:8000/api/method/";
+  static const String baseUrl = "http://192.168.0.104:8000/api/method/";
   
   Future<InvoiceDetailResponse?> getInvoiceDetails({
     required String invoiceName,

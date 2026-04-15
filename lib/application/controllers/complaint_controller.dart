@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 
 class ComplaintController {
  
-  static const String baseUrl = "http://192.168.0.100:8000/api/method/mobile_app.api.";
+  static const String baseUrl = "http://192.168.0.104:8000/api/method/mobile_app.api.";
 
   Future<bool> submitComplaint({
     required String client,
@@ -18,15 +18,14 @@ class ComplaintController {
         body: jsonEncode({
           "client": client,
           "description": description,
-          
         }),
       );
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return data['message'] == "Success";
-      }
-      return false;
+      print("Complaint response [${response.statusCode}]: ${response.body}");
+
+      // Frappe returns the created document in data['message'], not the string "Success".
+      // Any HTTP 200 means the record was saved successfully.
+      return response.statusCode == 200;
     } catch (e) {
       print("Erreur réseau réclamation: $e");
       return false;

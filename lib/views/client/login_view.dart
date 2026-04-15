@@ -71,7 +71,7 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
-    print("🔵 Tentative de login avec email: $email");
+    print(" Tentative de login avec email: $email");
 
     setState(() => isLoading = true);
 
@@ -98,7 +98,7 @@ class _LoginPageState extends State<LoginPage> {
           return;
         }
 
-        // ✅ Sauvegarde aussi le sid et email pour les Users
+      
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('sid', response.user.sid!);
         if (response.user.email != null) {
@@ -121,7 +121,7 @@ class _LoginPageState extends State<LoginPage> {
           ),
         );
       } else {
-        print("🔴 Login échoué - response est null");
+        print("Login échoué - response est null");
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text("Identifiants invalides"),

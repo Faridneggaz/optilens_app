@@ -3,7 +3,8 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class OrderController {
-  final String baseUrl = "http://192.168.0.100:8000/api/method/mobile_app.api";
+  // Utilisation de l'IP .107 comme dans votre fichier actuel
+  final String baseUrl = "http://192.168.0.104:8000/api/method/mobile_app.api";
 
   Future<bool> submitOrder(List items) async {
     try {
@@ -48,6 +49,26 @@ class OrderController {
       return data['message']?['orders'] ?? [];
     } catch (e) {
       return [];
+    }
+  }
+
+  // --- NOUVELLE FONCTION POUR LES DÉTAILS ---
+  Future<List?> getOrderItems(String orderId) async {
+    try {
+      final response = await http.get(
+        Uri.parse("$baseUrl.get_order_details?order_id=$orderId"),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        // On récupère les items dans le message de succès
+        if (data['message'] != null && data['message']['status'] == 'success') {
+          return data['message']['items'];
+        }
+      }
+      return null;
+    } catch (e) {
+      return null;
     }
   }
 }

@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import '../../domain/response/stock_entry_details_response.dart';
 
 class StockEntryDetailsController {
-  static const String baseUrl = "http://192.168.0.100:8000/api/method/";
+  static const String baseUrl = "http://192.168.0.104:8000/api/method/";
   
   static const String fetchEndpoint = "mobile_app.api.get_stock_entry_details_by_name";
   static const String manageEndpoint = "mobile_app.api.manage_stock_entry";

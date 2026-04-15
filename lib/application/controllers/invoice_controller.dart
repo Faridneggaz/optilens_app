@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import '../../domain/response/InvoicesResponse.dart';
 
 class InvoiceController {
-  static const String baseUrl = "http://192.168.0.100:8000/api/method/";
+  static const String baseUrl = "http://192.168.0.107:8000/api/method/";
   static const String getInvoicesByCustomerCode = "mobile_app.api.get_invoices_by_customer_code";
 
   Future<InvoicesResponse?> fetchInvoices(

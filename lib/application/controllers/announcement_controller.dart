@@ -4,7 +4,7 @@ import '../../domain/response/announcement.dart';
 
 class AnnouncementController {
   
-  final String baseUrl = "http://192.168.0.100:8000/api/method/mobile_app.api.get_announcements_by_customer_code";
+  final String baseUrl = "http://192.168.0.104:8000/api/method/mobile_app.api.get_announcements_by_customer_code";
 
   Future<List<Announcement>> fetchAnnouncements(String customerCode) async {
     try {

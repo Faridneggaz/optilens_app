@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import '../../domain/response/StockEntryResponse.dart';
 
 class StockEntryController {
-  static const String baseUrl = "http://192.168.0.100:8000/api/method/";
+  static const String baseUrl = "http://192.168.0.104:8000/api/method/";
   static const String getLastStockEntries = "mobile_app.api.get_last_stock_entries";
 
   Future<StockEntryResponse?> fetchLastStockEntries({

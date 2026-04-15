@@ -57,9 +57,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   void fetchAnnouncements() async {
     setState(() => isAnnouncementsLoading = true);
-    
-    // On utilise le nom du client comme ID pour le filtrage API
-    // Si vous avez l'email dans l'objet Customer, utilisez widget.customer.email
+
     final String userId = widget.customer.code; 
     
     final result = await announcementController.fetchAnnouncements(userId);
@@ -71,8 +69,6 @@ class _DashboardPageState extends State<DashboardPage> {
       });
     }
   }
-
-  // --- HELPERS (Conversion String -> Flutter Object) ---
 
   IconData _getIcon(String iconName) {
     switch (iconName) {
@@ -97,7 +93,6 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
-  // --- UI BUILD ---
 
   @override
   Widget build(BuildContext context) {
@@ -111,7 +106,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 children: [
                   // HEADER
                   AppHeader(
-                    title: 'Dashboard',
+                    title: '',
                     customer: widget.customer,
                     customerCode: widget.customer.code,
                   ),

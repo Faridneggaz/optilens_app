@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../widgets/header.dart';
 import '../../../domain/response/Customer.dart';
 import 'complaint_form_view.dart';
-// N'oublie pas d'importer ta page d'historique ici :
 import '../../views/client/order_history_page.dart'; 
 
 class ProfilePage extends StatelessWidget {

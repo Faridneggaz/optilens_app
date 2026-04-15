@@ -22,7 +22,6 @@ class InvoiceDetailPage extends StatefulWidget {
 }
 
 class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
-  // --- VARIABLES ---
   final InvoiceDetailController _controller = InvoiceDetailController();
   BlueThermalPrinter bluetooth = BlueThermalPrinter.instance;
 
@@ -30,7 +29,6 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
   bool _isLoading = true;
   String? _error;
 
-  // Bluetooth
   List<BluetoothDevice> _devices = [];
   bool _connected = false;
   BluetoothDevice? _selectedDevice;
@@ -42,7 +40,7 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
     _initBluetooth();
   }
 
-  // --- LOGIQUE BLUETOOTH ---
+// --- LOGIQUE BLUETOOTH ---
   Future<void> _initBluetooth() async {
     await [
       Permission.bluetooth,
@@ -84,28 +82,26 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
     }
   }
 
-  // --- GESTION DU CLIC IMPRIMER ---
+
   void _handlePrintButton() async {
-    // Si l'app pense être connectée, on vérifie l'état réel
+  
     if (_connected) {
       bool? isConnected = await bluetooth.isConnected;
       if (isConnected == true) {
-        // Si vraiment connecté, on imprime direct
+
         _printTicketSmall(); 
         return;
       } else {
-        // Sinon on met à jour l'état
+
         setState(() => _connected = false);
       }
     }
-    // Si pas connecté, on affiche la liste
     _showDeviceSelectionDialog();
   }
 
   void _showDeviceSelectionDialog() async {
     List<BluetoothDevice> devices = await bluetooth.getBondedDevices();
     
-    // Filtre pour afficher les imprimantes (PT-210, MTP...)
     List<BluetoothDevice> printers = devices.where((d) {
       String name = (d.name ?? "").toLowerCase();
       return name.contains("pt") || name.contains("mtp") || name.contains("print") || name.contains("pos") || name.contains("goojprt");
@@ -143,17 +139,15 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
     );
   }
 
-  // --- C'EST ICI QUE J'AI CORRIGÉ L'ERREUR "ALREADY CONNECTED" ---
+
   Future<void> _connectAndPrint(BluetoothDevice device) async {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Connexion à ${device.name}...")));
     
     try {
-      // 1. On vérifie si une connexion traîne et on la coupe
+   
       if (await bluetooth.isConnected == true) {
         await bluetooth.disconnect();
       }
-
-      // 2. Maintenant on peut se connecter proprement
       await bluetooth.connect(device);
       
       setState(() {
@@ -161,11 +155,10 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
         _selectedDevice = device;
       });
 
-      // 3. On imprime
+
       _printTicketSmall();
 
     } catch (e) {
-      // Si malgré tout on a l'erreur, c'est qu'on est probablement bien connecté
       if (e.toString().contains("already connected")) {
          setState(() {
            _connected = true;
@@ -178,7 +171,6 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
     }
   }
 
-  // --- FORMAT TICKET 58mm (GOOJPRT) ---
   Future<void> _printTicketSmall() async {
     if (_invoiceData == null) return;
 
@@ -199,9 +191,9 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
         // Logo
         if (logoBytes != null) bluetooth.printImageBytes(logoBytes);
         bluetooth.printNewLine();
-        
-        // En-tête
-        bluetooth.printCustom("OPTILENS ALGER", 2, 1);
+ 
+       
+        // En-tête        bluetooth.printCustom("OPTILENS ALGER", 2, 1);
         bluetooth.printNewLine();
         bluetooth.printCustom("--------------------------------", 1, 1);
 
@@ -242,7 +234,6 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
     });
   }
 
-  // --- UI (VOTRE DESIGN EXACT) ---
   Color _getStatusColor(String status) {
     final s = status.toLowerCase();
     if (s.contains('paid')) return Colors.green;
@@ -265,7 +256,7 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
         iconTheme: const IconThemeData(color: Colors.black),
       ),
       
-      // BOUTON IMPRIMER FLOTTANT
+      
       floatingActionButton: FloatingActionButton(
         onPressed: (_isLoading || _error != null) ? null : _handlePrintButton,
         backgroundColor: const Color(0xFF00A69C),
@@ -275,7 +266,7 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: Color(0xFF00A69C)))
           : _error != null
-              ? Center(child: Text(_error!)) // Simple message d'erreur
+              ? Center(child: Text(_error!))
               : SingleChildScrollView(
                   padding: const EdgeInsets.all(20),
                   child: Padding(

@@ -1,5 +1,3 @@
-// lib/views/client/complaint_form_view.dart
-
 import 'package:flutter/material.dart';
 import '../../application/controllers/complaint_controller.dart';
 import '../../widgets/header.dart';
@@ -16,7 +14,7 @@ class ComplaintFormPage extends StatefulWidget {
 class _ComplaintFormPageState extends State<ComplaintFormPage> {
   final _formKey = GlobalKey<FormState>();
   final _controller = ComplaintController();
-  final _descController = TextEditingController(); // Unique contrôleur de texte
+  final _descController = TextEditingController();
   bool _isLoading = false;
 
   void _send() async {
@@ -30,6 +28,8 @@ class _ComplaintFormPageState extends State<ComplaintFormPage> {
     setState(() => _isLoading = false);
 
     if (success) {
+      _descController.clear();
+      _formKey.currentState!.reset();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Réclamation envoyée !"), backgroundColor: Colors.green),
       );

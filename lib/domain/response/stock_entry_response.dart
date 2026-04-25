@@ -1,4 +1,4 @@
-import 'StockEntry.dart';
+import 'stock_entry.dart';
 
 class StockEntryResponse {
   final List<StockEntry> stockEntries;

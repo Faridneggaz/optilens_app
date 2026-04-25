@@ -64,19 +64,37 @@ class AnnouncementCard extends StatelessWidget {
     );
   }
 
-  Widget _buildIconPlaceholder() {
-    return Container(
-      height: 100, width: double.infinity,
-      decoration: BoxDecoration(color: Colors.teal.withOpacity(0.05), borderRadius: const BorderRadius.vertical(top: Radius.circular(20))),
-      child: Icon(Icons.campaign_outlined, size: 40, color: Colors.teal.shade300),
-    );
-  }
+Widget _buildIconPlaceholder() {
+  return Container(
+    height: 100, 
+    width: double.infinity,
+    decoration: BoxDecoration(
+
+      color: announcement.colorValue.withOpacity(0.1), 
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    child: Icon(
+      Icons.campaign_outlined, 
+      size: 40, 
+  
+      color: announcement.colorValue, 
+    ),
+  );
+}
+
+ 
 
   Widget _buildBadge() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(color: const Color(0xFFECA04B), borderRadius: BorderRadius.circular(6)),
-      child: Text(announcement.type.toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
+      decoration: BoxDecoration(
+        color: announcement.colorValue, 
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        announcement.type.toUpperCase(), 
+        style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+      ),
     );
   }
 }

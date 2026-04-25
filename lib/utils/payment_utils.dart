@@ -61,8 +61,6 @@ class _PaymentListState extends State<PaymentList> {
           final item = widget.items[index];
           final isExpanded = expandedIndex == index;
 
-          // LE CHANGEMENT PRINCIPAL EST ICI :
-          // Une seule Card qui contient tout (Header + Liste)
           return Card(
             color: const Color.fromRGBO(254, 255, 255, 1),
             elevation: 2,
@@ -70,15 +68,14 @@ class _PaymentListState extends State<PaymentList> {
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
-              // Optionnel : bordure verte si ouvert
               side: isExpanded 
                   ? const BorderSide(color: Color(0xFF00A89C), width: 1.5) 
                   : BorderSide.none,
             ),
             child: Column(
               children: [
-                // 1. LE HEADER (Toujours visible)
-                InkWell( // Rend toute la zone cliquable
+
+                InkWell( 
                   onTap: () => toggleExpand(index),
                   borderRadius: BorderRadius.vertical(
                     top: const Radius.circular(12),
@@ -132,18 +129,17 @@ class _PaymentListState extends State<PaymentList> {
                   ),
                 ),
 
-                // 2. LA LISTE (Visible seulement si isExpanded = true)
-                // Elle est MAINTENANT À L'INTÉRIEUR de la Card
+
                 if (isExpanded)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                     child: Column(
                       children: [
-                        // Une petite ligne de séparation optionnelle
+
                         Divider(color: Colors.grey.withOpacity(0.2)), 
                         const SizedBox(height: 10),
                         
-                        // Appel de la fonction de timeline
+
                         ..._buildTimelineInvoices(item),
                       ],
                     ),
@@ -156,7 +152,7 @@ class _PaymentListState extends State<PaymentList> {
     );
   }
 
-  // --- MÊME STYLE QUE PRÉCÉDEMMENT (Timeline, Gris, Orange) ---
+
   List<Widget> _buildTimelineInvoices(PaymentItemData item) {
     return List.generate(item.invoices.length, (i) {
       final invoice = item.invoices[i];
@@ -166,7 +162,7 @@ class _PaymentListState extends State<PaymentList> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Ligne et point
+
             SizedBox(
               width: 30,
               child: Stack(
@@ -188,7 +184,7 @@ class _PaymentListState extends State<PaymentList> {
                 ],
               ),
             ),
-            // Texte (INV et Montant)
+
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.only(bottom: 20, left: 10),

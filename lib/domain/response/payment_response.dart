@@ -1,4 +1,4 @@
-import 'Payment.dart';
+import 'payment.dart';
 
 class PaymentResponse {
   final List<Payment> payments;

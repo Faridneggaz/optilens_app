@@ -1,84 +1,43 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../../widgets/header.dart';
 import '../../utils/payment_utils.dart';
-import '../../../domain/response/Customer.dart';
-import '../../../application/controllers/Paymentcontroller.dart';
-import '../../domain/response/PaymentResponse.dart';
+import '../../../application/controllers/payment_controller.dart';
+import '../../../application/controllers/session_controller.dart';
 
-class PaymentPage extends StatefulWidget {
-  final Customer customer;
-  final String customerCode;
+class PaymentPage extends StatelessWidget {
+  PaymentPage({super.key});
 
-  const PaymentPage({
-    super.key,
-    required this.customer,
-    required this.customerCode,
-  });
-
-  @override
-  State<PaymentPage> createState() => _PaymentPageState();
-}
-
-class _PaymentPageState extends State<PaymentPage> {
-  bool isLoading = true;
-  List<PaymentItemData> payments = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _loadPayments();
-  }
-
-  Future<void> _loadPayments() async {
-    final PaymentResponse? response = await PaymentController().fetchPayments(
-      widget.customerCode,
-    );
-
-    if (response != null) {
-      setState(() {
-        payments = response.payments.map((payment) {
-          return PaymentItemData(
-            paymentId: payment.name,
-            date: payment.posting_date,
-            invoices: payment.invoices_payed.map((inv) {
-              return PaidInvoice(
-                invoiceId: inv.invoice,
-                amount: inv.allocated_amount,
-              );
-            }).toList(),
-          );
-        }).toList();
-
-        isLoading = false;
-      });
-    } else {
-      setState(() => isLoading = false);
-    }
-  }
+  final PaymentController c = Get.find<PaymentController>();
 
   @override
   Widget build(BuildContext context) {
+    final customer = Get.find<SessionController>().customer.value!;
+
     return Scaffold(
       backgroundColor: const Color.fromRGBO(247, 255, 253, 1),
       body: Column(
         children: [
           AppHeader(
-            title: '',
-            customer: widget.customer,
-            customerCode: widget.customerCode,
-          ),
+              title: '',
+              customer: customer,
+              customerCode: customer.code),
           const SizedBox(height: 12),
           Expanded(
-            child: isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : payments.isEmpty
-                ? const Center(child: Text("No payments found"))
-                : SingleChildScrollView(
-                    child: PaymentList(
-                      globalTitle: 'Payments History',
-                      items: payments,
-                    ),
-                  ),
+            child: Obx(() {
+              if (c.isLoading.value) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (c.payments.isEmpty) {
+                return const Center(child: Text('No payments found'));
+              }
+              return SingleChildScrollView(
+                child: PaymentList(
+                  globalTitle: 'Payments History',
+                  items: c.payments,
+                ),
+              );
+            }),
           ),
         ],
       ),

@@ -1,32 +1,128 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import '../../domain/response/InvoicesResponse.dart';
+import 'package:flutter/widgets.dart';
+import 'package:get/get.dart';
+import '../../data/repositories/invoice_repository.dart';
+import '../../domain/response/sales_invoice.dart';
+import '../../utils/invoice_utils.dart';
+import 'session_controller.dart';
 
-class InvoiceController {
-  static const String baseUrl = "http://192.168.0.100:8000/api/method/";
-  static const String getInvoicesByCustomerCode = "mobile_app.api.get_invoices_by_customer_code";
+class InvoiceController extends GetxController {
+  final _repo = InvoiceRepository();
 
-  Future<InvoicesResponse?> fetchInvoices(
-    String customerCode, {
-    int limit = 20,
-    int offset = 0, 
-  }) async {
-    final url = Uri.parse(
-      "$baseUrl$getInvoicesByCustomerCode?code=$customerCode&limit=$limit&offset=$offset",
-    );
+  final salesInvoices     = <SalesInvoice>[].obs;
+  final posInvoices       = <SalesInvoice>[].obs;
+  final isLoading         = true.obs;
+  final isLoadingMore     = false.obs;
+  final hasMore           = true.obs;
+  final selectedTab       = 0.obs;
+  final searchQuery       = ''.obs;
+  final selectedStatus    = 'All'.obs;
+  final isHeaderVisible   = true.obs;
 
+  int _offset = 0;
+  static const int _limit = 20;
+  double _lastScrollOffset = 0;
+  late final ScrollController scrollController;
+
+  @override
+  void onInit() {
+    super.onInit();
+    scrollController = ScrollController()..addListener(_onScroll);
+    fetchInvoices();
+  }
+
+  @override
+  void onClose() {
+    scrollController.dispose();
+    super.onClose();
+  }
+
+  void _onScroll() {
+    final current = scrollController.offset;
+    if (current > _lastScrollOffset && current > 50) {
+      isHeaderVisible.value = false;
+    } else if (current < _lastScrollOffset) {
+      isHeaderVisible.value = true;
+    }
+    _lastScrollOffset = current;
+  }
+
+  String get _customerCode =>
+      Get.find<SessionController>().customer.value?.code ?? '';
+
+  List<InvoiceItemData> get filteredSalesItems => salesInvoices
+      .where((i) =>
+          i.name.toLowerCase().contains(searchQuery.value.toLowerCase()) &&
+          (selectedStatus.value == 'All' || i.status == selectedStatus.value))
+      .map((i) => InvoiceItemData(
+            title: i.name,
+            ttc: i.outstanding_amount,
+            price: i.grand_total,
+            postingDate: i.posting_date,
+            status: i.status,
+          ))
+      .toList();
+
+  List<InvoiceItemData> get filteredPOSItems => posInvoices
+      .where((i) =>
+          i.name.toLowerCase().contains(searchQuery.value.toLowerCase()) &&
+          (selectedStatus.value == 'All' || i.status == selectedStatus.value))
+      .map((i) => InvoiceItemData(
+            title: i.name,
+            ttc: i.outstanding_amount,
+            price: i.grand_total,
+            postingDate: i.posting_date,
+            status: i.status,
+          ))
+      .toList();
+
+  Future<void> onRefresh() async {
+    isLoading.value = true;
+    hasMore.value   = true;
+    _offset         = 0;
+    salesInvoices.clear();
+    posInvoices.clear();
+    await fetchInvoices();
+  }
+
+  Future<void> onLoadMore() async {
+    if (!isLoadingMore.value && hasMore.value) {
+      await fetchInvoices(isLoadMore: true);
+    }
+  }
+
+  Future<void> fetchInvoices({bool isLoadMore = false}) async {
     try {
-      final response = await http.get(url);
-      if (response.statusCode == 200) {
-        final jsonData = json.decode(response.body);
-        return InvoicesResponse.fromJson(jsonData);
-      } else {
-        print("Erreur serveur: ${response.statusCode}");
-        return null;
+      if (isLoadMore) {
+        isLoadingMore.value = true;
+      } else if (salesInvoices.isEmpty && posInvoices.isEmpty) {
+        isLoading.value = true;
       }
-    } catch (e) {
-      print("Erreur réseau: $e");
-      return null;
+
+      final response = await _repo.fetchInvoices(
+        _customerCode,
+        limit: _limit,
+        offset: _offset,
+      );
+
+      if (isLoadMore) {
+        salesInvoices.addAll(response.sales_invoices);
+        posInvoices.addAll(response.pos_invoices);
+      } else {
+        salesInvoices.value = response.sales_invoices;
+        posInvoices.value   = response.pos_invoices;
+      }
+
+      if (response.sales_invoices.length < _limit &&
+          response.pos_invoices.length < _limit) {
+        hasMore.value = false;
+      } else {
+        _offset += _limit;
+      }
+    } catch (_) {
+      Get.snackbar('Erreur', 'Impossible de charger les factures');
+    } finally {
+      isLoading.value     = false;
+      isLoadingMore.value = false;
     }
   }
 }

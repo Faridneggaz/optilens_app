@@ -1,7 +1,7 @@
 class StockEntryItem {
   final String id;
   final int idx;
-  final String item_code; // obligatoire pour ERPNext
+  final String item_code; 
   final String item_name;
   final String from_warehouse;
   final String to_warehouse;

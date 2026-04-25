@@ -1,4 +1,4 @@
-import 'Customer.dart';
+import 'customer.dart';
 
 class CustomerResponse {
   final Customer customer;

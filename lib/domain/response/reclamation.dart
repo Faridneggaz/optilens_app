@@ -1,7 +1,7 @@
 // lib/domain/response/reclamation.dart
 
 class CustomerComplaint {
-  final String name; // ID unique généré par Frappe
+  final String name; 
   final String client;
   final String dateReception;
   final String description;
@@ -19,7 +19,6 @@ class CustomerComplaint {
       client: json['client'] ?? "",
       dateReception: json['date_reception'] ?? "",
       description: json['desciption_reclamation'] ?? "",
-      // Nous avons retiré le champ 'documents_référence'
     );
   }
 }

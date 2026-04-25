@@ -11,7 +11,6 @@ class CartItem {
     this.quantity = 1,
   });
 
-  // Pour envoyer au format JSON attendu par ton API Python
   Map<String, dynamic> toJson() => {
     "item_code": itemCode,
     "qty": quantity,

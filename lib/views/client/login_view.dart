@@ -1,315 +1,176 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../../../application/controllers/CustomerController.dart';
-import '../../widgets/zoom_drawer_page.dart';
+import 'package:get/get.dart';
 import '../../../application/controllers/login_controller.dart';
 
-class LoginPage extends StatefulWidget {
+class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
-}
-
-class _LoginPageState extends State<LoginPage> {
-  final TextEditingController _clientCodeController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-
-  bool isLoading = false;
-  bool isUserLogin = false;
-  bool _isObscure = true;
-
-  void loginClient() async {
-    final code = _clientCodeController.text.trim();
-    if (code.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Veuillez entrer le code client")),
-      );
-      return;
-    }
-
-    setState(() => isLoading = true);
-
-    try {
-      final response = await CustomerController().fetchCustomer(code);
-      if (response != null) {
-
-        // ✅ FIX PRINCIPAL : Sauvegarde le code client dans SharedPreferences
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('custom_customer_code', code);
-        print("✅ custom_customer_code sauvegardé: $code");
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) =>
-                ZoomDrawerPage(customer: response.customer, isUser: false),
-          ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Code client invalide"),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      setState(() => isLoading = false);
-    }
-  }
-
-  void loginUser() async {
-    final email = _emailController.text.trim();
-    final password = _passwordController.text.trim();
-
-    if (email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Email et mot de passe requis")),
-      );
-      return;
-    }
-
-    print(" Tentative de login avec email: $email");
-
-    setState(() => isLoading = true);
-
-    try {
-      final response = await LoginController().login(
-        email: email,
-        password: password,
-      );
-
-      setState(() => isLoading = false);
-
-      if (response != null) {
-        print("🟢 Login réussi - Username: ${response.user.name}");
-        print("🟢 Token reçu: ${response.user.sid}");
-
-        if (response.user.sid == null || response.user.sid!.isEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Erreur: Token manquant dans la réponse du serveur."),
-              backgroundColor: Colors.red,
-              duration: Duration(seconds: 5),
-            ),
-          );
-          return;
-        }
-
-      
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('sid', response.user.sid!);
-        if (response.user.email != null) {
-          await prefs.setString('email', response.user.email!);
-        }
-        if (response.user.name != null) {
-          await prefs.setString('name', response.user.name!);
-        }
-
-        print("✅ Navigation vers ZoomDrawerPage");
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => ZoomDrawerPage(
-              isUser: true,
-              userName: response.user.name,
-              token: response.user.sid,
-            ),
-          ),
-        );
-      } else {
-        print("Login échoué - response est null");
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Identifiants invalides"),
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 4),
-          ),
-        );
-      }
-    } catch (e) {
-      print("🔴 Exception dans loginUser: $e");
-      setState(() => isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Erreur de connexion: $e"),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final c = Get.find<LoginController>();
+
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      body: Stack(
-        children: [
-          Container(
-            height: double.infinity,
-            width: double.infinity,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFFE0F2F1), Color(0xFF80CBC4)],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-            ),
-            child: SafeArea(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 60),
+      body: Obx(() => Stack(
+            children: [
+              // ── Background gradient ───────────────────────────────────────
+              Container(
+                height: double.infinity,
+                width: double.infinity,
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFFE0F2F1), Color(0xFF80CBC4)],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                ),
+                child: SafeArea(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 60),
 
-                    Image.asset(
-                      'assets/images/optilens_transparent.png',
-                      width: 220,
-                    ),
+                        Image.asset('assets/images/optilens_transparent.png',
+                            width: 220),
 
-                    const SizedBox(height: 30),
+                        const SizedBox(height: 30),
 
-                    Text(
-                      isUserLogin ? 'User Login' : 'Welcome Back',
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                        Text(
+                          c.isUserLogin.value ? 'User Login' : 'Welcome Back',
+                          style: const TextStyle(
+                              fontSize: 24, fontWeight: FontWeight.bold),
+                        ),
 
-                    const SizedBox(height: 8),
+                        const SizedBox(height: 8),
 
-                    Text(
-                      isUserLogin
-                          ? 'Login with your email and password.'
-                          : 'Please enter your Client Code to continue.',
-                      textAlign: TextAlign.center,
-                    ),
+                        Text(
+                          c.isUserLogin.value
+                              ? 'Login with your email and password.'
+                              : 'Please enter your Client Code to continue.',
+                          textAlign: TextAlign.center,
+                        ),
 
-                    const SizedBox(height: 30),
+                        const SizedBox(height: 30),
 
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 8,
-                            offset: Offset(0, 4),
+                        // ── Form card ───────────────────────────────────────
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: const [
+                              BoxShadow(
+                                  color: Colors.black12,
+                                  blurRadius: 8,
+                                  offset: Offset(0, 4))
+                            ],
                           ),
-                        ],
-                      ),
-                      child: Column(
-                        children: [
-                          if (!isUserLogin)
-                            TextField(
-                              controller: _clientCodeController,
-                              decoration: InputDecoration(
-                                hintText: 'Client Code',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                            ),
-                          if (isUserLogin) ...[
-                            TextField(
-                              controller: _emailController,
-                              keyboardType: TextInputType.emailAddress,
-                              decoration: InputDecoration(
-                                hintText: 'Email',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            TextField(
-                              controller: _passwordController,
-                              obscureText: _isObscure,
-                              decoration: InputDecoration(
-                                hintText: 'Password',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    _isObscure
-                                        ? Icons.visibility_off
-                                        : Icons.visibility,
-                                    color: Colors.grey,
+                          child: Column(
+                            children: [
+                              if (!c.isUserLogin.value)
+                                TextField(
+                                  controller: c.clientCodeController,
+                                  decoration: InputDecoration(
+                                    hintText: 'Client Code',
+                                    border: OutlineInputBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(12)),
                                   ),
-                                  onPressed: () {
-                                    setState(() => _isObscure = !_isObscure);
-                                  },
                                 ),
-                              ),
-                            ),
-                          ],
-                          const SizedBox(height: 20),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: isLoading
-                                  ? null
-                                  : isUserLogin
-                                      ? loginUser
-                                      : loginClient,
-                              style: ElevatedButton.styleFrom(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
+                              if (c.isUserLogin.value) ...[
+                                TextField(
+                                  controller: c.emailController,
+                                  keyboardType: TextInputType.emailAddress,
+                                  decoration: InputDecoration(
+                                    hintText: 'Email',
+                                    border: OutlineInputBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(12)),
+                                  ),
                                 ),
-                                backgroundColor: Colors.teal,
-                                foregroundColor: Colors.white,
-                              ),
-                              child: isLoading
-                                  ? const SizedBox(
-                                      height: 20,
-                                      width: 20,
-                                      child: CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 2,
+                                const SizedBox(height: 16),
+                                TextField(
+                                  controller: c.passwordController,
+                                  obscureText: c.isObscure.value,
+                                  decoration: InputDecoration(
+                                    hintText: 'Password',
+                                    border: OutlineInputBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(12)),
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
+                                        c.isObscure.value
+                                            ? Icons.visibility_off
+                                            : Icons.visibility,
+                                        color: Colors.grey,
                                       ),
-                                    )
-                                  : const Text('LOGIN'),
-                            ),
+                                      onPressed: c.toggleObscure,
+                                    ),
+                                  ),
+                                ),
+                              ],
+
+                              const SizedBox(height: 20),
+
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                  onPressed: c.isLoading.value
+                                      ? null
+                                      : c.isUserLogin.value
+                                          ? c.loginUser
+                                          : c.loginClient,
+                                  style: ElevatedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 16),
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(12)),
+                                    backgroundColor: Colors.teal,
+                                    foregroundColor: Colors.white,
+                                  ),
+                                  child: c.isLoading.value
+                                      ? const SizedBox(
+                                          height: 20,
+                                          width: 20,
+                                          child: CircularProgressIndicator(
+                                              color: Colors.white,
+                                              strokeWidth: 2))
+                                      : const Text('LOGIN'),
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        GestureDetector(
+                          onTap: c.toggleLoginMode,
+                          child: Text(
+                            c.isUserLogin.value
+                                ? 'Log-in as client'
+                                : 'Log-in as user',
+                            style: const TextStyle(fontWeight: FontWeight.w800),
+                          ),
+                        ),
+
+                        const SizedBox(height: 40),
+                      ],
                     ),
-
-                    const SizedBox(height: 16),
-
-                    GestureDetector(
-                      onTap: () {
-                        setState(() => isUserLogin = !isUserLogin);
-                      },
-                      child: Text(
-                        isUserLogin ? 'Log-in as client' : 'Log-in as user',
-                        style: const TextStyle(fontWeight: FontWeight.w800),
-                      ),
-                    ),
-
-                    const SizedBox(height: 40),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ),
 
-          if (isLoading)
-            Container(
-              color: Colors.black26,
-              child: const Center(child: CircularProgressIndicator()),
-            ),
-        ],
-      ),
+              // ── Full-screen loading overlay ────────────────────────────────
+              if (c.isLoading.value)
+                Container(
+                  color: Colors.black26,
+                  child: const Center(child: CircularProgressIndicator()),
+                ),
+            ],
+          )),
     );
   }
 }

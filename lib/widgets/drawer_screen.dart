@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_zoom_drawer/flutter_zoom_drawer.dart';
+import 'package:get/get.dart';
+import '../application/controllers/session_controller.dart';
 
+/// The slide-out drawer. Removed onLogout callback — uses SessionController
+/// directly. Removed onSelectPage callback — caller passes it in (ZoomDrawerPage).
 class DrawerScreen extends StatelessWidget {
   final Function(int) onSelectPage;
-  final VoidCallback onLogout; // Nécessaire pour la déconnexion
   final bool isUser;
 
   const DrawerScreen({
     super.key,
     required this.onSelectPage,
     required this.isUser,
-    required this.onLogout,
   });
 
   @override
@@ -20,52 +22,44 @@ class DrawerScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // --- LOGO ---
+            // Logo
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 15),
-              child: Image.asset('assets/images/optilensss.png', height: 100),
-            ),
-            
-            // --- MENU ITEMS ---
-            Column(
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.home, color: Color(0xFF3BADA2)),
-                  title: const Text("Home"),
-                  onTap: () {
-                    onSelectPage(0);
-                    ZoomDrawer.of(context)?.close();
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.notifications, color: Color(0xFF3BADA2)),
-                  title: const Text("Notifications"),
-                  onTap: () {
-                    onSelectPage(1);
-                    ZoomDrawer.of(context)?.close();
-                  },
-                ),
-                if (isUser)
-                  ListTile(
-                    leading: const Icon(Icons.inventory_2, color: Color(0xFF3BADA2)),
-                    title: const Text("Stock"),
-                    onTap: () {
-                      onSelectPage(2);
-                      ZoomDrawer.of(context)?.close();
-                    },
-                  ),
-              ],
+              child:
+                  Image.asset('assets/images/optilensss.png', height: 100),
             ),
 
-            const Spacer(), // Pousse le contenu suivant tout en bas
+            // Menu items
+            Column(children: [
+              ListTile(
+                leading: const Icon(Icons.home, color: Color(0xFF3BADA2)),
+                title: const Text('Home'),
+                onTap: () => onSelectPage(0),
+              ),
+              ListTile(
+                leading: const Icon(Icons.notifications,
+                    color: Color(0xFF3BADA2)),
+                title: const Text('Notifications'),
+                onTap: () => onSelectPage(1),
+              ),
+              if (isUser)
+                ListTile(
+                  leading: const Icon(Icons.inventory_2,
+                      color: Color(0xFF3BADA2)),
+                  title: const Text('Stock'),
+                  onTap: () => onSelectPage(2),
+                ),
+            ]),
 
-            // --- BOUTON LOGOUT (Même design que Profile) ---
+            const Spacer(),
+
+            // Logout button
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: InkWell(
                 onTap: () {
                   ZoomDrawer.of(context)?.close();
-                  onLogout();
+                  Get.find<SessionController>().logout();
                 },
                 child: Container(
                   width: double.infinity,
@@ -77,15 +71,12 @@ class DrawerScreen extends StatelessWidget {
                   alignment: Alignment.center,
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
                     children: const [
-                      Icon(
-                        Icons.logout,
-                        color: Color.fromARGB(255, 223, 54, 38),
-                      ),
+                      Icon(Icons.logout,
+                          color: Color.fromARGB(255, 223, 54, 38)),
                       SizedBox(width: 10),
                       Text(
-                        "Log Out",
+                        'Log Out',
                         style: TextStyle(
                           color: Color.fromARGB(255, 223, 54, 38),
                           fontWeight: FontWeight.w700,
@@ -100,28 +91,26 @@ class DrawerScreen extends StatelessWidget {
 
             const SizedBox(height: 25),
 
-            // --- FOOTER POWERED BY (Même design que Profile) ---
+            // Footer
             Text.rich(
               const TextSpan(
-                text: "Powered by ",
+                text: 'Powered by ',
                 style: TextStyle(
-                  color: Colors.grey,
-                  fontSize: 16, // Légèrement réduit pour s'adapter au drawer
-                  fontWeight: FontWeight.w600,
-                ),
+                    color: Colors.grey,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600),
                 children: [
                   TextSpan(
-                    text: "Jethings",
+                    text: 'Jethings',
                     style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black54,
-                    ),
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black54),
                   ),
                 ],
               ),
             ),
-            
-            const SizedBox(height: 30), // Espace en bas
+
+            const SizedBox(height: 30),
           ],
         ),
       ),

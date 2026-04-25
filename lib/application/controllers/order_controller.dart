@@ -1,73 +1,98 @@
 import 'dart:convert';
+import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+import '../../data/repositories/order_repository.dart';
+import '../../utils/api_config.dart';
 
-class OrderController {
-  // Utilisation de l'IP .107 comme dans votre fichier actuel
-  final String baseUrl = "http://192.168.0.100:8000/api/method/mobile_app.api";
+class OrderController extends GetxController {
+  final _repo = OrderRepository();
 
-  Future<bool> submitOrder(List items) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final code = prefs.getString('custom_customer_code');
+  // Cart state (used by OrderPage)
+  final cart         = <Map<String, dynamic>>[].obs;
+  final isSubmitting = false.obs;
 
-      if (code == null || code.isEmpty) return false;
+  // Order history state (used by OrderHistoryPage)
+  final orders    = [].obs;
+  final isLoading = false.obs;
 
-      final response = await http.post(
-        Uri.parse("$baseUrl.create_sales_order"),
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-        },
-        body: jsonEncode({"customer_code": code, "items": items}),
-      );
+  double get cartTotal =>
+      cart.fold(0, (sum, item) => sum + (item['rate'] * item['qty']));
 
-      if (response.statusCode != 200) return false;
+  // ── Cart management ──────────────────────────────────────────────────────
 
-      final decoded = json.decode(response.body);
-      final msg = decoded['message'];
-      if (msg == null) return false;
-
-      return msg['status'] == 'success' || msg['order_id'] != null;
-    } catch (e) {
-      return false;
+  void addToCart(dynamic item) {
+    final idx = cart.indexWhere((e) => e['item_code'] == item['item_code']);
+    if (idx != -1) {
+      cart[idx]['qty']++;
+      cart.refresh();
+    } else {
+      cart.add({
+        'item_code': item['item_code'],
+        'item_name': item['item_name'] ?? item['item_code'],
+        'qty':       1,
+        'rate':      (item['standard_rate'] ?? 0.0).toDouble(),
+      });
     }
   }
 
-  Future<List> fetchOrders() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final code = prefs.getString('custom_customer_code');
-      if (code == null || code.isEmpty) return [];
-
-      final response = await http.get(
-        Uri.parse("$baseUrl.get_customer_orders?customer_code=$code"),
-      );
-
-      if (response.statusCode != 200) return [];
-      final data = json.decode(response.body);
-      return data['message']?['orders'] ?? [];
-    } catch (e) {
-      return [];
+  void updateQty(int index, int delta) {
+    if (delta < 0 && cart[index]['qty'] == 1) {
+      cart.removeAt(index);
+    } else {
+      cart[index]['qty'] += delta;
+      cart.refresh();
     }
   }
 
-  // --- NOUVELLE FONCTION POUR LES DÉTAILS ---
-  Future<List?> getOrderItems(String orderId) async {
-    try {
-      final response = await http.get(
-        Uri.parse("$baseUrl.get_order_details?order_id=$orderId"),
-      );
+  // ── Item search (no token needed for this endpoint) ─────────────────────
 
+  Future<List<dynamic>> searchItems(String query) async {
+    if (query.length < 2) return [];
+    try {
+      final url =
+          '${ApiConfig.apiMethodPath}mobile_app.api.search_items?search_text=$query';
+      final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        // On récupère les items dans le message de succès
-        if (data['message'] != null && data['message']['status'] == 'success') {
-          return data['message']['items'];
-        }
+        return data['message'] ?? [];
       }
-      return null;
-    } catch (e) {
+    } catch (_) {}
+    return [];
+  }
+
+  // ── Order submission ─────────────────────────────────────────────────────
+
+  Future<bool> confirmOrder() async {
+    if (cart.isEmpty) return false;
+    isSubmitting.value = true;
+    try {
+      final result = await _repo.submitOrder(cart.toList());
+      if (result) cart.clear();
+      return result;
+    } catch (_) {
+      return false;
+    } finally {
+      isSubmitting.value = false;
+    }
+  }
+
+  // ── Order history ────────────────────────────────────────────────────────
+
+  Future<void> loadOrders() async {
+    isLoading.value = true;
+    try {
+      orders.value = await _repo.fetchOrders();
+    } catch (_) {
+      orders.value = [];
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<List?> getOrderItems(String orderId) async {
+    try {
+      return await _repo.getOrderItems(orderId);
+    } catch (_) {
       return null;
     }
   }

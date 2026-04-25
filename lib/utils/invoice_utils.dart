@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../domain/response/sales_invoice.dart';
 import 'status_color.dart';
 
 class InvoiceItemData {
@@ -51,7 +50,7 @@ class InvoiceList extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // --- MODIFICATION 1 : Expanded ajouté ici ---
+
                     Expanded( 
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -79,10 +78,9 @@ class InvoiceList extends StatelessWidget {
                       ),
                     ),
                     
-                    // Petit espace de sécurité entre les deux colonnes
                     const SizedBox(width: 10), 
 
-                    // Colonne de Droite (Prix, Debt, Status)
+
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [

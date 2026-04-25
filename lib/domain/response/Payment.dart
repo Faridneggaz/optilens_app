@@ -1,4 +1,4 @@
-import 'PaymentInvoice.dart';
+import 'payment_invoice.dart';
 
 class Payment {
   final String name;

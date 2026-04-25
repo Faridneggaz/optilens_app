@@ -1,10 +1,13 @@
+import 'package:flutter/material.dart';
+import '../../utils/api_config.dart';
+
 class Announcement {
   final String id;
   final String title;
   final String subtitle;
   final String type;
   final String priority;
-  final String color;
+  final String color; 
   final String postedTime;
   final String? image;
 
@@ -14,14 +17,25 @@ class Announcement {
     required this.postedTime, this.image,
   });
 
-  // METS TON IP ICI (Celle de ton serveur ERPNext)
-  static const String baseUrl = "http://192.168.0.100:8000";
+
+  static const String baseUrl = ApiConfig.baseUrl;
+
+  Color get colorValue {
+    try {
+      String hexColor = color.replaceAll("#", "");
+      if (hexColor.length == 6) hexColor = "FF$hexColor"; 
+      return Color(int.parse("0x$hexColor"));
+    } catch (e) {
+      return const Color(0xFF00A89C);
+    }
+  }
 
   factory Announcement.fromJson(Map<String, dynamic> json) {
-    String? rawImage = json['image'] ?? json['banner_image']; // Gère les deux noms
+    String? rawImage = json['image'] ?? json['banner_image'];
     
     String? fullImageUrl;
     if (rawImage != null && rawImage.isNotEmpty) {
+
       fullImageUrl = rawImage.startsWith('http') ? rawImage : "$baseUrl$rawImage";
     }
 

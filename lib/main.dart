@@ -1,14 +1,23 @@
 import 'package:flutter/material.dart';
-import 'widgets/bottom_navbar.dart';
-import 'views/client/Dashboard_view.dart';
-import 'views/client/Invoice_view.dart';
-import 'views/client/Payment_view.dart';
-import 'views/client/Profil_view.dart';
+import 'package:get/get.dart';
+import 'app/routes/app_routes.dart';
+import 'app/bindings/login_binding.dart';
+import 'app/bindings/app_binding.dart';
 import 'views/client/login_view.dart';
-import 'domain/response/Customer.dart';
-import 'widgets/logout_dialogue.dart';
+import 'views/client/invoice_detail_page.dart';
+import 'views/client/order_history_page.dart';
+import 'views/client/order_page.dart';
+import 'views/client/complaint_form_view.dart';
+import 'views/client/announcement_detail_view.dart';
+import 'views/user/stock_entry.dart';
+import 'widgets/zoom_drawer_page.dart';
+import 'application/controllers/session_controller.dart';
+import 'application/controllers/invoice_detail_controller.dart';
+import 'application/controllers/stock_entry_details_controller.dart';
 
 void main() {
+  // SessionController is permanent so it survives full route clears (logout)
+  Get.put(SessionController(), permanent: true);
   runApp(const MyApp());
 }
 
@@ -17,94 +26,54 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter App',
-      theme: ThemeData(primarySwatch: Colors.teal),
-      home: const LoginPage(),
+    return GetMaterialApp(
+      title: 'Optilens',
       debugShowCheckedModeBanner: false,
-    );
-  }
-}
-
-class MainPage extends StatefulWidget {
-  final Customer customer;
-  final int selectedIndex;
-
-  const MainPage({super.key, required this.customer, this.selectedIndex = 0});
-
-  @override
-  State<MainPage> createState() => MainPageState();
-}
-
-class MainPageState extends State<MainPage> {
-  late int _selectedIndex;
-  late final List<Widget> _pages;
-  final List<int> _navigationHistory = [];
-
-  void setPage(int index) {
-    if (index < 0 || index >= _pages.length) return;
-
-    setState(() {
-      _selectedIndex = index;
-      _navigationHistory.add(index);
-    });
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedIndex = widget.selectedIndex;
-    _navigationHistory.add(_selectedIndex);
-
-    _pages = [
-      DashboardPage(customer: widget.customer),
-      InvoicePage(
-        customerCode: widget.customer.code,
-        customer: widget.customer,
-      ),
-      PaymentPage(
-        customer: widget.customer,
-        customerCode: widget.customer.code,
-      ),
-      ProfilePage(
-        customer: widget.customer,
-        customerCode: widget.customer.code,
-       
-      ),
-    ];
-  }
-
-  void _onItemTapped(int index) {
-    if (_selectedIndex == index) return;
-
-    setState(() {
-      _selectedIndex = index;
-      _navigationHistory.add(index);
-    });
-  }
-
-  Future<bool> _onWillPop() async {
-    if (_navigationHistory.length > 1) {
-      setState(() {
-        _navigationHistory.removeLast();
-        _selectedIndex = _navigationHistory.last;
-      });
-      return false;
-    }
-    return true;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: _onWillPop,
-      child: Scaffold(
-        body: _pages[_selectedIndex],
-        bottomNavigationBar: BottomNavBar(
-          currentIndex: _selectedIndex,
-          onTap: _onItemTapped,
+      theme: ThemeData(primarySwatch: Colors.teal),
+      initialRoute: AppRoutes.login,
+      getPages: [
+        // ── Auth ─────────────────────────────────────────────────────────────
+        GetPage(
+          name:    AppRoutes.login,
+          page:    () => const LoginPage(),
+          binding: LoginBinding(),
         ),
-      ),
+
+        // ── Main shell (client + user) ────────────────────────────────────────
+        GetPage(
+          name:    AppRoutes.main,
+          page:    () => const ZoomDrawerPage(),
+          binding: AppBinding(),
+        ),
+
+        // ── Per-push detail pages (fresh controller each time via GetPage binding) ─
+        GetPage(
+          name:    AppRoutes.invoiceDetail,
+          page:    () => const InvoiceDetailPage(),
+          binding: BindingsBuilder(() => Get.put(InvoiceDetailController())),
+        ),
+        GetPage(
+          name: AppRoutes.orderHistory,
+          page: () => const OrderHistoryPage(),
+        ),
+        GetPage(
+          name: AppRoutes.order,
+          page: () => const OrderPage(),
+        ),
+        GetPage(
+          name: AppRoutes.complaint,
+          page: () => const ComplaintFormPage(),
+        ),
+        GetPage(
+          name: AppRoutes.announcementDetail,
+          page: () => const AnnouncementDetailPage(),
+        ),
+        GetPage(
+          name:    AppRoutes.stockEntry,
+          page:    () => const StockEntryPage(),
+          binding: BindingsBuilder(() => Get.put(StockEntryDetailsController())),
+        ),
+      ],
     );
   }
 }

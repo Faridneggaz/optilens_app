@@ -76,12 +76,12 @@ class LoginController extends GetxController {
 
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('sid',   response.user.sid);
-      await prefs.setString('email', response.user.email);
-      await prefs.setString('name',  response.user.name);
+      await prefs.setString('email', response.user.email ?? '');
+      await prefs.setString('name',  response.user.name ?? '');
 
       final session = Get.find<SessionController>();
       session.token.value    = response.user.sid;
-      session.userName.value = response.user.name;
+      session.userName.value = response.user.name ?? 'Utilisateur';
       session.isUser.value   = true;
 
       Get.offAllNamed(AppRoutes.main);

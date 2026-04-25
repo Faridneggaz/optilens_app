@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../../application/controllers/invoice_controller.dart';
 
-class InvoiceFilterBar extends StatefulWidget {
+class InvoiceFilterBar extends StatelessWidget {
   final void Function(String) onSearchChanged;
   final void Function(String?) onStatusChanged;
   final String selectedStatus;
@@ -13,26 +15,9 @@ class InvoiceFilterBar extends StatefulWidget {
   });
 
   @override
-  State<InvoiceFilterBar> createState() => _InvoiceFilterBarState();
-}
-
-class _InvoiceFilterBarState extends State<InvoiceFilterBar> {
-  late TextEditingController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final c = Get.find<InvoiceController>();
+
     return Container(
       color: const Color.fromRGBO(254, 255, 255, 1),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -52,8 +37,8 @@ class _InvoiceFilterBarState extends State<InvoiceFilterBar> {
                 ],
               ),
               child: TextField(
-                controller: _controller,
-                onChanged: widget.onSearchChanged,
+                controller: c.searchController,
+                onChanged: onSearchChanged,
                 decoration: const InputDecoration(
                   hintText: 'Search by number',
                   prefixIcon: Icon(Icons.search),
@@ -78,14 +63,14 @@ class _InvoiceFilterBarState extends State<InvoiceFilterBar> {
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
                 icon: const Icon(Icons.filter_list),
-                value: widget.selectedStatus,
+                value: selectedStatus,
                 items: ['All', 'Paid', 'Overdue']
                     .map(
                       (status) =>
                           DropdownMenuItem(value: status, child: Text(status)),
                     )
                     .toList(),
-                onChanged: widget.onStatusChanged,
+                onChanged: onStatusChanged,
               ),
             ),
           ),

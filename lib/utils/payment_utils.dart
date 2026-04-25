@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../application/controllers/payment_controller.dart';
 
 class PaidInvoice {
   final String invoiceId;
@@ -20,7 +22,7 @@ class PaymentItemData {
   double get totalAmount => invoices.fold(0, (sum, inv) => sum + inv.amount);
 }
 
-class PaymentList extends StatefulWidget {
+class PaymentList extends StatelessWidget {
   final String globalTitle;
   final List<PaymentItemData> items;
 
@@ -31,37 +33,28 @@ class PaymentList extends StatefulWidget {
   });
 
   @override
-  State<PaymentList> createState() => _PaymentListState();
-}
-
-class _PaymentListState extends State<PaymentList> {
-  int? expandedIndex;
-
-  void toggleExpand(int index) {
-    setState(() {
-      expandedIndex = expandedIndex == index ? null : index;
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final controller = Get.find<PaymentController>();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (widget.globalTitle.isNotEmpty)
+        if (globalTitle.isNotEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Text(
-              widget.globalTitle,
+              globalTitle,
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
           ),
         
-        ...List.generate(widget.items.length, (index) {
-          final item = widget.items[index];
-          final isExpanded = expandedIndex == index;
+        ...List.generate(items.length, (index) {
+          final item = items[index];
 
-          return Card(
+          return Obx(() {
+            final isExpanded = controller.expandedIndex.value == index;
+
+            return Card(
             color: const Color.fromRGBO(254, 255, 255, 1),
             elevation: 2,
             shadowColor: Colors.black.withOpacity(0.1),
@@ -76,7 +69,7 @@ class _PaymentListState extends State<PaymentList> {
               children: [
 
                 InkWell( 
-                  onTap: () => toggleExpand(index),
+                  onTap: () => controller.toggleExpand(index),
                   borderRadius: BorderRadius.vertical(
                     top: const Radius.circular(12),
                     bottom: Radius.circular(isExpanded ? 0 : 12),
@@ -147,6 +140,7 @@ class _PaymentListState extends State<PaymentList> {
               ],
             ),
           );
+        });
         }),
       ],
     );

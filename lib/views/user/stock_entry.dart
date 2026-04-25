@@ -10,8 +10,8 @@ class StockEntryPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Controller is registered by UserDashboardController.navigateToStockEntry
-    // via BindingsBuilder before this page is pushed.
-    final c = Get.find<StockEntryDetailsController>();
+    // via BindingsBuilder before this page is pushed. Fallback to Get.put.
+    final c = Get.put(StockEntryDetailsController());
 
     return Obx(() {
       if (c.isLoading.value) {

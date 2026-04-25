@@ -22,6 +22,7 @@ class InvoiceController extends GetxController {
   static const int _limit = 20;
   double _lastScrollOffset = 0;
   late final ScrollController scrollController;
+  final searchController = TextEditingController();
 
   @override
   void onInit() {
@@ -32,6 +33,7 @@ class InvoiceController extends GetxController {
 
   @override
   void onClose() {
+    searchController.dispose();
     scrollController.dispose();
     super.onClose();
   }

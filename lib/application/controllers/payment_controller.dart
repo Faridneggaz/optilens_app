@@ -8,6 +8,15 @@ class PaymentController extends GetxController {
 
   final payments  = <PaymentItemData>[].obs;
   final isLoading = true.obs;
+  final expandedIndex = Rxn<int>();
+
+  void toggleExpand(int index) {
+    if (expandedIndex.value == index) {
+      expandedIndex.value = null;
+    } else {
+      expandedIndex.value = index;
+    }
+  }
 
   @override
   void onInit() {

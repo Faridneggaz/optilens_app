@@ -20,9 +20,11 @@ class StockEntryDetailsController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    final args = Get.arguments as Map<String, dynamic>?;
-    _name  = args?['name']  as String? ?? '';
-    _token = args?['token'] as String? ?? '';
+    final data = Get.arguments;
+    if (data != null && data is Map<String, dynamic>) {
+      _name  = data['name']  as String? ?? '';
+      _token = data['token'] as String? ?? '';
+    }
     fetchDetails();
   }
 

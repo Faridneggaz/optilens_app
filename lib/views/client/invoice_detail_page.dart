@@ -7,7 +7,7 @@ class InvoiceDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = Get.find<InvoiceDetailController>();
+    final c = Get.put(InvoiceDetailController());
 
     return Scaffold(
       backgroundColor: Colors.white,

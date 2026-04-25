@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/repositories/stock_entry_repository.dart';
@@ -20,6 +21,14 @@ class UserDashboardController extends GetxController {
   int _offset = 0;
   static const int _limit = 20;
   String _actualToken = '';
+
+  final searchController = TextEditingController();
+
+  @override
+  void onClose() {
+    searchController.dispose();
+    super.onClose();
+  }
 
   @override
   void onInit() {

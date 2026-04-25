@@ -26,8 +26,10 @@ class InvoiceDetailController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    final args   = Get.arguments as Map<String, dynamic>?;
-    _invoiceName = args?['invoiceName'] as String? ?? '';
+    final data = Get.arguments;
+    if (data != null && data is Map<String, dynamic>) {
+      _invoiceName = data['invoiceName'] as String? ?? '';
+    }
     loadInvoiceDetails();
     initBluetooth();
   }

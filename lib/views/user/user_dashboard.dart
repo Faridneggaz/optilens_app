@@ -251,7 +251,7 @@ class UserDashboardPage extends StatelessWidget {
 
 // ── StockFilterBar (kept co-located with UserDashboardPage) ──────────────────
 
-class StockFilterBar extends StatefulWidget {
+class StockFilterBar extends StatelessWidget {
   final void Function(String)  onSearchChanged;
   final void Function(String?) onStatusChanged;
   final String selectedStatus;
@@ -264,26 +264,9 @@ class StockFilterBar extends StatefulWidget {
   });
 
   @override
-  State<StockFilterBar> createState() => _StockFilterBarState();
-}
-
-class _StockFilterBarState extends State<StockFilterBar> {
-  late final TextEditingController _ctrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = TextEditingController();
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final c = Get.find<UserDashboardController>();
+
     return Container(
       color: const Color.fromARGB(255, 247, 255, 254),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -296,8 +279,8 @@ class _StockFilterBarState extends State<StockFilterBar> {
               border: Border.all(color: Colors.teal.shade100),
             ),
             child: TextField(
-              controller: _ctrl,
-              onChanged: widget.onSearchChanged,
+              controller: c.searchController,
+              onChanged: onSearchChanged,
               decoration: const InputDecoration(
                 hintText: 'Search MAT-STE...',
                 prefixIcon: Icon(Icons.search, color: Colors.teal),
@@ -319,11 +302,11 @@ class _StockFilterBarState extends State<StockFilterBar> {
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               icon:  const Icon(Icons.filter_list, color: Colors.teal),
-              value: widget.selectedStatus,
+              value: selectedStatus,
               items: ['All', 'Approved', 'Pending', 'Draft']
                   .map((s) => DropdownMenuItem(value: s, child: Text(s)))
                   .toList(),
-              onChanged: widget.onStatusChanged,
+              onChanged: onStatusChanged,
             ),
           ),
         ),

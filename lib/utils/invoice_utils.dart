@@ -56,7 +56,7 @@ class InvoiceList extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            invoiceType == "pos" ? "${item.title}" : item.title,
+                            invoiceType == "pos" ? item.title : item.title,
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -101,7 +101,7 @@ class InvoiceList extends StatelessWidget {
                               horizontal: 8,
                             ),
                             decoration: BoxDecoration(
-                              color: getStatusColor(item.status).withOpacity(0.1),
+                              color: getStatusColor(item.status).withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
@@ -129,7 +129,7 @@ class InvoiceList extends StatelessWidget {
                 ),
               ),
             );
-          }).toList(),
+          }),
         ],
       ),
     );

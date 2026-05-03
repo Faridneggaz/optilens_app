@@ -1,9 +1,9 @@
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/repositories/stock_entry_repository.dart';
 import '../../domain/response/stock_entry.dart';
 import '../../app/routes/app_routes.dart';
+import '../../core/services/session_service.dart';
 import 'session_controller.dart';
 
 class UserDashboardController extends GetxController {
@@ -40,8 +40,7 @@ class UserDashboardController extends GetxController {
     if (_session.token.value.isNotEmpty) {
       _actualToken = _session.token.value;
     } else {
-      final prefs = await SharedPreferences.getInstance();
-      _actualToken = prefs.getString('token') ?? '';
+      _actualToken = Get.find<SessionService>().authToken;
     }
     fetchStockEntries();
   }

@@ -12,11 +12,16 @@ class LoginRepository {
     required String email,
     required String password,
   }) async {
-    final url = Uri.parse('$_baseUrl$_loginEndpoint').replace(
-      queryParameters: {'email': email, 'password': password},
-    );
+    final url = Uri.parse('$_baseUrl$_loginEndpoint');
     try {
-      final response = await http.get(url);
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: json.encode({'email': email, 'password': password}),
+      );
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
         final message = jsonData['message'];

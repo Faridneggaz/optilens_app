@@ -1,5 +1,3 @@
-// lib/domain/response/reclamation.dart
-
 class CustomerComplaint {
   final String name; 
   final String client;

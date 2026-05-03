@@ -1,16 +1,16 @@
 class StockEntryDetails {
   final String name;
-  final String posting_date;
-  final String from_warehouse;
-  final String to_warehouse;
+  final String postingDate;
+  final String fromWarehouse;
+  final String toWarehouse;
   final String company;
   String status;
 
   StockEntryDetails({
     required this.name,
-    required this.posting_date,
-    required this.from_warehouse,
-    required this.to_warehouse,
+    required this.postingDate,
+    required this.fromWarehouse,
+    required this.toWarehouse,
     required this.company,
     required this.status,
   });
@@ -18,9 +18,9 @@ class StockEntryDetails {
   static StockEntryDetails fromJson(Map<String, dynamic> json) {
     return StockEntryDetails(
       name: json["name"],
-      posting_date: json["postingDate"],
-      from_warehouse: json["fromWarehouse"] ?? "",
-      to_warehouse: json["toWarehouse"] ?? "",
+      postingDate: json["postingDate"],
+      fromWarehouse: json["fromWarehouse"] ?? "",
+      toWarehouse: json["toWarehouse"] ?? "",
       company: json["company"],
       status: json["status"],
     );

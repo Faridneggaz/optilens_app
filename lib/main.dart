@@ -14,10 +14,19 @@ import 'widgets/zoom_drawer_page.dart';
 import 'application/controllers/session_controller.dart';
 import 'application/controllers/invoice_detail_controller.dart';
 import 'application/controllers/stock_entry_details_controller.dart';
+import 'application/controllers/order_controller.dart';
 
-void main() {
-  // SessionController is permanent so it survives full route clears (logout)
+import 'core/services/session_service.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize async persistent storage Service explicitly before runApp
+  await Get.putAsync(() => SessionService().init());
+  
+  // Keep the in-memory reactive Controller permanent
   Get.put(SessionController(), permanent: true);
+  
   runApp(const MyApp());
 }
 
@@ -26,11 +35,14 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final sessionService = Get.find<SessionService>();
+    final initial = sessionService.isSessionValid() ? AppRoutes.main : AppRoutes.login;
+
     return GetMaterialApp(
       title: 'Optilens',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(primarySwatch: Colors.teal),
-      initialRoute: AppRoutes.login,
+      initialRoute: initial,
       getPages: [
         // ── Auth ─────────────────────────────────────────────────────────────
         GetPage(
@@ -50,15 +62,23 @@ class MyApp extends StatelessWidget {
         GetPage(
           name:    AppRoutes.invoiceDetail,
           page:    () => const InvoiceDetailPage(),
-          binding: BindingsBuilder(() => Get.put(InvoiceDetailController())),
+          binding: BindingsBuilder(() { Get.put(InvoiceDetailController()); }),
+        ),
+        // Binding fires once per push — loads orders / clears cart
+        // without putting any side-effect inside build().
+        GetPage(
+          name:    AppRoutes.orderHistory,
+          page:    () => const OrderHistoryPage(),
+          binding: BindingsBuilder(() {
+            Get.find<OrderController>().loadOrders();
+          }),
         ),
         GetPage(
-          name: AppRoutes.orderHistory,
-          page: () => const OrderHistoryPage(),
-        ),
-        GetPage(
-          name: AppRoutes.order,
-          page: () => const OrderPage(),
+          name:    AppRoutes.order,
+          page:    () => const OrderPage(),
+          binding: BindingsBuilder(() {
+            Get.find<OrderController>().clearCart();
+          }),
         ),
         GetPage(
           name: AppRoutes.complaint,
@@ -71,7 +91,7 @@ class MyApp extends StatelessWidget {
         GetPage(
           name:    AppRoutes.stockEntry,
           page:    () => const StockEntryPage(),
-          binding: BindingsBuilder(() => Get.put(StockEntryDetailsController())),
+          binding: BindingsBuilder(() { Get.put(StockEntryDetailsController()); }),
         ),
       ],
     );

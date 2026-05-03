@@ -19,6 +19,13 @@ class ZoomDrawerPage extends StatelessWidget {
     final session = Get.find<SessionController>();
 
     return Obx(() {
+      if (session.isRestoring.value) {
+        return const Scaffold(
+          backgroundColor: Color.fromARGB(255, 246, 255, 253),
+          body: Center(child: CircularProgressIndicator(color: Colors.teal)),
+        );
+      }
+
       final isUser     = session.isUser.value;
       final drawerCtrl = session.zoomDrawerCtrl;
 

@@ -32,11 +32,11 @@ class PaymentController extends GetxController {
       payments.value = response.payments.map((p) {
         return PaymentItemData(
           paymentId: p.name,
-          date: p.posting_date,
-          invoices: p.invoices_payed
+          date: p.postingDate,
+          invoices: p.invoicesPayed
               .map((inv) => PaidInvoice(
                     invoiceId: inv.invoice,
-                    amount: inv.allocated_amount,
+                    amount: inv.allocatedAmount,
                   ))
               .toList(),
         );

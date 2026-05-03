@@ -1,26 +1,28 @@
 class SalesInvoice {
   final String name;
-  final String posting_date;
-  final double grand_total;
-  final double outstanding_amount;
+  final String postingDate;
+  final double grandTotal;
+  final double outstandingAmount;
   final String status;
-  final int is_pos;
+  final int isPos;
+
   SalesInvoice({
     required this.name,
-    required this.posting_date,
-    required this.grand_total,
-    required this.is_pos,
-    required this.outstanding_amount,
+    required this.postingDate,
+    required this.grandTotal,
+    required this.isPos,
+    required this.outstandingAmount,
     required this.status,
   });
+
   static SalesInvoice fromJson(Map<String, dynamic> json) {
     return SalesInvoice(
       name: json["name"],
-      posting_date: json["posting_date"],
-      grand_total: json["grand_total"],
-      outstanding_amount: json["outstanding_amount"],
+      postingDate: json["posting_date"],
+      grandTotal: (json["grand_total"] as num).toDouble(),
+      outstandingAmount: (json["outstanding_amount"] as num).toDouble(),
       status: json["status"],
-      is_pos: json["is_pos"],
+      isPos: json["is_pos"],
     );
   }
 }

@@ -38,18 +38,18 @@ class StockEntryPage extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: ListView(children: [
-                Text('Date : ${data.stock_entry.posting_date}',
+                Text('Date : ${data.stockEntry.postingDate}',
                     style: TextStyle(color: Colors.grey.shade600)),
                 const SizedBox(height: 12),
-                Text('Company : ${data.stock_entry.company}',
+                Text('Company : ${data.stockEntry.company}',
                     style: const TextStyle(
                         fontSize: 16, fontWeight: FontWeight.w500)),
                 const SizedBox(height: 20),
 
-                if (data.stock_entry.from_warehouse.isNotEmpty)
+                if (data.stockEntry.fromWarehouse.isNotEmpty)
                   _warehouseBox(
                     title:        'From',
-                    value:        data.stock_entry.from_warehouse,
+                    value:        data.stockEntry.fromWarehouse,
                     isValidated:  c.fromWarehouseValidated.value,
                     onTap: () => c.fromWarehouseValidated.value =
                         !c.fromWarehouseValidated.value,
@@ -57,10 +57,10 @@ class StockEntryPage extends StatelessWidget {
                   ),
                 const SizedBox(height: 12),
 
-                if (data.stock_entry.to_warehouse.isNotEmpty)
+                if (data.stockEntry.toWarehouse.isNotEmpty)
                   _warehouseBox(
                     title:        'To',
-                    value:        data.stock_entry.to_warehouse,
+                    value:        data.stockEntry.toWarehouse,
                     isValidated:  c.toWarehouseValidated.value,
                     onTap: () => c.toWarehouseValidated.value =
                         !c.toWarehouseValidated.value,
@@ -131,9 +131,9 @@ class StockEntryPage extends StatelessWidget {
                       Expanded(
                           flex: 4,
                           child: Text(
-                              item.item_code.isNotEmpty
-                                  ? item.item_code
-                                  : item.item_name,
+                              item.itemCode.isNotEmpty
+                                  ? item.itemCode
+                                  : item.itemName,
                               style: const TextStyle(fontSize: 14))),
 
                       Expanded(
@@ -346,13 +346,13 @@ class StockEntryPage extends StatelessWidget {
               onPressed: selectedItemCode != null
                   ? () {
                       c.addItem(model.StockEntryItem(
-                        id:             '',
-                        idx:            c.data.value!.items.length + 1,
-                        item_code:      selectedItemCode!,
-                        item_name:      selectedItemName ?? selectedItemCode!,
-                        from_warehouse: c.data.value!.stock_entry.from_warehouse,
-                        to_warehouse:   c.data.value!.stock_entry.to_warehouse,
-                        quantity:       qty,
+                        id:            '',
+                        idx:           c.data.value!.items.length + 1,
+                        itemCode:      selectedItemCode!,
+                        itemName:      selectedItemName ?? selectedItemCode!,
+                        fromWarehouse: c.data.value!.stockEntry.fromWarehouse,
+                        toWarehouse:   c.data.value!.stockEntry.toWarehouse,
+                        quantity:      qty,
                       ));
                       Get.back();
                     }

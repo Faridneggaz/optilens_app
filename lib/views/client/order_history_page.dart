@@ -8,8 +8,8 @@ class OrderHistoryPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = Get.find<OrderController>();
-    // Load orders when page is first built
-    c.loadOrders();
+    // loadOrders() is now triggered by the BindingsBuilder in main.dart
+    // (fires once per route push, not on every rebuild).
 
     const Color primaryTeal = Color(0xFF008075);
     const Color bgColor     = Color(0xFFF7FFFD);
@@ -106,19 +106,26 @@ class OrderHistoryPage extends StatelessWidget {
       ),
       child: Column(children: [
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Text(order['name'],
-              style: const TextStyle(
-                  fontWeight: FontWeight.bold, fontSize: 14)),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-                color: statusColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8)),
-            child: Text(status.toUpperCase(),
-                style: TextStyle(
-                    color: statusColor,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w900)),
+          Expanded(
+            child: Text(order['name'],
+                style: const TextStyle(
+                    fontWeight: FontWeight.bold, fontSize: 14)),
+          ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8)),
+              child: Text(status.toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                      color: statusColor,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w900)),
+            ),
           ),
         ]),
         const SizedBox(height: 12),

@@ -57,7 +57,7 @@ class PaymentList extends StatelessWidget {
             return Card(
             color: const Color.fromRGBO(254, 255, 255, 1),
             elevation: 2,
-            shadowColor: Colors.black.withOpacity(0.1),
+            shadowColor: Colors.black.withValues(alpha: 0.1),
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
@@ -129,7 +129,7 @@ class PaymentList extends StatelessWidget {
                     child: Column(
                       children: [
 
-                        Divider(color: Colors.grey.withOpacity(0.2)), 
+                        Divider(color: Colors.grey.withValues(alpha: 0.2)), 
                         const SizedBox(height: 10),
                         
 
@@ -165,13 +165,13 @@ class PaymentList extends StatelessWidget {
                   if (!isLast)
                     Positioned(
                       top: 12, bottom: 0, left: 14,
-                      child: Container(width: 2, color: Colors.grey.withOpacity(0.3)),
+                      child: Container(width: 2, color: Colors.grey.withValues(alpha: 0.3)),
                     ),
                   Container(
                     margin: const EdgeInsets.only(top: 8),
                     width: 12, height: 12,
                     decoration: BoxDecoration(
-                      color: Colors.grey.withOpacity(0.4),
+                      color: Colors.grey.withValues(alpha: 0.4),
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -195,7 +195,7 @@ class PaymentList extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      "${invoice.amount.toStringAsFixed(0)}",
+                      invoice.amount.toStringAsFixed(0),
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w900,

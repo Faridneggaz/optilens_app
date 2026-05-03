@@ -57,9 +57,9 @@ class InvoiceController extends GetxController {
           (selectedStatus.value == 'All' || i.status == selectedStatus.value))
       .map((i) => InvoiceItemData(
             title: i.name,
-            ttc: i.outstanding_amount,
-            price: i.grand_total,
-            postingDate: i.posting_date,
+            ttc: i.outstandingAmount,
+            price: i.grandTotal,
+            postingDate: i.postingDate,
             status: i.status,
           ))
       .toList();
@@ -70,9 +70,9 @@ class InvoiceController extends GetxController {
           (selectedStatus.value == 'All' || i.status == selectedStatus.value))
       .map((i) => InvoiceItemData(
             title: i.name,
-            ttc: i.outstanding_amount,
-            price: i.grand_total,
-            postingDate: i.posting_date,
+            ttc: i.outstandingAmount,
+            price: i.grandTotal,
+            postingDate: i.postingDate,
             status: i.status,
           ))
       .toList();
@@ -107,15 +107,15 @@ class InvoiceController extends GetxController {
       );
 
       if (isLoadMore) {
-        salesInvoices.addAll(response.sales_invoices);
-        posInvoices.addAll(response.pos_invoices);
+        salesInvoices.addAll(response.salesInvoices);
+        posInvoices.addAll(response.posInvoices);
       } else {
-        salesInvoices.value = response.sales_invoices;
-        posInvoices.value   = response.pos_invoices;
+        salesInvoices.value = response.salesInvoices;
+        posInvoices.value   = response.posInvoices;
       }
 
-      if (response.sales_invoices.length < _limit &&
-          response.pos_invoices.length < _limit) {
+      if (response.salesInvoices.length < _limit &&
+          response.posInvoices.length < _limit) {
         hasMore.value = false;
       } else {
         _offset += _limit;

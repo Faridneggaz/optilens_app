@@ -223,7 +223,7 @@ class UserDashboardPage extends StatelessWidget {
                             fontWeight: FontWeight.w600,
                             color: Color.fromRGBO(31, 40, 55, 1))),
                     const SizedBox(height: 4),
-                    Text(entry.posting_date,
+                    Text(entry.postingDate,
                         style: const TextStyle(
                             color: Colors.grey, fontSize: 13)),
                   ]),

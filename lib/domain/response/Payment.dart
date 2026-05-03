@@ -2,29 +2,29 @@ import 'payment_invoice.dart';
 
 class Payment {
   final String name;
-  final String posting_date;
-  final double paid_amount;
-  final String payment_type;
-  final String? mode_of_payment;
-  final List<PaymentInvoice> invoices_payed;
+  final String postingDate;
+  final double paidAmount;
+  final String paymentType;
+  final String? modeOfPayment;
+  final List<PaymentInvoice> invoicesPayed;
 
   Payment({
     required this.name,
-    required this.posting_date,
-    required this.paid_amount,
-    required this.payment_type,
-    this.mode_of_payment,
-    required this.invoices_payed,
+    required this.postingDate,
+    required this.paidAmount,
+    required this.paymentType,
+    this.modeOfPayment,
+    required this.invoicesPayed,
   });
 
   static Payment fromJson(Map<String, dynamic> json) {
     return Payment(
       name: json["name"],
-      posting_date: json["posting_date"],
-      paid_amount: json["paid_amount"],
-      payment_type: json["payment_type"],
-      mode_of_payment: json["mode_of_payment"],
-      invoices_payed: (json["invoices_payed"] as List)
+      postingDate: json["posting_date"],
+      paidAmount: (json["paid_amount"] as num).toDouble(),
+      paymentType: json["payment_type"],
+      modeOfPayment: json["mode_of_payment"],
+      invoicesPayed: (json["invoices_payed"] as List)
           .map((i) => PaymentInvoice.fromJson(i))
           .toList(),
     );

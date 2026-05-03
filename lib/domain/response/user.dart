@@ -10,11 +10,6 @@ class User {
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
-    print('User.fromJson - JSON reçu: $json');
-    print('ID trouvé: ${json['sid']}');
-    print('Email trouvé: ${json['email']}');
-    print(' Name trouvé: ${json['name']}');
-    
     return User(
       sid: json['sid']?.toString() ?? '',
       email: json['email']?.toString(),

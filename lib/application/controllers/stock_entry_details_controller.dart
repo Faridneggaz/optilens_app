@@ -30,7 +30,7 @@ class StockEntryDetailsController extends GetxController {
 
   bool get isPending {
     if (data.value == null) return false;
-    final s = data.value!.stock_entry.status.toLowerCase();
+    final s = data.value!.stockEntry.status.toLowerCase();
     return s == 'pending' || s == 'draft';
   }
 
@@ -39,10 +39,10 @@ class StockEntryDetailsController extends GetxController {
     final itemsReady = data.value != null &&
         validatedItemIndices.length == data.value!.items.length;
     bool warehousesReady = true;
-    if (data.value?.stock_entry.from_warehouse.isNotEmpty ?? false) {
+    if (data.value?.stockEntry.fromWarehouse.isNotEmpty ?? false) {
       warehousesReady = warehousesReady && fromWarehouseValidated.value;
     }
-    if (data.value?.stock_entry.to_warehouse.isNotEmpty ?? false) {
+    if (data.value?.stockEntry.toWarehouse.isNotEmpty ?? false) {
       warehousesReady = warehousesReady && toWarehouseValidated.value;
     }
     return itemsReady && warehousesReady;
@@ -99,10 +99,10 @@ class StockEntryDetailsController extends GetxController {
     isSubmitting.value = true;
     try {
       final itemsToSend = data.value!.items.map((e) => {
-            'itemName':      e.item_code,
+            'itemName':      e.itemCode,
             'quantity':      e.quantity,
-            'fromWarehouse': e.from_warehouse,
-            'toWarehouse':   e.to_warehouse,
+            'fromWarehouse': e.fromWarehouse,
+            'toWarehouse':   e.toWarehouse,
           }).toList();
 
       return await _repo.approveStockEntry(

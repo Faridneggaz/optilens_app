@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/repositories/login_repository.dart';
 import '../../data/repositories/customer_repository.dart';
 import '../../app/routes/app_routes.dart';
+import '../../core/services/session_service.dart';
 import 'session_controller.dart';
 
 class LoginController extends GetxController {
@@ -41,8 +41,13 @@ class LoginController extends GetxController {
     isLoading.value = true;
     try {
       final response = await _customerRepo.fetchCustomer(code);
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('custom_customer_code', code);
+      
+      final sessionService = Get.find<SessionService>();
+      await sessionService.saveSession(
+        code: code,
+        role: 'client',
+        token: '',
+      );
 
       final session = Get.find<SessionController>();
       session.customer.value = response.customer;
@@ -68,16 +73,19 @@ class LoginController extends GetxController {
     isLoading.value = true;
     try {
       final response = await _loginRepo.login(email: email, password: password);
+      
       if (response.user.sid.isEmpty) {
         Get.snackbar('Erreur', 'Token manquant dans la réponse',
             backgroundColor: Colors.red, colorText: Colors.white);
         return;
       }
 
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('sid',   response.user.sid);
-      await prefs.setString('email', response.user.email ?? '');
-      await prefs.setString('name',  response.user.name ?? '');
+      final sessionService = Get.find<SessionService>();
+      await sessionService.saveSession(
+        code: response.user.email ?? email,
+        role: 'user',
+        token: response.user.sid,
+      );
 
       final session = Get.find<SessionController>();
       session.token.value    = response.user.sid;

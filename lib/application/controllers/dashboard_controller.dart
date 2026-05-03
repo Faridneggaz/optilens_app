@@ -55,7 +55,7 @@ class DashboardController extends GetxController {
   Future<void> _fetchInvoices() async {
     try {
       final r = await _invoiceRepo.fetchInvoices(_customerCode, limit: 5);
-      invoices.value = r.sales_invoices;
+      invoices.value = r.salesInvoices;
     } catch (_) {}
   }
 

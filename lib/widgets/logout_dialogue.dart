@@ -8,22 +8,37 @@ class LogoutDialog {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text("Do you really want to logout?"),
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24), // heavily rounded corners
+        ),
+        title: Text('logout_confirm_title'.tr),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
+            child: Text(
+              'btn_cancel'.tr,
+              style: const TextStyle(
+                color: Colors.deepPurple,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: Colors.redAccent,
               foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
             onPressed: () async {
               await Get.find<SessionService>().clearSession();
               Get.offAllNamed(AppRoutes.login);
             },
-            child: const Text("Confirm"),
+            child: Text('btn_confirm'.tr),
           ),
         ],
       ),

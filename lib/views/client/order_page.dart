@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../application/controllers/order_controller.dart';
+import '../../../application/controllers/language_controller.dart';
 import '../../domain/response/cart_item.dart';
 import '../../domain/response/item.dart';
 
@@ -18,101 +19,103 @@ class OrderPage extends StatelessWidget {
     // cart.clear() is now called by clearCart() via the BindingsBuilder in
     // main.dart — fires once per route push, not on every rebuild.
 
-    return Scaffold(
-      backgroundColor: _bg,
-      appBar: AppBar(
-        title: const Text(
-          'NOUVELLE COMMANDE',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-        centerTitle: true,
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: BackButton(color: _teal),
-      ),
-      body: Column(children: [
-        // ── Search bar ─────────────────────────────────────────────────────
-        Padding(
-          padding: const EdgeInsets.fromLTRB(15, 15, 15, 8),
-          child: SearchAnchor(
-            viewBackgroundColor: _bg,
-            viewElevation: 0,
-            viewShape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.vertical(bottom: Radius.circular(25)),
-            ),
-            builder: (context, controller) => SearchBar(
-              controller: controller,
-              hintText: 'Chercher un verre ou une monture...',
-              onTap:     () => controller.openView(),
-              onChanged: (_) => controller.openView(),
-              leading: const Icon(Icons.search, color: _teal),
-              elevation: const WidgetStatePropertyAll(0),
-              backgroundColor: WidgetStatePropertyAll(
-                _teal.withValues(alpha: 0.05),
-              ),
-            ),
-
-            // ✅ FIX : Future<List<Widget>> — compatible avec suggestionsBuilder
-            suggestionsBuilder: (context, controller) async {
-              final q = controller.text.trim();
-
-              if (q.isEmpty) {
-                return [
-                  const ListTile(
-                    leading: Icon(Icons.search, color: Colors.grey),
-                    title: Text('Tapez pour chercher un article'),
-                  )
-                ];
-              }
-
-              // ✅ Appel direct à search_items via le controller
-              final results = await c.searchItems(q);
-
-              if (results.isEmpty) {
-                return [
-                  const ListTile(
-                    leading: Icon(Icons.info_outline, color: Colors.orange),
-                    title: Text('Aucun article trouvé'),
-                  )
-                ];
-              }
-
-              return results
-                  .map((item) => _buildSuggestionTile(c, item, controller))
-                  .toList();
-            },
+    return GetBuilder<LanguageController>(
+      builder: (_) => Scaffold(
+        backgroundColor: _bg,
+        appBar: AppBar(
+          title: Text(
+            'new_order'.tr,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
+          centerTitle: true,
+          backgroundColor: Colors.white,
+          elevation: 0,
+          leading: BackButton(color: _teal),
         ),
+        body: Column(children: [
+          // ── Search bar ─────────────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(15, 15, 15, 8),
+            child: SearchAnchor(
+              viewBackgroundColor: _bg,
+              viewElevation: 0,
+              viewShape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.vertical(bottom: Radius.circular(25)),
+              ),
+              builder: (context, controller) => SearchBar(
+                controller: controller,
+                hintText: 'search_item_bar_hint'.tr,
+                onTap:     () => controller.openView(),
+                onChanged: (_) => controller.openView(),
+                leading: const Icon(Icons.search, color: _teal),
+                elevation: const WidgetStatePropertyAll(0),
+                backgroundColor: WidgetStatePropertyAll(
+                  _teal.withValues(alpha: 0.05),
+                ),
+              ),
 
-        // ── Cart list ──────────────────────────────────────────────────────
-        Expanded(
-          child: Obx(() => c.cart.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.shopping_basket_outlined,
-                          size: 60, color: Colors.grey[300]),
-                      const SizedBox(height: 12),
-                      const Text('Votre panier est vide',
-                          style: TextStyle(color: Colors.grey, fontSize: 16)),
-                      const SizedBox(height: 4),
-                      const Text(
-                          'Utilisez la recherche pour ajouter des articles',
-                          style: TextStyle(color: Colors.grey, fontSize: 12)),
-                    ],
-                  ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.only(top: 4, bottom: 8),
-                  itemCount: c.cart.length,
-                  itemBuilder: (context, i) => _buildCartTile(c, i),
-                )),
-        ),
+              // ✅ FIX : Future<List<Widget>> — compatible avec suggestionsBuilder
+              suggestionsBuilder: (context, controller) async {
+                final q = controller.text.trim();
 
-        // ── Summary / Confirm ──────────────────────────────────────────────
-        _buildSummary(c, context),
-      ]),
+                if (q.isEmpty) {
+                  return [
+                    ListTile(
+                      leading: const Icon(Icons.search, color: Colors.grey),
+                      title: Text('search_item_hint'.tr),
+                    )
+                  ];
+                }
+
+                // ✅ Appel direct à search_items via le controller
+                final results = await c.searchItems(q);
+
+                if (results.isEmpty) {
+                  return [
+                    ListTile(
+                      leading: const Icon(Icons.info_outline, color: Colors.orange),
+                      title: Text('no_item_found'.tr),
+                    )
+                  ];
+                }
+
+                return results
+                    .map((item) => _buildSuggestionTile(c, item, controller))
+                    .toList();
+              },
+            ),
+          ),
+
+          // ── Cart list ──────────────────────────────────────────────────────
+          Expanded(
+            child: Obx(() => c.cart.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.shopping_basket_outlined,
+                            size: 60, color: Colors.grey[300]),
+                        const SizedBox(height: 12),
+                        Text('cart_empty'.tr,
+                            style: const TextStyle(color: Colors.grey, fontSize: 16)),
+                        const SizedBox(height: 4),
+                        Text(
+                            'cart_empty_hint'.tr,
+                            style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.only(top: 4, bottom: 8),
+                    itemCount: c.cart.length,
+                    itemBuilder: (context, i) => _buildCartTile(c, i),
+                  )),
+          ),
+
+          // ── Summary / Confirm ──────────────────────────────────────────────
+          _buildSummary(c, context),
+        ]),
+      ),
     );
   }
 
@@ -256,16 +259,16 @@ class OrderPage extends StatelessWidget {
         Obx(() => Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'TOTAL ESTIMÉ',
-                  style: TextStyle(
+                Text(
+                  'estimated_total'.tr,
+                  style: const TextStyle(
                     color: Colors.grey,
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
                   ),
                 ),
                 Text(
-                  'Total: ${c.cartTotal.toStringAsFixed(2)} DZD',
+                  '${'total_prefix'.tr}${c.cartTotal.toStringAsFixed(2)} DZD',
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -285,16 +288,16 @@ class OrderPage extends StatelessWidget {
                         final ok = await c.confirmOrder();
                         if (ok) {
                           Get.snackbar(
-                            'Succès',
-                            'Commande envoyée avec succès !',
+                            'success'.tr,
+                            'order_success'.tr,
                             backgroundColor: Colors.green,
                             colorText: Colors.white,
                           );
                           Get.back();
                         } else {
                           Get.snackbar(
-                            'Erreur',
-                            'Erreur de création de commande',
+                            'error'.tr,
+                            'order_error'.tr,
                             backgroundColor: Colors.red,
                             colorText: Colors.white,
                           );
@@ -309,9 +312,9 @@ class OrderPage extends StatelessWidget {
                 ),
                 child: c.isSubmitting.value
                     ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text(
-                        'VALIDER LA COMMANDE',
-                        style: TextStyle(
+                    : Text(
+                        'confirm_order'.tr,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
                         ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_zoom_drawer/flutter_zoom_drawer.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'bottom_navbar.dart';
 import '../views/client/dashboard_view.dart';
 import '../views/client/invoice_view.dart';
@@ -9,7 +10,10 @@ import '../views/client/profil_view.dart';
 import '../views/user/user_dashboard.dart';
 import '../application/controllers/session_controller.dart';
 import '../application/controllers/main_controller.dart';
+import '../application/controllers/language_controller.dart';
 import '../application/controllers/user_dashboard_controller.dart';
+import '../views/client/about_j_optic_screen.dart';
+import '../app/routes/app_routes.dart';
 
 class ZoomDrawerPage extends StatelessWidget {
   const ZoomDrawerPage({super.key});
@@ -38,28 +42,30 @@ class ZoomDrawerPage extends StatelessWidget {
         drawerCtrl.close?.call();
       }
 
-      return ZoomDrawer(
-        controller:   drawerCtrl,
-        menuScreen:   DrawerScreen(
-          onSelectPage: openPage,
-          isUser:       isUser,
+      return GetBuilder<LanguageController>(
+        builder: (lang) => ZoomDrawer(
+          controller:   drawerCtrl,
+          isRtl:        lang.isRtl,
+          menuScreen:   DrawerScreen(
+            onSelectPage: openPage,
+            isUser:       isUser,
+          ),
+          mainScreen:   isUser ? UserDashboardPage() : _ClientShell(),
+          borderRadius: 28,
+          showShadow:   true,
+          angle:        0.0,
+          drawerShadowsBackgroundColor:
+              const Color.fromARGB(255, 47, 142, 138),
+          slideWidth: MediaQuery.of(context).size.width > 600
+              ? 350.0
+              : MediaQuery.of(context).size.width * 0.80,
+          menuBackgroundColor: Colors.white,
         ),
-        mainScreen:   isUser ? UserDashboardPage() : _ClientShell(),
-        borderRadius: 28,
-        showShadow:   true,
-        angle:        0.0,
-        drawerShadowsBackgroundColor:
-            const Color.fromARGB(255, 47, 142, 138),
-        slideWidth: MediaQuery.of(context).size.width > 600
-            ? 350.0
-            : MediaQuery.of(context).size.width * 0.80,
-        menuBackgroundColor: Colors.white,
       );
     });
   }
 }
 
-/// Client mode: bottom-nav shell (4 pages).
 class _ClientShell extends StatelessWidget {
   _ClientShell();
 
@@ -88,7 +94,6 @@ class _ClientShell extends StatelessWidget {
   }
 }
 
-/// The slide-out drawer.
 class DrawerScreen extends StatelessWidget {
   final Function(int) onSelectPage;
   final bool isUser;
@@ -101,85 +106,161 @@ class DrawerScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 254, 255, 255),
-      body: SafeArea(
-        child: Column(children: [
-          // Logo
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 15),
-            child: Image.asset('assets/images/optilensss.png', height: 100),
-          ),
+    const primaryColor = Color(0xFF3BADA2);
 
-          Column(children: [
-            ListTile(
-              leading: const Icon(Icons.home, color: Color(0xFF3BADA2)),
-              title: const Text('Home'),
-              onTap:  () => onSelectPage(0),
-            ),
-            ListTile(
-              leading: const Icon(Icons.notifications, color: Color(0xFF3BADA2)),
-              title: const Text('Notifications'),
-              onTap:  () => onSelectPage(1),
-            ),
-            if (isUser)
-              ListTile(
-                leading: const Icon(Icons.inventory_2, color: Color(0xFF3BADA2)),
-                title: const Text('Stock'),
-                onTap:  () => onSelectPage(2),
-              ),
-          ]),
-
-          const Spacer(),
-
-          // Logout
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: InkWell(
-              onTap: () {
-                ZoomDrawer.of(context)?.close();
-                Get.find<SessionController>().logout();
-              },
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                decoration: BoxDecoration(
-                  color: const Color.fromARGB(255, 255, 226, 227),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                alignment: Alignment.center,
-                child: Row(mainAxisSize: MainAxisSize.min, children: const [
-                  Icon(Icons.logout,
-                      color: Color.fromARGB(255, 223, 54, 38)),
-                  SizedBox(width: 10),
-                  Text('Log Out',
-                      style: TextStyle(
-                          color: Color.fromARGB(255, 223, 54, 38),
-                          fontWeight: FontWeight.w700,
-                          fontSize: 16)),
-                ]),
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 25),
-
-          Text.rich(const TextSpan(
-            text: 'Powered by ',
-            style: TextStyle(
-                color: Colors.grey,
-                fontSize: 16,
-                fontWeight: FontWeight.w600),
+    return GetBuilder<LanguageController>(
+      builder: (_) => Scaffold(
+        backgroundColor: const Color.fromARGB(255, 254, 255, 255),
+        body: SafeArea(
+          child: Column(
             children: [
-              TextSpan(
-                  text: 'Jethings',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold, color: Colors.black54)),
-            ],
-          )),
+              // 1. Logo Section
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 15),
+                child: Image.asset('assets/images/optilensss.png', height: 100),
+              ),
 
-          const SizedBox(height: 30),
-        ]),
+              // 2. Menu Principal (ListView)
+              Expanded(
+                child: ListView(
+                  padding: EdgeInsets.zero,
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.home, color: primaryColor),
+                      title: Text('nav_home'.tr),
+                      onTap: () {
+                        ZoomDrawer.of(context)?.close();
+                        onSelectPage(0);
+                      },
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.notifications, color: primaryColor),
+                      title: Text('nav_notifications'.tr),
+                      onTap: () {
+                        ZoomDrawer.of(context)?.close();
+                        Get.toNamed(AppRoutes.notifications);
+                      },
+                    ),
+                      if (isUser)
+                        ListTile(
+                          leading: const Icon(Icons.inventory_2, color: primaryColor),
+                          title: Text('nav_stock'.tr),
+                          onTap: () {
+                            ZoomDrawer.of(context)?.close();
+                            onSelectPage(2);
+                          },
+                        ),
+                      if (isUser)
+                        ListTile(
+                          leading: const Icon(Icons.assignment_outlined, color: primaryColor),
+                          title: Text('material_requests'.tr),
+                          onTap: () {
+                            ZoomDrawer.of(context)?.close();
+                            onSelectPage(3);
+                          },
+                        ),
+                  ],
+                ),
+              ),
+
+              // 3. Section Basse (J-Optic & Logout)
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // --- SECTION J-OPTIC PLACÉE EN BAS ---
+                    if (!isUser) ...[
+                      const Divider(height: 1, color: Color(0xFFE8F3F0)),
+                      const SizedBox(height: 15),
+                      Text(
+                        'about_joptic_section'.tr,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey,
+                          letterSpacing: 1.1,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      // Lien Site Web
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(Icons.language, color: primaryColor),
+                        title: Text('website'.tr),
+                        onTap: () => launchUrl(Uri.parse('https://jethings.com')),
+                      ),
+                      // Lien App
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(Icons.info_outline, color: primaryColor),
+                        title: Text('app_joptic'.tr),
+                        onTap: () {
+                          ZoomDrawer.of(context)?.close();
+                          Get.to(() => const AboutJethingsScreen());
+                        },
+                      ),
+                      const SizedBox(height: 10),
+                    ],
+
+                    // --- BOUTON DÉCONNEXION ---
+                    InkWell(
+                      onTap: () {
+                        ZoomDrawer.of(context)?.close();
+                        Get.find<SessionController>().logout();
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        decoration: BoxDecoration(
+                          color: const Color.fromARGB(255, 255, 226, 227),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.logout, color: Color.fromARGB(255, 223, 54, 38)),
+                            const SizedBox(width: 10),
+                            Text(
+                              'btn_logout'.tr,
+                              style: const TextStyle(
+                                color: Color.fromARGB(255, 223, 54, 38),
+                                fontWeight: FontWeight.w700,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 25),
+                    Center(
+                      child: Text.rich(
+                        TextSpan(
+                          text: 'powered_by'.tr,
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          children: const [
+                            TextSpan(
+                              text: 'Jethings',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black54,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -20,4 +20,31 @@ class CustomerRepository {
       throw RepositoryException('Network error: $e');
     }
   }
+
+  Future<Map<String, dynamic>> changePassword({
+    required String oldPassword,
+    required String newPassword,
+  }) async {
+    final url = Uri.parse(
+      'https://optilens.jethings.com/api/method/mobile_app.api.change_customer_code'
+      '?old_code=${Uri.encodeComponent(oldPassword)}'
+      '&new_code=${Uri.encodeComponent(newPassword)}',
+    );
+    try {
+      final response = await http.post(url);
+      if (response.statusCode == 200) {
+        final body = jsonDecode(response.body);
+        // API wraps response in 'message' key
+        final data = body['message'];
+        if (data == null) {
+          return {'success': false, 'error': 'Empty response'};
+        }
+        return Map<String, dynamic>.from(data as Map);
+      }
+      throw RepositoryException('Server error: ${response.statusCode}');
+    } catch (e) {
+      if (e is RepositoryException) rethrow;
+      throw RepositoryException('Network error: $e');
+    }
+  }
 }

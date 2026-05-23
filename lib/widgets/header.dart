@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
 import 'logout_dialogue.dart';
 import 'package:flutter_zoom_drawer/flutter_zoom_drawer.dart';
+import 'language_selector_widget.dart';
+import 'package:get/get.dart';
 
 class AppHeader extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final dynamic customer;
   final String customerCode;
-  final VoidCallback? onMenuTap; // ← AJOUTÉ
+  final VoidCallback? onMenuTap;
 
   const AppHeader({
     super.key,
     required this.title,
     required this.customer,
     required this.customerCode,
-    this.onMenuTap, // ← AJOUTÉ
+    this.onMenuTap, 
   });
 
   @override
@@ -25,54 +27,92 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
       color: Colors.white,
       elevation: 6,
       shadowColor: Colors.black26,
-      child: SizedBox(
-        height: preferredSize.height,
-        child: Stack(
-          children: [
-            Center(
-              child: Text(
-                title,
-                style: const TextStyle(
-                  color: Color.fromRGBO(239, 67, 67, 1),
-                  fontSize: 22,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-            Positioned(
-              right: 12,
-              top: 0,
-              bottom: 0,
-              child: PopupMenuButton<String>(
-                icon: const Icon(Icons.menu, size: 28),
-                onSelected: (_) => LogoutDialog.show(context),
-                itemBuilder: (_) => const [
-                  PopupMenuItem(value: 'logout', child: Text('Logout')),
-                ],
-              ),
-            ),
-            Positioned(
-              left: 12,
-              top: 0,
-              bottom: 0,
-              child: InkWell(
-                onTap: () {
-                  if (onMenuTap != null) {
-                    onMenuTap!(); // ← APPELLE LE CALLBACK
-                  } else {
-                    ZoomDrawer.of(context)?.toggle();
-                  }
-                },
-                child: Center(
+      child: SafeArea(
+        bottom: false,
+        child: SizedBox(
+          height: preferredSize.height,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Logo — on left in LTR, on right in RTL (auto by Directionality)
+                InkWell(
+                  onTap: () {
+                    if (onMenuTap != null) {
+                      onMenuTap!();
+                    } else {
+                      ZoomDrawer.of(context)?.toggle();
+                    }
+                  },
                   child: Image.asset(
                     'assets/images/optilensss.png',
                     height: 30,
                     fit: BoxFit.contain,
                   ),
                 ),
-              ),
+
+                // Centered title
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Text(
+                      title,
+                      textAlign: TextAlign.center,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFF1F2837),
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Action icons — on right in LTR, on left in RTL
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.language, size: 22),
+                      tooltip: 'language_tooltip'.tr,
+                      onPressed: LanguageSelectorWidget.show,
+                    ),
+                    PopupMenuButton<String>(
+                      icon: const Icon(Icons.menu, size: 28),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      color: Colors.white,
+                      elevation: 8,
+                      offset: const Offset(0, 40),
+                      onSelected: (_) => LogoutDialog.show(context),
+                      itemBuilder: (_) => [
+                        PopupMenuItem(
+                          value: 'logout',
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.logout, color: Colors.redAccent, size: 22),
+                              const SizedBox(width: 12),
+                              Text(
+                                'btn_logout'.tr,
+                                style: const TextStyle(
+                                  color: Colors.redAccent,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

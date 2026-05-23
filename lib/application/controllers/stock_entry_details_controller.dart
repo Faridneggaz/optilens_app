@@ -66,6 +66,10 @@ class StockEntryDetailsController extends GetxController {
     }
   }
 
+  Future<void> onRefresh() async {
+    await fetchDetails();
+  }
+
   void toggleItemValidation(int index) {
     final updated = Set<int>.from(validatedItemIndices);
     if (updated.contains(index)) {

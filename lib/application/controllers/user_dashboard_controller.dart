@@ -17,6 +17,9 @@ class UserDashboardController extends GetxController {
   final selectedPageIndex = 0.obs;
   final searchQuery     = ''.obs;
   final selectedStatus  = 'All'.obs;
+  final isSearching     = false.obs;
+  final searchStockEntries = <StockEntry>[].obs;
+  Worker? _debounce;
 
   int _offset = 0;
   static const int _limit = 20;
@@ -26,6 +29,7 @@ class UserDashboardController extends GetxController {
 
   @override
   void onClose() {
+    _debounce?.dispose();
     searchController.dispose();
     super.onClose();
   }
@@ -33,6 +37,24 @@ class UserDashboardController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    
+    _debounce = debounce(searchQuery, (query) {
+      if (query.isNotEmpty) {
+        fetchSearchResults();
+      } else {
+        isSearching.value = false;
+        searchStockEntries.clear();
+      }
+    }, time: const Duration(milliseconds: 400));
+
+    ever(selectedStatus, (_) {
+      if (searchQuery.value.isNotEmpty) {
+        fetchSearchResults();
+      } else {
+        onRefresh();
+      }
+    });
+
     _loadToken();
   }
 
@@ -48,12 +70,7 @@ class UserDashboardController extends GetxController {
   void setPage(int i) => selectedPageIndex.value = i;
 
   List<StockEntry> get filteredEntries {
-    return stockEntries.where((e) {
-      final matchSearch = e.name.toLowerCase().contains(searchQuery.value.toLowerCase());
-      final matchStatus = selectedStatus.value == 'All' ||
-          e.status.toLowerCase() == selectedStatus.value.toLowerCase();
-      return matchSearch && matchStatus;
-    }).toList();
+    return searchQuery.value.isNotEmpty ? searchStockEntries : stockEntries;
   }
 
   Future<void> onRefresh() async {
@@ -82,6 +99,7 @@ class UserDashboardController extends GetxController {
         token: _actualToken,
         limit: _limit,
         offset: _offset,
+        status: selectedStatus.value == 'All' ? null : selectedStatus.value,
       );
 
       if (isLoadMore) {
@@ -100,6 +118,24 @@ class UserDashboardController extends GetxController {
     } finally {
       isLoading.value     = false;
       isLoadingMore.value = false;
+    }
+  }
+
+  Future<void> fetchSearchResults() async {
+    isSearching.value = true;
+    try {
+      final response = await _repo.fetchLastStockEntries(
+        token: _actualToken,
+        limit: 20,
+        offset: 0,
+        searchText: searchQuery.value,
+        status: selectedStatus.value == 'All' ? null : selectedStatus.value,
+      );
+      searchStockEntries.value = response.stockEntries;
+    } catch (_) {
+      // silently fail
+    } finally {
+      isSearching.value = false;
     }
   }
 

@@ -19,14 +19,16 @@ class Payment {
 
   static Payment fromJson(Map<String, dynamic> json) {
     return Payment(
-      name: json["name"],
-      postingDate: json["posting_date"],
-      paidAmount: (json["paid_amount"] as num).toDouble(),
-      paymentType: json["payment_type"],
+      name: json["name"] ?? "",
+      postingDate: json["posting_date"] ?? "",
+      paidAmount: (json["paid_amount"] as num?)?.toDouble() ?? 0.0,
+      paymentType: json["payment_type"] ?? "",
       modeOfPayment: json["mode_of_payment"],
-      invoicesPayed: (json["invoices_payed"] as List)
-          .map((i) => PaymentInvoice.fromJson(i))
-          .toList(),
+      invoicesPayed: json["invoices_payed"] != null 
+          ? (json["invoices_payed"] as List)
+              .map((i) => PaymentInvoice.fromJson(i))
+              .toList()
+          : [],
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-
+import 'package:get/get.dart';
+import '../application/controllers/language_controller.dart';
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
@@ -12,21 +13,21 @@ class BottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      currentIndex: currentIndex,
-      onTap: onTap,
-      selectedItemColor: Colors.teal,
-      unselectedItemColor: Colors.grey,
-      type: BottomNavigationBarType.fixed,
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Dashboard'),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.receipt_long),
-          label: 'Invoice',
-        ),
-        BottomNavigationBarItem(icon: Icon(Icons.payment), label: 'Payment'),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-      ],
+    return GetBuilder<LanguageController>(
+      builder: (_) => BottomNavigationBar(
+        currentIndex: currentIndex,
+        onTap: onTap,
+        selectedItemColor: Colors.teal,
+        unselectedItemColor: Colors.grey,
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: Colors.white,
+        items: [
+          BottomNavigationBarItem(icon: const Icon(Icons.home),         label: 'nav_home'.tr),
+          BottomNavigationBarItem(icon: const Icon(Icons.receipt_long), label: 'nav_invoices'.tr),
+          BottomNavigationBarItem(icon: const Icon(Icons.payment),      label: 'nav_payments'.tr),
+          BottomNavigationBarItem(icon: const Icon(Icons.person),       label: 'nav_profile'.tr),
+        ],
+      ),
     );
   }
 }

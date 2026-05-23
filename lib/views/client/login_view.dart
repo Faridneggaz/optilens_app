@@ -37,7 +37,7 @@ class LoginPage extends StatelessWidget {
                         const SizedBox(height: 30),
 
                         Text(
-                          c.isUserLogin.value ? 'User Login' : 'Welcome Back',
+                          c.isUserLogin.value ? 'login_title_user'.tr : 'login_title_client'.tr,
                           style: const TextStyle(
                               fontSize: 24, fontWeight: FontWeight.bold),
                         ),
@@ -46,8 +46,8 @@ class LoginPage extends StatelessWidget {
 
                         Text(
                           c.isUserLogin.value
-                              ? 'Login with your email and password.'
-                              : 'Please enter your Client Code to continue.',
+                              ? 'login_subtitle_user'.tr
+                              : 'login_subtitle_client'.tr,
                           textAlign: TextAlign.center,
                         ),
 
@@ -71,8 +71,9 @@ class LoginPage extends StatelessWidget {
                               if (!c.isUserLogin.value)
                                 TextField(
                                   controller: c.clientCodeController,
+                                  onChanged: (v) => c.errorMessage.value = '',
                                   decoration: InputDecoration(
-                                    hintText: 'Client Code',
+                                    hintText: 'hint_client_code'.tr,
                                     border: OutlineInputBorder(
                                         borderRadius:
                                             BorderRadius.circular(12)),
@@ -81,9 +82,10 @@ class LoginPage extends StatelessWidget {
                               if (c.isUserLogin.value) ...[
                                 TextField(
                                   controller: c.emailController,
+                                  onChanged: (v) => c.errorMessage.value = '',
                                   keyboardType: TextInputType.emailAddress,
                                   decoration: InputDecoration(
-                                    hintText: 'Email',
+                                    hintText: 'hint_email'.tr,
                                     border: OutlineInputBorder(
                                         borderRadius:
                                             BorderRadius.circular(12)),
@@ -92,9 +94,10 @@ class LoginPage extends StatelessWidget {
                                 const SizedBox(height: 16),
                                 TextField(
                                   controller: c.passwordController,
+                                  onChanged: (v) => c.errorMessage.value = '',
                                   obscureText: c.isObscure.value,
                                   decoration: InputDecoration(
-                                    hintText: 'Password',
+                                    hintText: 'hint_password'.tr,
                                     border: OutlineInputBorder(
                                         borderRadius:
                                             BorderRadius.circular(12)),
@@ -110,6 +113,30 @@ class LoginPage extends StatelessWidget {
                                   ),
                                 ),
                               ],
+
+                              Obx(() => c.errorMessage.value.isNotEmpty
+                                ? Container(
+                                    margin: const EdgeInsets.only(top: 8),
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: const Color.fromARGB(255, 255, 235, 235),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.error_outline, color: Colors.red, size: 18),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            c.errorMessage.value,
+                                            style: const TextStyle(color: Colors.red, fontSize: 13),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                : const SizedBox.shrink(),
+                              ),
 
                               const SizedBox(height: 20),
 
@@ -137,7 +164,7 @@ class LoginPage extends StatelessWidget {
                                           child: CircularProgressIndicator(
                                               color: Colors.white,
                                               strokeWidth: 2))
-                                      : const Text('LOGIN'),
+                                      : Text('btn_login'.tr),
                                 ),
                               ),
                             ],
@@ -150,8 +177,8 @@ class LoginPage extends StatelessWidget {
                           onTap: c.toggleLoginMode,
                           child: Text(
                             c.isUserLogin.value
-                                ? 'Log-in as client'
-                                : 'Log-in as user',
+                                ? 'btn_switch_to_client'.tr
+                                : 'btn_switch_to_user'.tr,
                             style: const TextStyle(fontWeight: FontWeight.w800),
                           ),
                         ),

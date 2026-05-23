@@ -13,10 +13,17 @@ class InvoiceRepository {
     String customerCode, {
     int limit = 20,
     int offset = 0,
+    String? searchText,
+    String? status,
   }) async {
-    final url = Uri.parse(
-      '$_baseUrl$_getInvoicesByCustomerCode?code=$customerCode&limit=$limit&offset=$offset',
-    );
+    String urlStr = '$_baseUrl$_getInvoicesByCustomerCode?code=$customerCode&limit=$limit&offset=$offset';
+    if (searchText != null && searchText.isNotEmpty) {
+      urlStr += '&search_text=$searchText';
+    }
+    if (status != null && status != 'All') {
+      urlStr += '&status=$status';
+    }
+    final url = Uri.parse(urlStr);
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {

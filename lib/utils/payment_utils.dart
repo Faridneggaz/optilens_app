@@ -83,7 +83,7 @@ class PaymentList extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Payment for ${item.paymentId}',
+                                '${'payment_for'.tr}${item.paymentId}',
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,

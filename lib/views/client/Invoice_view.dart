@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../widgets/header.dart';
-import '../../widgets/invoice_filter_bar.dart';
 import '../../utils/invoice_utils.dart';
 import '../../../application/controllers/invoice_controller.dart';
+import '../../../application/controllers/language_controller.dart';
 import '../../../application/controllers/session_controller.dart';
 import '../../../app/routes/app_routes.dart';
 
@@ -16,22 +16,15 @@ class InvoicePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final customer = Get.find<SessionController>().customer.value!;
 
-    return Scaffold(
-      backgroundColor: const Color.fromRGBO(247, 255, 253, 1),
-      body: Obx(() => Column(
+    return GetBuilder<LanguageController>(
+      builder: (_) => Scaffold(
+        backgroundColor: const Color.fromRGBO(247, 255, 253, 1),
+        body: Obx(() => Column(
             children: [
               AppHeader(
                   title: '',
                   customer: customer,
                   customerCode: customer.code),
-
-              InvoiceFilterBar(
-                selectedStatus:  c.selectedStatus.value,
-                onSearchChanged: (v) => c.searchQuery.value = v,
-                onStatusChanged: (v) {
-                  if (v != null) c.selectedStatus.value = v;
-                },
-              ),
 
               const SizedBox(height: 12),
 
@@ -59,12 +52,11 @@ class InvoicePage extends StatelessWidget {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('Outstanding Amount',
-                                    style: TextStyle(
-                                        fontSize: 18,
-                                        color:
-                                            Color.fromRGBO(238, 33, 33, 1),
-                                        fontWeight: FontWeight.w900)),
+                                Text('outstanding_amount'.tr,
+                                     style: const TextStyle(
+                                         fontSize: 18,
+                                         color: Color.fromRGBO(238, 33, 33, 1),
+                                         fontWeight: FontWeight.w900)),
                                 const SizedBox(height: 8),
                                 Text(
                                   '${customer.debt.toStringAsFixed(2)} DA',
@@ -93,6 +85,8 @@ class InvoicePage extends StatelessWidget {
                       ),
                       _buildTabs(),
                       const SizedBox(height: 10),
+                      _buildSearchBar(),
+                      const SizedBox(height: 10),
                     ],
                   ),
                 ),
@@ -105,9 +99,9 @@ class InvoicePage extends StatelessWidget {
                   child: RefreshIndicator(
                     onRefresh:  c.onRefresh,
                     color: const Color.fromARGB(255, 0, 167, 155),
-                    child: c.isLoading.value && !c.isLoadingMore.value
+                    child: (c.isLoading.value && !c.isLoadingMore.value) || c.isSearching.value
                         ? const Center(
-                            child: CircularProgressIndicator())
+                            child: CircularProgressIndicator(color: Color.fromARGB(255, 0, 167, 155)))
                         : SingleChildScrollView(
                             controller: c.scrollController,
                             physics:
@@ -119,7 +113,7 @@ class InvoicePage extends StatelessWidget {
                                 // Load-more button
                                 if (c.hasMore.value &&
                                     (c.salesInvoices.isNotEmpty ||
-                                        c.posInvoices.isNotEmpty))
+                                        c.posInvoices.isNotEmpty) && c.searchQuery.value.isEmpty && !c.isSearching.value)
                                   Padding(
                                     padding: const EdgeInsets.symmetric(
                                         vertical: 20, horizontal: 16),
@@ -153,12 +147,10 @@ class InvoicePage extends StatelessWidget {
                                                           .circular(10),
                                                 ),
                                               ),
-                                              child: const Text(
-                                                  'Load More (20)',
-                                                  style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 16)),
+                                             child: Text('load_more'.tr,
+                                                 style: const TextStyle(
+                                                     fontWeight: FontWeight.bold,
+                                                     fontSize: 16)),
                                             ),
                                           ),
                                   ),
@@ -166,22 +158,20 @@ class InvoicePage extends StatelessWidget {
                                 if (!c.hasMore.value &&
                                     (c.salesInvoices.isNotEmpty ||
                                         c.posInvoices.isNotEmpty))
-                                  const Padding(
-                                    padding: EdgeInsets.all(20),
-                                    child: Text('All invoices loaded',
-                                        style: TextStyle(
+                                  Padding(
+                                    padding: const EdgeInsets.all(20),
+                                    child: Text('all_invoices_loaded'.tr,
+                                        style: const TextStyle(
                                             color: Colors.grey)),
                                   ),
 
                                 if (c.salesInvoices.isEmpty &&
                                     c.posInvoices.isEmpty &&
                                     !c.isLoading.value)
-                                  const Padding(
-                                    padding:
-                                        EdgeInsets.only(top: 50),
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 50),
                                     child: Center(
-                                        child: Text(
-                                            'Aucune facture trouvée')),
+                                        child: Text('no_invoices'.tr)),
                                   ),
 
                                 const SizedBox(height: 40),
@@ -193,6 +183,7 @@ class InvoicePage extends StatelessWidget {
               ),
             ],
           )),
+      ),
     );
   }
 
@@ -205,8 +196,8 @@ class InvoicePage extends StatelessWidget {
           borderRadius: BorderRadius.circular(14)),
       child: Row(
         children: [
-          _tabButton('Sales Invoices', 0),
-          _tabButton('POS Invoices',   1),
+          _tabButton('tab_sales_invoices'.tr, 0),
+          _tabButton('tab_pos_invoices'.tr,   1),
         ],
       ),
     );
@@ -251,6 +242,109 @@ class InvoicePage extends StatelessWidget {
       onInvoiceTap: (item) => Get.toNamed(
         AppRoutes.invoiceDetail,
         arguments: {'invoiceName': item.title},
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              height: 48,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 4,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: c.searchController,
+                onChanged: (v) {
+                  c.searchQuery.value = v;
+                },
+                style: const TextStyle(fontSize: 15),
+                decoration: InputDecoration(
+                  hintText: 'search_invoice_hint'.tr,
+                  hintStyle: const TextStyle(
+                    color: Colors.grey,
+                    fontSize: 15,
+                  ),
+                  prefixIcon: Obx(() => Icon(
+                    c.isSearching.value 
+                      ? Icons.hourglass_empty 
+                      : Icons.search,
+                    color: Colors.black54,
+                    size: 24,
+                  )),
+                  suffixIcon: Obx(() => c.searchQuery.value.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.close, size: 18, color: Colors.grey),
+                        onPressed: () {
+                          c.searchController.clear();
+                          c.searchQuery.value = '';
+                        },
+                      )
+                    : const SizedBox.shrink(),
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 14),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            height: 48,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 4,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+            child: DropdownButtonHideUnderline(
+              child: Obx(() => DropdownButton<String>(
+                dropdownColor: Colors.white,
+                value: c.selectedStatus.value,
+              icon: const Padding(
+                padding: EdgeInsets.only(left: 8.0),
+                child: Icon(Icons.filter_list, 
+                           color: Colors.black87, 
+                           size: 24),
+              ),
+              style: const TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.w600,
+                fontSize: 15,
+              ),
+              items: [
+                DropdownMenuItem(value: 'All',     child: Text('filter_all'.tr)),
+                DropdownMenuItem(value: 'Unpaid',  child: Text('unpaid'.tr)),
+                DropdownMenuItem(value: 'Paid',    child: Text('filter_paid'.tr)),
+                DropdownMenuItem(value: 'Overdue', child: Text('filter_overdue'.tr)),
+                DropdownMenuItem(value: 'Return',  child: Text('Return'.tr)),
+              ],
+              onChanged: (v) {
+                if (v != null) c.selectedStatus.value = v;
+              },
+            )),
+          ),
+          ),
+        ],
       ),
     );
   }

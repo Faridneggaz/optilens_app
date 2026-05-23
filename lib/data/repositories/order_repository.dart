@@ -45,16 +45,12 @@ class OrderRepository {
 
   Future<List<Item>> searchItems(String searchText) async {
     if (searchText.isEmpty) return [];
-
-    // ✅ Récupérer le customer_code depuis la session
     final code = Get.find<SessionService>().userCode;
-
-    // ✅ Passer customer_code pour récupérer la bonne price list côté backend
     final url = Uri.parse(
       '${ApiConfig.mobileAppApiPath}search_items',
     ).replace(queryParameters: {
       'search_text': searchText,
-      'customer_code': code, // ✅ AJOUTÉ — permet au backend de retourner le bon prix
+      'customer_code': code,
     });
 
     try {

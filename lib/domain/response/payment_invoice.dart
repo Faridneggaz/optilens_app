@@ -17,12 +17,12 @@ class PaymentInvoice {
 
   static PaymentInvoice fromJson(Map<String, dynamic> json) {
     return PaymentInvoice(
-      invoice: json["invoice"],
-      allocatedAmount: (json["allocated_amount"] as num).toDouble(),
-      invoicePostingDate: json["invoice_posting_date"],
-      invoiceStatus: json["invoice_status"],
-      invoiceTotal: (json["invoice_total"] as num).toDouble(),
-      invoiceOutstanding: (json["invoice_outstanding"] as num).toDouble(),
+      invoice: json["invoice"] ?? "",
+      allocatedAmount: (json["allocated_amount"] as num?)?.toDouble() ?? 0.0,
+      invoicePostingDate: json["invoice_posting_date"] ?? "",
+      invoiceStatus: json["invoice_status"] ?? "",
+      invoiceTotal: (json["invoice_total"] as num?)?.toDouble() ?? 0.0,
+      invoiceOutstanding: (json["invoice_outstanding"] as num?)?.toDouble() ?? 0.0,
     );
   }
 }

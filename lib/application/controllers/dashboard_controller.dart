@@ -48,6 +48,12 @@ class DashboardController extends GetxController {
     _offset          = 0;
     hasMore.value    = true;
     isInitialLoading.value = true;
+    
+    // Debug print for priceList
+    if (_session.customer.value != null) {
+      print('>>> priceList value: ${_session.customer.value!.priceList}');
+    }
+
     await Future.wait([_fetchInvoices(), _fetchAnnouncements()]);
     isInitialLoading.value = false;
   }

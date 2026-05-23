@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../application/controllers/stock_entry_details_controller.dart';
 import '../../domain/response/stock_entry_item.dart' as model;
 import '../../widgets/header.dart';
+import '../../../application/controllers/language_controller.dart';
 
 class StockEntryPage extends StatelessWidget {
   const StockEntryPage({super.key});
@@ -13,7 +14,8 @@ class StockEntryPage extends StatelessWidget {
     // via BindingsBuilder before this page is pushed. Fallback to Get.put.
     final c = Get.put(StockEntryDetailsController());
 
-    return Obx(() {
+    return GetBuilder<LanguageController>(
+      builder: (_) => Obx(() {
       if (c.isLoading.value) {
         return const Scaffold(
             body:
@@ -24,31 +26,36 @@ class StockEntryPage extends StatelessWidget {
           fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black);
       final data = c.data.value;
       if (data == null) {
-        return const Scaffold(
-            body: Center(child: Text('Failed to load stock entry.')));
+        return Scaffold(
+            body: Center(child: Text('failed_load_stock'.tr)));
       }
 
       return Scaffold(
         backgroundColor: const Color.fromARGB(255, 247, 255, 254),
         body: Column(children: [
           AppHeader(
-              title: 'Stock Entry', customer: null, customerCode: ''),
+              title: 'stock_entry_page_title'.tr, customer: null, customerCode: ''),
 
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: ListView(children: [
-                Text('Date : ${data.stockEntry.postingDate}',
+            child: RefreshIndicator(
+              onRefresh: c.onRefresh,
+              color: const Color.fromARGB(255, 0, 167, 155),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  children: [
+                Text('${'date_label_stock'.tr}${data.stockEntry.postingDate}',
                     style: TextStyle(color: Colors.grey.shade600)),
                 const SizedBox(height: 12),
-                Text('Company : ${data.stockEntry.company}',
+                Text('${'company_label'.tr}${data.stockEntry.company}',
                     style: const TextStyle(
                         fontSize: 16, fontWeight: FontWeight.w500)),
                 const SizedBox(height: 20),
 
                 if (data.stockEntry.fromWarehouse.isNotEmpty)
                   _warehouseBox(
-                    title:        'From',
+                    title:        'warehouse_from'.tr,
                     value:        data.stockEntry.fromWarehouse,
                     isValidated:  c.fromWarehouseValidated.value,
                     onTap: () => c.fromWarehouseValidated.value =
@@ -59,7 +66,7 @@ class StockEntryPage extends StatelessWidget {
 
                 if (data.stockEntry.toWarehouse.isNotEmpty)
                   _warehouseBox(
-                    title:        'To',
+                    title:        'warehouse_to'.tr,
                     value:        data.stockEntry.toWarehouse,
                     isValidated:  c.toWarehouseValidated.value,
                     onTap: () => c.toWarehouseValidated.value =
@@ -71,8 +78,8 @@ class StockEntryPage extends StatelessWidget {
 
                 Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                  const Text('Items',
-                      style: TextStyle(
+                  Text('items_label'.tr,
+                      style: const TextStyle(
                           fontSize: 20, fontWeight: FontWeight.bold)),
                   if (c.isPending)
                     IconButton(
@@ -88,19 +95,19 @@ class StockEntryPage extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 0),
                   child: Row(children: [
                     if (c.isPending) const SizedBox(width: 40),
-                    const Expanded(
+                    Expanded(
                         flex: 4,
-                        child: Text('Item Name',
+                        child: Text('item_name'.tr,
                             textAlign: TextAlign.left,
                             style: headerStyle)),
-                    const Expanded(
+                    Expanded(
                         flex: 2,
-                        child: Text('QTY',
+                        child: Text('qty_header'.tr,
                             textAlign: TextAlign.center,
                             style: headerStyle)),
-                    const Expanded(
+                    Expanded(
                         flex: 2,
-                        child: Text('Status',
+                        child: Text('status_header'.tr,
                             textAlign: TextAlign.center,
                             style: headerStyle)),
                   ]),
@@ -169,9 +176,10 @@ class StockEntryPage extends StatelessWidget {
                     ]),
                   );
                 }),
-              ]),
+                  ]),
+                ),
+              ),
             ),
-          ),
 
           Padding(
             padding: const EdgeInsets.all(16),
@@ -191,7 +199,7 @@ class StockEntryPage extends StatelessWidget {
                     ),
                     child: c.isSubmitting.value
                         ? const CircularProgressIndicator(color: Colors.white)
-                        : Text(c.isPending ? 'APPROVE' : 'APPROVED',
+                        : Text(c.isPending ? 'btn_approve'.tr : 'btn_approved'.tr,
                             style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold)),
@@ -200,7 +208,7 @@ class StockEntryPage extends StatelessWidget {
           ),
         ]),
       );
-    });
+    }));
   }
 
   Future<void> _handleApprove(StockEntryDetailsController c) async {
@@ -208,7 +216,7 @@ class StockEntryPage extends StatelessWidget {
     if (result['message'] == 'Success') {
       Get.snackbar(
         'Succès',
-        result['detail'] ?? 'Stock Entry approved successfully',
+        result['detail'] ?? 'approve_success'.tr,
         backgroundColor: Colors.green,
         colorText: Colors.white,
       );
@@ -216,7 +224,7 @@ class StockEntryPage extends StatelessWidget {
     } else {
       Get.snackbar(
         'Erreur',
-        result['error'] ?? 'Failed to approve',
+        result['error'] ?? 'approve_error'.tr,
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
@@ -278,14 +286,14 @@ class StockEntryPage extends StatelessWidget {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setD) => AlertDialog(
           scrollable: true,
-          title: const Text('Add Item'),
+          title: Text('add_item_dialog_title'.tr),
           content: SizedBox(
             width: double.maxFinite,
             child: Column(mainAxisSize: MainAxisSize.min, children: [
               TextField(
                 controller: searchCtrl,
                 decoration: InputDecoration(
-                  labelText: 'Search Item',
+                  labelText: 'search_item_label'.tr,
                   suffixIcon: isSearching
                       ? const SizedBox(
                           width: 20,
@@ -331,7 +339,7 @@ class StockEntryPage extends StatelessWidget {
               const SizedBox(height: 10),
 
               TextField(
-                decoration:   const InputDecoration(labelText: 'Quantity'),
+                decoration: InputDecoration(labelText: 'quantity_label'.tr),
                 keyboardType: TextInputType.number,
                 controller:   TextEditingController(text: '1'),
                 onChanged: (v) => qty = int.tryParse(v) ?? 1,
@@ -341,7 +349,7 @@ class StockEntryPage extends StatelessWidget {
           actions: [
             TextButton(
                 onPressed: () => Get.back(),
-                child: const Text('Cancel')),
+                child: Text('btn_cancel'.tr)),
             ElevatedButton(
               onPressed: selectedItemCode != null
                   ? () {
@@ -357,7 +365,7 @@ class StockEntryPage extends StatelessWidget {
                       Get.back();
                     }
                   : null,
-              child: const Text('Add'),
+              child: Text('btn_add'.tr),
             ),
           ],
         ),

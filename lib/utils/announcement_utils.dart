@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../domain/response/announcement.dart';
 
 class AnnouncementCard extends StatelessWidget {
@@ -48,11 +49,11 @@ class AnnouncementCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text("Posté le ${announcement.postedTime}", style: TextStyle(fontSize: 11, color: Colors.grey[400])),
+                    Text("${'published_on'.tr}${announcement.postedTime}", style: TextStyle(fontSize: 11, color: Colors.grey[400])),
                     ElevatedButton(
                       onPressed: onTap,
                       style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00A89C), foregroundColor: Colors.white),
-                      child: const Text("Voir plus"),
+                      child: Text('view_more'.tr),
                     ),
                   ],
                 ),

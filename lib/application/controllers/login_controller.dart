@@ -19,6 +19,7 @@ class LoginController extends GetxController {
   final isLoading    = false.obs;
   final isUserLogin  = false.obs;
   final isObscure    = true.obs;
+  final errorMessage = ''.obs;
 
   @override
   void onClose() {
@@ -28,16 +29,20 @@ class LoginController extends GetxController {
     super.onClose();
   }
 
-  void toggleLoginMode()  => isUserLogin.value  = !isUserLogin.value;
+  void toggleLoginMode() {
+    isUserLogin.value = !isUserLogin.value;
+    errorMessage.value = '';
+  }
   void toggleObscure()    => isObscure.value     = !isObscure.value;
 
   Future<void> loginClient() async {
     final code = clientCodeController.text.trim();
     if (code.isEmpty) {
-      Get.snackbar('Erreur', 'Veuillez entrer le code client',
+      Get.snackbar('error'.tr, 'error_enter_client_code'.tr,
           backgroundColor: Colors.orange, colorText: Colors.white);
       return;
     }
+    errorMessage.value = '';
     isLoading.value = true;
     try {
       final response = await _customerRepo.fetchCustomer(code);
@@ -55,8 +60,12 @@ class LoginController extends GetxController {
 
       Get.offAllNamed(AppRoutes.main);
     } catch (e) {
-      Get.snackbar('Erreur', 'Code client invalide',
-          backgroundColor: Colors.red, colorText: Colors.white);
+      final errorStr = e.toString().toLowerCase();
+      if (errorStr.contains('network') || errorStr.contains('socket') || errorStr.contains('connection')) {
+        errorMessage.value = 'connection_error'.tr;
+      } else {
+        errorMessage.value = 'incorrect_code'.tr;
+      }
     } finally {
       isLoading.value = false;
     }
@@ -66,17 +75,17 @@ class LoginController extends GetxController {
     final email    = emailController.text.trim();
     final password = passwordController.text.trim();
     if (email.isEmpty || password.isEmpty) {
-      Get.snackbar('Erreur', 'Email et mot de passe requis',
+      Get.snackbar('error'.tr, 'error_email_password_required'.tr,
           backgroundColor: Colors.orange, colorText: Colors.white);
       return;
     }
+    errorMessage.value = '';
     isLoading.value = true;
     try {
       final response = await _loginRepo.login(email: email, password: password);
       
       if (response.user.sid.isEmpty) {
-        Get.snackbar('Erreur', 'Token manquant dans la réponse',
-            backgroundColor: Colors.red, colorText: Colors.white);
+        errorMessage.value = 'error_token_missing'.tr;
         return;
       }
 
@@ -94,8 +103,12 @@ class LoginController extends GetxController {
 
       Get.offAllNamed(AppRoutes.main);
     } catch (e) {
-      Get.snackbar('Erreur', 'Identifiants invalides',
-          backgroundColor: Colors.red, colorText: Colors.white);
+      final errorStr = e.toString().toLowerCase();
+      if (errorStr.contains('network') || errorStr.contains('socket') || errorStr.contains('connection')) {
+        errorMessage.value = 'connection_error'.tr;
+      } else {
+        errorMessage.value = 'login_error'.tr;
+      }
     } finally {
       isLoading.value = false;
     }

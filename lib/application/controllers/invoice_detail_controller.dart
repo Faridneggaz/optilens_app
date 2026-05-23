@@ -41,7 +41,7 @@ class InvoiceDetailController extends GetxController {
       final data        = await _repo.getInvoiceDetails(invoiceName: _invoiceName);
       invoiceData.value = data;
     } catch (e) {
-      error.value = 'Impossible de charger les détails: $e';
+      error.value = '${'invoice_load_error'.tr}: $e';
     } finally {
       isLoading.value = false;
     }
@@ -63,7 +63,7 @@ class InvoiceDetailController extends GetxController {
   }
 
   Future<void> connectAndPrint(BluetoothDevice device) async {
-    Get.snackbar('Bluetooth', 'Connexion à ${device.name}...');
+    Get.snackbar('Bluetooth', '${'bluetooth_connecting'.tr} ${device.name}…');
     try {
       if (await bluetooth.isConnected == true) await bluetooth.disconnect();
       await bluetooth.connect(device);
@@ -76,7 +76,7 @@ class InvoiceDetailController extends GetxController {
         selectedDevice.value = device;
         await printTicketSmall();
       } else {
-        Get.snackbar('Erreur Bluetooth', e.toString(),
+        Get.snackbar('bluetooth_error'.tr, '${'bluetooth_connection_failed'.tr}: ${e.toString()}',
             backgroundColor: Colors.red, colorText: Colors.white);
       }
     }
@@ -102,13 +102,13 @@ class InvoiceDetailController extends GetxController {
     bluetooth.printCustom('OPTILENS ALGER', 2, 1);
     bluetooth.printNewLine();
     bluetooth.printCustom('--------------------------------', 1, 1);
-    bluetooth.printCustom('Client: ${inv.customer ?? 'Passage'}', 1, 0);
-    bluetooth.printCustom('Cmd: ${inv.name}', 1, 0);
-    bluetooth.printCustom('Date: ${inv.postingDate}', 1, 0);
+    bluetooth.printCustom('Client : ${inv.customer ?? 'Passage'}', 1, 0);
+    bluetooth.printCustom('Bon : ${inv.name}', 1, 0);
+    bluetooth.printCustom('Date : ${inv.postingDate}', 1, 0);
     bluetooth.printCustom('--------------------------------', 1, 1);
 
     final header =
-        'Art'.padRight(12) + 'Qt'.padLeft(3) + 'Px'.padLeft(7) + 'Tot'.padLeft(9);
+        'Art'.padRight(12) + 'Qté'.padLeft(3) + 'Prix'.padLeft(7) + 'Total'.padLeft(9);
     bluetooth.printCustom(header, 1, 0);
 
     for (final item in items) {
@@ -122,7 +122,7 @@ class InvoiceDetailController extends GetxController {
     }
 
     bluetooth.printCustom('--------------------------------', 1, 1);
-    bluetooth.printLeftRight('Qte Totale:', totalQty.toInt().toString(), 1);
+    bluetooth.printLeftRight('Qté Totale :', totalQty.toInt().toString(), 1);
     bluetooth.printNewLine();
     bluetooth.printCustom('Total: ${inv.grandTotal.toStringAsFixed(0)} DA', 2, 1);
     bluetooth.printNewLine();

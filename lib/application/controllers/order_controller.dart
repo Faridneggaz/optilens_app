@@ -51,22 +51,17 @@ class OrderController extends GetxController {
 
   // ── Item loading ─────────────────────────────────────────────────────────
 
-  Future<void> _fetchItems(String customerCode) async {
+  Future<void> _fetchItems(String code) async {
     isLoadingItems.value = true;
     try {
-      items.value = await _repo.fetchItems(customerCode);
+      items.value = await _repo.fetchItems(code);
     } catch (_) {
       items.value = [];
     } finally {
-      // ✅ Toujours remis à false même en cas d'erreur
       isLoadingItems.value = false;
     }
   }
 
-  // ── Item search ──────────────────────────────────────────────────────────
-
-  /// ✅ Nouvelle fonction — appelle l'endpoint search_items directement
-  /// Utilisée par la SearchAnchor pour des résultats rapides côté serveur
   Future<List<Item>> searchItems(String searchText) async {
     if (searchText.trim().isEmpty) return [];
     try {

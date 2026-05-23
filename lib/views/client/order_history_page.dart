@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../application/controllers/order_controller.dart';
+import '../../../application/controllers/language_controller.dart';
 
 class OrderHistoryPage extends StatelessWidget {
   const OrderHistoryPage({super.key});
@@ -14,43 +15,45 @@ class OrderHistoryPage extends StatelessWidget {
     const Color primaryTeal = Color(0xFF008075);
     const Color bgColor     = Color(0xFFF7FFFD);
 
-    return Scaffold(
-      backgroundColor: bgColor,
-      body: Column(children: [
-        _buildTopBar(c, primaryTeal),
-        Expanded(
-          child: Obx(() {
-            if (c.isLoading.value) {
-              return Center(
-                  child: CircularProgressIndicator(color: primaryTeal));
-            }
-            return RefreshIndicator(
-              onRefresh: c.loadOrders,
-              child: c.orders.isEmpty
-                  ? const Center(child: Text('Aucune commande'))
-                  : ListView.builder(
-                      padding:
-                          const EdgeInsets.fromLTRB(20, 15, 20, 100),
-                      itemCount: c.orders.length,
-                      itemBuilder: (context, i) =>
-                          _buildOrderCard(c.orders[i], primaryTeal),
-                    ),
-            );
-          }),
+    return GetBuilder<LanguageController>(
+      builder: (_) => Scaffold(
+        backgroundColor: bgColor,
+        body: Column(children: [
+          _buildTopBar(c, primaryTeal),
+          Expanded(
+            child: Obx(() {
+              if (c.isLoading.value) {
+                return Center(
+                    child: CircularProgressIndicator(color: primaryTeal));
+              }
+              return RefreshIndicator(
+                onRefresh: c.loadOrders,
+                child: c.orders.isEmpty
+                    ? Center(child: Text('no_orders'.tr))
+                    : ListView.builder(
+                        padding:
+                            const EdgeInsets.fromLTRB(20, 15, 20, 100),
+                        itemCount: c.orders.length,
+                        itemBuilder: (context, i) =>
+                            _buildOrderCard(c.orders[i], primaryTeal),
+                      ),
+              );
+            }),
+          ),
+        ]),
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: () =>
+              Get.toNamed('/order')?.then((_) => c.loadOrders()),
+          backgroundColor: primaryTeal,
+          icon: const Icon(Icons.add, color: Colors.white),
+          label: Text('new_order'.tr,
+              style: const TextStyle(
+                  color: Colors.white, fontWeight: FontWeight.bold)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
         ),
-      ]),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () =>
-            Get.toNamed('/order')?.then((_) => c.loadOrders()),
-        backgroundColor: primaryTeal,
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text('NOUVELLE COMMANDE',
-            style: TextStyle(
-                color: Colors.white, fontWeight: FontWeight.bold)),
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 
@@ -65,9 +68,9 @@ class OrderHistoryPage extends StatelessWidget {
       ),
       child: Row(children: [
         const BackButton(color: Colors.white),
-        const Expanded(
-          child: Text('MES COMMANDES',
-              style: TextStyle(
+        Expanded(
+          child: Text('my_orders'.tr,
+              style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
                   fontSize: 18)),
@@ -148,7 +151,7 @@ class OrderHistoryPage extends StatelessWidget {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10)),
             ),
-            child: Text('Détails >',
+            child: Text('details_btn'.tr,
                 style: TextStyle(
                     color: primaryTeal,
                     fontWeight: FontWeight.bold,
@@ -189,7 +192,7 @@ class OrderHistoryPage extends StatelessWidget {
               padding: const EdgeInsets.symmetric(
                   horizontal: 25, vertical: 10),
               child: Column(children: [
-                Text('COMMANDE $orderId',
+                Text('${'order_title_prefix'.tr}$orderId',
                     style: const TextStyle(
                         fontWeight: FontWeight.w900, fontSize: 16)),
                 const SizedBox(height: 15),
@@ -207,8 +210,8 @@ class OrderHistoryPage extends StatelessWidget {
                       Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('DATE',
-                                style: TextStyle(
+                            Text('date_label'.tr,
+                                style: const TextStyle(
                                     color: Colors.grey,
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold)),
@@ -219,8 +222,8 @@ class OrderHistoryPage extends StatelessWidget {
                       Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            const Text('TOTAL',
-                                style: TextStyle(
+                            Text('total_label'.tr,
+                                style: const TextStyle(
                                     color: Colors.grey,
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold)),
@@ -249,8 +252,8 @@ class OrderHistoryPage extends StatelessWidget {
                             color: primaryTeal));
                   }
                   if (!snapshot.hasData || snapshot.data == null) {
-                    return const Center(
-                        child: Text('Erreur de chargement'));
+                    return Center(
+                        child: Text('load_error'.tr));
                   }
                   final items = snapshot.data as List;
                   return ListView.builder(
@@ -284,7 +287,7 @@ class OrderHistoryPage extends StatelessWidget {
             Text(item['item_code'],
                 style: const TextStyle(
                     fontWeight: FontWeight.bold, fontSize: 12)),
-            Text('Qté: ${item['qty']} x ${item['rate']} DZD',
+            Text('${'qty_detail'.tr} : ${item['qty']} x ${item['rate']} DZD',
                 style: const TextStyle(color: Colors.grey, fontSize: 11)),
           ]),
         ),

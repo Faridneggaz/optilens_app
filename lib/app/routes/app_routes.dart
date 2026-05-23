@@ -7,4 +7,9 @@ abstract class AppRoutes {
   static const complaint      = '/complaint';
   static const announcementDetail = '/announcement-detail';
   static const stockEntry     = '/stock-entry';
+  static const changePassword = '/change-password';
+  static const about          = '/about';
+  static const notifications      = '/notifications';
+  static const materialRequests   = '/material-requests';
+  static const materialRequestDetail = '/material-request-detail';
 }

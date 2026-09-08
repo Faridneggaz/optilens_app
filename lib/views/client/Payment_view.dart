@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../widgets/header.dart';
 import '../../utils/payment_utils.dart';
@@ -73,7 +73,7 @@ class PaymentPage extends StatelessWidget {
                                     child: ElevatedButton(
                                       onPressed: c.onLoadMore,
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.white,
+                                        backgroundColor: const Color.fromARGB(255, 247, 255, 253),
                                         foregroundColor: const Color.fromARGB(
                                             255, 0, 167, 155),
                                         elevation: 0,
@@ -126,8 +126,8 @@ class PaymentPage extends StatelessWidget {
             child: Container(
               height: 48,
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
+                color: Color.fromARGB(255, 247, 255, 253),
+                                  borderRadius: BorderRadius.circular(12),
                 boxShadow: const [
                   BoxShadow(
                     color: Colors.black12,
@@ -177,3 +177,5 @@ class PaymentPage extends StatelessWidget {
     );
   }
 }
+
+

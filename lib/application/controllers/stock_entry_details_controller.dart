@@ -1,7 +1,9 @@
 import 'package:get/get.dart';
 import '../../data/repositories/stock_entry_details_repository.dart';
+import '../../data/repositories/employee_api.dart';
 import '../../domain/response/stock_entry_details_response.dart';
 import '../../domain/response/stock_entry_item.dart' as model;
+import '../../core/services/session_service.dart';
 
 class StockEntryDetailsController extends GetxController {
   final _repo = StockEntryDetailsRepository();
@@ -15,7 +17,6 @@ class StockEntryDetailsController extends GetxController {
   final validatedItemIndices    = <int>{}.obs;
 
   String _name  = '';
-  String _token = '';
 
   @override
   void onInit() {
@@ -23,7 +24,6 @@ class StockEntryDetailsController extends GetxController {
     final data = Get.arguments;
     if (data != null && data is Map<String, dynamic>) {
       _name  = data['name']  as String? ?? '';
-      _token = data['token'] as String? ?? '';
     }
     fetchDetails();
   }
@@ -51,7 +51,9 @@ class StockEntryDetailsController extends GetxController {
   Future<void> fetchDetails() async {
     isLoading.value = true;
     try {
-      final response = await _repo.fetchDetails(name: _name, token: _token);
+      final response = await _repo.fetchDetails(
+          name: _name, 
+          token: Get.find<SessionService>().authToken);
       data.value = response;
       if (!isPending && data.value != null) {
         fromWarehouseValidated.value = true;
@@ -111,12 +113,12 @@ class StockEntryDetailsController extends GetxController {
 
       return await _repo.approveStockEntry(
         name:   _name,
-        token:  _token,
+        token:  Get.find<SessionService>().authToken,
         items:  itemsToSend,
         action: 'approve',
       );
     } catch (e) {
-      return {'error': e.toString()};
+      return EmployeeApi.failureResult(e);
     } finally {
       isSubmitting.value = false;
     }
@@ -124,7 +126,7 @@ class StockEntryDetailsController extends GetxController {
 
   Future<List<Map<String, String>>> searchItems(String searchText) async {
     try {
-      return await _repo.searchItems(token: _token, searchText: searchText);
+      return await _repo.searchItems(token: Get.find<SessionService>().authToken, searchText: searchText);
     } catch (_) {
       return [];
     }

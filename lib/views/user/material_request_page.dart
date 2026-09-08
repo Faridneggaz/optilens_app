@@ -5,7 +5,9 @@ import '../../domain/response/material_request_response.dart';
 import '../../widgets/header.dart';
 import '../../../application/controllers/language_controller.dart';
 import '../../app/routes/app_routes.dart';
-
+import '../../utils/mr_status_helper.dart';
+import '../../core/services/session_service.dart';
+import '../../data/repositories/employee_api.dart';
 class MaterialRequestPage extends StatelessWidget {
   const MaterialRequestPage({super.key});
 
@@ -45,7 +47,7 @@ class MaterialRequestPage extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: const Color.fromARGB(255, 247, 255, 253),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: Colors.grey.shade300),
                       ),
@@ -74,7 +76,7 @@ class MaterialRequestPage extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: const Color.fromARGB(255, 247, 255, 253),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: Colors.grey.shade300),
                       ),
@@ -141,8 +143,7 @@ class MaterialRequestPage extends StatelessWidget {
                   color: const Color.fromARGB(255, 0, 167, 155),
                   child: ListView.builder(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(vertical: 20),
                     itemCount: c.displayList.length + 1,
                     itemBuilder: (context, index) {
                       if (index == c.displayList.length) {
@@ -185,7 +186,7 @@ class MaterialRequestPage extends StatelessWidget {
         child: ElevatedButton(
           onPressed: c.onLoadMore,
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.white,
+            backgroundColor: const Color.fromARGB(255, 247, 255, 253),
             foregroundColor: Colors.teal,
             elevation: 0,
             side: const BorderSide(color: Colors.teal),
@@ -208,7 +209,7 @@ class MaterialRequestPage extends StatelessWidget {
     MaterialRequestController c,
   ) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: () => Get.toNamed(AppRoutes.materialRequestDetail,
@@ -243,11 +244,11 @@ class MaterialRequestPage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Text(_translateStatus(req.status),
+                  Text(translateMRStatus(req.status),
                       style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          color: _statusColor(req.status))),
+                          color: getMRStatusColor(req.status))),
                 ],
               ),
               const SizedBox(height: 8),
@@ -277,7 +278,7 @@ class MaterialRequestPage extends StatelessWidget {
                   Expanded(
                     child: Text(
                         req.fromWarehouse.isNotEmpty
-                            ? '${req.fromWarehouse} → ${req.warehouse}'
+                            ? '${req.fromWarehouse} \\u2192 ${req.warehouse}'
                             : req.warehouse,
                         style:
                             const TextStyle(color: Colors.grey, fontSize: 13),
@@ -333,46 +334,6 @@ class MaterialRequestPage extends StatelessWidget {
     );
   }
 
-  String _translateStatus(String status) {
-    switch (status) {
-      case 'Draft':
-        return 'Brouillon';
-      case 'Submitted':
-        return 'Soumis';
-      case 'Pending':
-        return 'En attente';
-      case 'Partially Received':
-        return 'Partiellement reçu';
-      case 'Received':
-        return 'Reçu';
-      case 'Stopped':
-        return 'Arrêté';
-      case 'Cancelled':
-        return 'Annulé';
-      default:
-        return status;
-    }
-  }
-
-  Color _statusColor(String status) {
-    switch (status) {
-      case 'Draft':
-        return Colors.red;
-      case 'Submitted':
-        return Colors.blue;
-      case 'Pending':
-        return Colors.orange;
-      case 'Partially Received':
-      case 'Received':
-        return Colors.green;
-      case 'Stopped':
-      case 'Cancelled':
-        return Colors.grey;
-      default:
-        return Colors.grey;
-    }
-  }
-
   void _handleSubmit(
       BuildContext context, String name, MaterialRequestController c) {
     Get.defaultDialog(
@@ -388,6 +349,9 @@ class MaterialRequestPage extends StatelessWidget {
             barrierDismissible: false);
         final res = await c.submitRequest(name);
         Get.back();
+        if (EmployeeApi.isAuthHandled(res)) {
+          return;
+        }
         if (res.containsKey('error')) {
           Get.snackbar('Error', res['error'],
               backgroundColor: Colors.red.shade100, colorText: Colors.red);
@@ -416,6 +380,9 @@ class MaterialRequestPage extends StatelessWidget {
             barrierDismissible: false);
         final res = await c.deleteRequest(name);
         Get.back();
+        if (EmployeeApi.isAuthHandled(res)) {
+          return;
+        }
         if (res.containsKey('error')) {
           Get.snackbar('Error', res['error'],
               backgroundColor: Colors.red.shade100, colorText: Colors.red);
@@ -456,12 +423,17 @@ class _CreateMaterialRequestSheetState
   
   String? _sourceWarehouse;
   String? _targetWarehouse;
+  
+  String? _selectedPriceList;
+  List<String> _priceLists = [];
+  List<String> _companies = ['OPTILENS ALGER'];
 
   final TextEditingController _searchController = TextEditingController();
   List<Map<String, String>> _searchResults = [];
   bool _isSearchingItems = false;
 
   final List<Map<String, dynamic>> _selectedItems = [];
+  bool _isSaving = false;
   bool _isSubmitting = false;
 
   final _purposes = [
@@ -475,6 +447,44 @@ class _CreateMaterialRequestSheetState
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _initLookups();
+  }
+
+  Future<void> _initLookups() async {
+    final session = Get.find<SessionService>();
+    final allowed = session.getAllowedCompanies();
+    if (allowed.isNotEmpty) {
+      _companies = allowed;
+      if (!_companies.contains(_selectedCompany)) {
+        _selectedCompany = _companies.first;
+      }
+    }
+
+    await Future.wait([
+      widget.c.loadCompanies(),
+      widget.c.loadPriceLists(),
+    ]);
+    if (!mounted) return;
+
+    setState(() {
+      if (widget.c.companies.isNotEmpty) {
+        _companies = widget.c.companies.toList();
+        if (!_companies.contains(_selectedCompany)) {
+          _selectedCompany = _companies.first;
+        }
+      }
+      _priceLists = widget.c.priceLists.toList();
+      if (_selectedPriceList != null &&
+          !_priceLists.contains(_selectedPriceList)) {
+        _selectedPriceList = null;
+      }
+    });
+    await widget.c.loadWarehouses(_selectedCompany);
   }
 
   Future<void> _search(String text) async {
@@ -510,7 +520,7 @@ class _CreateMaterialRequestSheetState
     setState(() => _searchResults.clear());
   }
 
-  Future<void> _submit() async {
+  Future<void> _submit({required bool submitDirect}) async {
     if (_selectedItems.isEmpty) {
       Get.snackbar('Error', 'Please add at least one item',
           backgroundColor: Colors.red.shade100, colorText: Colors.red);
@@ -538,7 +548,11 @@ class _CreateMaterialRequestSheetState
       }
     }
 
-    setState(() => _isSubmitting = true);
+    if (submitDirect) {
+      setState(() => _isSubmitting = true);
+    } else {
+      setState(() => _isSaving = true);
+    }
 
     final String requiredByStr =
         "${_requiredBy.year}-${_requiredBy.month.toString().padLeft(2, '0')}-${_requiredBy.day.toString().padLeft(2, '0')}";
@@ -548,16 +562,6 @@ class _CreateMaterialRequestSheetState
       'qty': e['qty'],
     }).toList();
 
-    // The setWarehouse should be target unless issue, then it's source? 
-    // Wait, ERPNext standard: 
-    // Material Transfer: set_warehouse = target, set_from_warehouse = source
-    // Material Issue: set_warehouse = source (target empty) - wait, or is it set_from_warehouse? 
-    // Usually Material Issue has `set_from_warehouse` or `set_warehouse`. Let's use set_warehouse as target, set_from_warehouse as source.
-    // The prompt says: "Warehouse fields — DYNAMIC based on purpose: Material Transfer -> source + target. Material Issue -> source only. Material Receipt / Purchase -> target only."
-    // And for create body: "set_warehouse (target - always required), set_from_warehouse (source - only for Material Transfer)".
-    // So for Material Issue, is set_warehouse used for source? Yes, in ERPNext if it's Issue, `set_warehouse` acts as source warehouse.
-    // Let's explicitly follow: setWarehouse is the main warehouse field, setFromWarehouse is the secondary.
-    // Let's set it based on purpose:
     String setWarehouse = '';
     String? setFromWarehouse;
     if (_selectedPurpose == 'Material Transfer') {
@@ -575,20 +579,55 @@ class _CreateMaterialRequestSheetState
       requiredBy:       requiredByStr,
       setWarehouse:     setWarehouse,
       setFromWarehouse: setFromWarehouse,
+      priceList:        _selectedPriceList,
       items:            itemsPayload,
     );
 
-    setState(() => _isSubmitting = false);
-
+    if (EmployeeApi.isAuthHandled(res)) {
+      if (submitDirect) {
+        setState(() => _isSubmitting = false);
+      } else {
+        setState(() => _isSaving = false);
+      }
+      return;
+    }
     if (res.containsKey('error')) {
+      if (submitDirect) {
+        setState(() => _isSubmitting = false);
+      } else {
+        setState(() => _isSaving = false);
+      }
       Get.snackbar('Error', res['error'],
           backgroundColor: Colors.red.shade100, colorText: Colors.red);
+      return;
+    }
+
+    final newDocName = res['name']?.toString() ?? res['id']?.toString() ?? res['message']?['name']?.toString();
+    
+    if (submitDirect && newDocName != null) {
+      final submitRes = await widget.c.submitRequest(newDocName);
+      setState(() => _isSubmitting = false);
+      
+      if (EmployeeApi.isAuthHandled(submitRes)) {
+        Get.back();
+        widget.c.onRefresh();
+        return;
+      }
+      if (submitRes.containsKey('error')) {
+        Get.snackbar('Warning', 'Draft created but submit failed: ${submitRes['error']}',
+            backgroundColor: Colors.orange.shade100, colorText: Colors.orange.shade900);
+      } else {
+        Get.snackbar('Success', 'mr_submitted'.tr,
+            backgroundColor: Colors.green.shade100, colorText: Colors.green);
+      }
     } else {
-      Get.back(); // close sheet
+      setState(() => _isSaving = false);
       Get.snackbar('Success', 'mr_created'.tr,
           backgroundColor: Colors.green.shade100, colorText: Colors.green);
-      widget.c.onRefresh();
     }
+    
+    Get.back(); // close sheet
+    widget.c.onRefresh();
   }
 
   @override
@@ -640,42 +679,46 @@ class _CreateMaterialRequestSheetState
               Expanded(
                 child: ListView(
                   controller: controller,
-                  padding: const EdgeInsets.all(20),
+                  padding: EdgeInsets.only(
+                    left: 20, right: 20, top: 8,
+                    bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+                  ),
                   children: [
-                    // ── Company ─────────────────────────────────────
-                    Text('select_company'.tr,
-                        style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.grey)),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey.shade300),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          isExpanded: true,
-                          value: _selectedCompany,
-                          items: ['OPTILENS ALGER']
-                              .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                              .toList(),
-                          onChanged: (v) {
-                            if (v != null) {
-                              setState(() => _selectedCompany = v);
-                              widget.c.loadWarehouses(v);
-                            }
-                          },
+                    // â”€â”€ Company â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                    if (_companies.length > 1) ...[
+                      Text('select_company'.tr,
+                          style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey)),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: Color.fromARGB(255, 247, 255, 253),
+                                  borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            isExpanded: true,
+                            value: _selectedCompany,
+                            items: _companies
+                                .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                                .toList(),
+                            onChanged: (v) {
+                              if (v != null) {
+                                setState(() => _selectedCompany = v);
+                                widget.c.loadWarehouses(v);
+                              }
+                            },
+                          ),
                         ),
                       ),
-                    ),
+                      const SizedBox(height: 16),
+                    ],
 
-                    const SizedBox(height: 16),
-
-                    // ── Purpose ─────────────────────────────────────
+                    // â”€â”€ Purpose â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                     Text('purpose'.tr,
                         style: const TextStyle(
                             fontSize: 12,
@@ -685,8 +728,8 @@ class _CreateMaterialRequestSheetState
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
+                        color: Color.fromARGB(255, 247, 255, 253),
+                                  borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: Colors.grey.shade300),
                       ),
                       child: DropdownButtonHideUnderline(
@@ -712,7 +755,7 @@ class _CreateMaterialRequestSheetState
 
                     const SizedBox(height: 16),
 
-                    // ── Required By date picker ──────────────────────
+                    // â”€â”€ Required By date picker â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                     Text('required_by'.tr,
                         style: const TextStyle(
                             fontSize: 12,
@@ -741,8 +784,8 @@ class _CreateMaterialRequestSheetState
                         padding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 14),
                         decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
+                          color: Color.fromARGB(255, 247, 255, 253),
+                                  borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: Colors.grey.shade300),
                         ),
                         child: Row(
@@ -760,95 +803,40 @@ class _CreateMaterialRequestSheetState
                       ),
                     ),
 
+                    const SizedBox(height: 16),
+                    
+                    // â”€â”€ Price List â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                    Text('price_list'.tr,
+                        style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey)),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: const Color.fromARGB(255, 247, 255, 253),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: _selectedPriceList,
+                          isExpanded: true,
+                          hint: Text('select_price_list'.tr,
+                              style: const TextStyle(color: Colors.grey, fontSize: 14)),
+                          items: [
+                            DropdownMenuItem(value: null, child: Text('none'.tr)),
+                            ..._priceLists.map((p) =>
+                                DropdownMenuItem(value: p, child: Text(p, style: const TextStyle(fontSize: 14))))
+                          ],
+                          onChanged: (v) => setState(() => _selectedPriceList = v),
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 20),
 
-                    // ── Warehouses based on purpose ──────────────────
-                    Obx(() {
-                      final whList = widget.c.warehouses;
-                      if (whList.isEmpty) return const SizedBox.shrink();
-
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (_selectedPurpose == 'Material Transfer' ||
-                              _selectedPurpose == 'Material Issue') ...[
-                            Text('source_warehouse'.tr,
-                                style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.grey)),
-                            const SizedBox(height: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                border:
-                                    Border.all(color: Colors.grey.shade300),
-                              ),
-                              child: DropdownButtonHideUnderline(
-                                child: DropdownButton<String>(
-                                  isExpanded: true,
-                                  hint: Text('select_warehouse'.tr),
-                                  value: _sourceWarehouse,
-                                  items: whList
-                                      .map((w) => DropdownMenuItem(
-                                          value: w['name'],
-                                          child: Text(w['warehouse_name'] ??
-                                              w['name'] ??
-                                              '')))
-                                      .toList(),
-                                  onChanged: (v) {
-                                    setState(() => _sourceWarehouse = v);
-                                  },
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                          ],
-
-                          if (_selectedPurpose == 'Material Transfer' ||
-                              _selectedPurpose == 'Material Receipt' ||
-                              _selectedPurpose == 'Purchase') ...[
-                            Text('target_warehouse'.tr,
-                                style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.grey)),
-                            const SizedBox(height: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                border:
-                                    Border.all(color: Colors.grey.shade300),
-                              ),
-                              child: DropdownButtonHideUnderline(
-                                child: DropdownButton<String>(
-                                  isExpanded: true,
-                                  hint: Text('select_warehouse'.tr),
-                                  value: _targetWarehouse,
-                                  items: whList
-                                      .map((w) => DropdownMenuItem(
-                                          value: w['name'],
-                                          child: Text(w['warehouse_name'] ??
-                                              w['name'] ??
-                                              '')))
-                                      .toList(),
-                                  onChanged: (v) {
-                                    setState(() => _targetWarehouse = v);
-                                  },
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                          ],
-                        ],
-                      );
-                    }),
-
-                    // ── Items section ────────────────────────────────
+                    // â”€â”€ Items section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                     Text('items_title'.tr.isNotEmpty
                         ? 'items_title'.tr
                         : 'items_label'.tr,
@@ -858,7 +846,7 @@ class _CreateMaterialRequestSheetState
                             color: Colors.grey)),
                     const SizedBox(height: 8),
 
-                    // ── Item search ──────────────────────────────────
+                    // â”€â”€ Item search â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                     TextField(
                       controller: _searchController,
                       decoration: InputDecoration(
@@ -912,7 +900,157 @@ class _CreateMaterialRequestSheetState
 
                     const SizedBox(height: 12),
 
-                    // ── Selected Items ───────────────────────────────
+                    // â”€â”€ Warehouses based on purpose â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                    Obx(() {
+                      final whList = widget.c.warehouses.toList();
+                      if (whList.isEmpty) return const SizedBox.shrink();
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (_selectedPurpose == 'Material Transfer' ||
+                              _selectedPurpose == 'Material Issue') ...[
+                            Text('source_warehouse'.tr,
+                                style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.grey)),
+                            const SizedBox(height: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              decoration: BoxDecoration(
+                                color: Color.fromARGB(255, 247, 255, 253),
+                                  borderRadius: BorderRadius.circular(12),
+                                border:
+                                    Border.all(color: Colors.grey.shade300),
+                              ),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  isExpanded: true,
+                                  hint: Text('select_warehouse'.tr),
+                                  value: _sourceWarehouse,
+                                  items: whList
+                                      .map((w) => DropdownMenuItem(
+                                          value: w['name'],
+                                          child: Text(w['warehouse_name'] ??
+                                              w['name'] ??
+                                              '')))
+                                      .toList(),
+                                  onChanged: (v) {
+                                    setState(() => _sourceWarehouse = v);
+                                  },
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                          ],
+
+                          if (_selectedPurpose == 'Material Transfer' ||
+                              _selectedPurpose == 'Material Receipt' ||
+                              _selectedPurpose == 'Purchase') ...[
+                            Text('target_warehouse'.tr,
+                                style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.grey)),
+                            const SizedBox(height: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              decoration: BoxDecoration(
+                                color: Color.fromARGB(255, 247, 255, 253),
+                                  borderRadius: BorderRadius.circular(12),
+                                border:
+                                    Border.all(color: Colors.grey.shade300),
+                              ),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  isExpanded: true,
+                                  hint: Text('select_warehouse'.tr),
+                                  value: _targetWarehouse,
+                                  items: whList
+                                      .map((w) => DropdownMenuItem(
+                                          value: w['name'],
+                                          child: Text(w['warehouse_name'] ??
+                                              w['name'] ??
+                                              '')))
+                                      .toList(),
+                                  onChanged: (v) {
+                                    setState(() => _targetWarehouse = v);
+                                  },
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                          ],
+                        ],
+                      );
+                    }),
+
+                    // â”€â”€ Items section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                    Text('items_title'.tr.isNotEmpty
+                        ? 'items_title'.tr
+                        : 'items_label'.tr,
+                        style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey)),
+                    const SizedBox(height: 8),
+
+                    // â”€â”€ Item search â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                    TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: 'search_item'.tr,
+                        hintStyle: TextStyle(
+                            color: Colors.grey.shade400, fontSize: 13),
+                        prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                        suffixIcon: _isSearchingItems
+                            ? const Padding(
+                                padding: EdgeInsets.all(12),
+                                child: SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2)),
+                              )
+                            : null,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                      ),
+                      onChanged: _search,
+                    ),
+
+                    if (_searchResults.isNotEmpty)
+                      Container(
+                        margin: const EdgeInsets.only(top: 8),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey.shade300),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: _searchResults.length,
+                          separatorBuilder: (_, __) =>
+                              const Divider(height: 1),
+                          itemBuilder: (context, index) {
+                            final item = _searchResults[index];
+                            return ListTile(
+                              title: Text(item['item_name'] ?? ''),
+                              subtitle: Text(item['item_code'] ?? ''),
+                              onTap: () => _addItem(item),
+                            );
+                          },
+                        ),
+                      ),
+
+                    const SizedBox(height: 12),
+
+                    // â”€â”€ Selected Items â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                     ..._selectedItems.asMap().entries.map((entry) {
                       final idx = entry.key;
                       final item = entry.value;
@@ -993,65 +1131,55 @@ class _CreateMaterialRequestSheetState
 
                     const SizedBox(height: 24),
 
-                    // ── Submit button ────────────────────────────────
-                    SizedBox(
-                      width: double.infinity,
-                      height: 54,
-                      child: ElevatedButton.icon(
-                        onPressed: _isSubmitting ? null : _submit,
-                        icon: _isSubmitting
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                    color: Colors.white, strokeWidth: 2))
-                            : const Icon(Icons.send, color: Colors.white),
-                        label: Text('submit'.tr,
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16)),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              const Color.fromARGB(255, 0, 167, 155),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14)),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
                   ],
                 ),
               ),
 
-              // Submit Button
+              // Bottom action area
               Padding(
                 padding: const EdgeInsets.all(16),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _isSubmitting ? null : _submit,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          const Color.fromARGB(255, 0, 167, 155),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: (_isSaving || _isSubmitting) ? null : () => _submit(submitDirect: false),
+                        icon: _isSaving
+                            ? const SizedBox(
+                                width: 20, height: 20,
+                                child: CircularProgressIndicator(color: Colors.teal, strokeWidth: 2))
+                            : const Icon(Icons.save, color: Colors.teal),
+                        label: Text('save_draft'.tr,
+                            style: const TextStyle(color: Colors.teal, fontWeight: FontWeight.bold, fontSize: 16)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.teal.shade50,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              side: const BorderSide(color: Colors.teal)),
+                        ),
+                      ),
                     ),
-                    child: _isSubmitting
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                                color: Colors.white, strokeWidth: 2))
-                        : Text('submit'.tr,
-                            style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white)),
-                  ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: (_isSaving || _isSubmitting) ? null : () => _submit(submitDirect: true),
+                        icon: _isSubmitting
+                            ? const SizedBox(
+                                width: 20, height: 20,
+                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                            : const Icon(Icons.send, color: Colors.white),
+                        label: Text('submit_direct'.tr,
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color.fromARGB(255, 0, 167, 155),
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -1061,3 +1189,5 @@ class _CreateMaterialRequestSheetState
     );
   }
 }
+
+

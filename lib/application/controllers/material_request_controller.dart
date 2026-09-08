@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import '../../data/repositories/material_request_repository.dart';
+import '../../data/repositories/employee_api.dart';
 import '../../domain/response/material_request_response.dart';
 import '../../core/services/session_service.dart';
 
@@ -15,6 +16,8 @@ class MaterialRequestController extends GetxController {
   final isSearching      = false.obs;
   final selectedStatus   = 'All'.obs;
   final warehouses       = <Map<String, String>>[].obs;
+  final companies        = <String>[].obs;
+  final priceLists       = <String>[].obs;
 
   Worker? _debounce;
   int _offset = 0;
@@ -29,12 +32,38 @@ class MaterialRequestController extends GetxController {
   void onInit() {
     super.onInit();
     fetchMaterialRequests();
-    loadWarehouses('OPTILENS ALGER');
+    _initLookups();
     _debounce = debounce(
       searchQuery,
       (String q) => _searchFromServer(q),
       time: const Duration(milliseconds: 400),
     );
+  }
+
+  Future<void> _initLookups() async {
+    await loadCompanies();
+    final company = companies.isNotEmpty ? companies.first : 'OPTILENS ALGER';
+    await loadWarehouses(company);
+  }
+
+  Future<void> loadCompanies() async {
+    try {
+      final res = await _repo.fetchCompanies(token: _token);
+      if (res.isNotEmpty) {
+        companies.value = res;
+        return;
+      }
+    } catch (_) {}
+    final allowed = Get.find<SessionService>().getAllowedCompanies();
+    if (allowed.isNotEmpty) {
+      companies.value = allowed;
+    }
+  }
+
+  Future<void> loadPriceLists() async {
+    try {
+      priceLists.value = await _repo.fetchPriceLists(token: _token);
+    } catch (_) {}
   }
 
   @override
@@ -120,7 +149,7 @@ class MaterialRequestController extends GetxController {
       return await _repo.manageMaterialRequest(
           token: _token, name: name, action: 'submit');
     } catch (e) {
-      return {'error': e.toString()};
+      return EmployeeApi.failureResult(e);
     }
   }
 
@@ -129,7 +158,7 @@ class MaterialRequestController extends GetxController {
       return await _repo.manageMaterialRequest(
           token: _token, name: name, action: 'delete');
     } catch (e) {
-      return {'error': e.toString()};
+      return EmployeeApi.failureResult(e);
     }
   }
 
@@ -147,6 +176,7 @@ class MaterialRequestController extends GetxController {
     required String requiredBy,
     required String setWarehouse,
     String? setFromWarehouse,
+    String? priceList,
     required List<Map<String, dynamic>> items,
   }) async {
     try {
@@ -157,10 +187,11 @@ class MaterialRequestController extends GetxController {
         requiredBy:       requiredBy,
         setWarehouse:     setWarehouse,
         setFromWarehouse: setFromWarehouse,
+        priceList:        priceList,
         items:            items,
       );
     } catch (e) {
-      return {'error': e.toString()};
+      return EmployeeApi.failureResult(e);
     }
   }
 }

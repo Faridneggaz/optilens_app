@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../utils/api_config.dart';
 import '../../domain/response/stock_entry_response.dart';
+import 'employee_api.dart';
 import 'repository_exception.dart';
 
 class StockEntryRepository {
@@ -16,7 +17,7 @@ class StockEntryRepository {
     String? searchText,
     String? status,
   }) async {
-    String urlStr = '$_baseUrl$_getLastStockEntries?token=$token&limit=$limit&offset=$offset';
+    String urlStr = '$_baseUrl$_getLastStockEntries?token=${Uri.encodeComponent(token)}&limit=$limit&offset=$offset';
     if (searchText != null && searchText.isNotEmpty) {
       urlStr += '&search_text=$searchText';
     }
@@ -27,7 +28,9 @@ class StockEntryRepository {
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
-        return StockEntryResponse.fromJson(json.decode(response.body));
+        final decoded = json.decode(response.body);
+        EmployeeApi.unwrap(decoded);
+        return StockEntryResponse.fromJson(decoded);
       }
       throw RepositoryException('Server error: ${response.statusCode}');
     } catch (e) {

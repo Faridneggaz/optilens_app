@@ -59,7 +59,7 @@ class ZoomDrawerPage extends StatelessWidget {
           slideWidth: MediaQuery.of(context).size.width > 600
               ? 350.0
               : MediaQuery.of(context).size.width * 0.80,
-          menuBackgroundColor: Colors.white,
+          menuBackgroundColor: const Color.fromARGB(255, 247, 255, 253),
         ),
       );
     });
@@ -110,7 +110,7 @@ class DrawerScreen extends StatelessWidget {
 
     return GetBuilder<LanguageController>(
       builder: (_) => Scaffold(
-        backgroundColor: const Color.fromARGB(255, 254, 255, 255),
+        backgroundColor: const Color.fromARGB(255, 247, 255, 253),
         body: SafeArea(
           child: Column(
             children: [
@@ -169,7 +169,7 @@ class DrawerScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // --- SECTION J-OPTIC PLACÉE EN BAS ---
+                    // --- SECTION J-OPTIC PLACÃ‰E EN BAS ---
                     if (!isUser) ...[
                       const Divider(height: 1, color: Color(0xFFE8F3F0)),
                       const SizedBox(height: 15),
@@ -203,7 +203,7 @@ class DrawerScreen extends StatelessWidget {
                       const SizedBox(height: 10),
                     ],
 
-                    // --- BOUTON DÉCONNEXION ---
+                    // --- BOUTON DÃ‰CONNEXION ---
                     InkWell(
                       onTap: () {
                         ZoomDrawer.of(context)?.close();
@@ -265,3 +265,4 @@ class DrawerScreen extends StatelessWidget {
     );
   }
 }
+

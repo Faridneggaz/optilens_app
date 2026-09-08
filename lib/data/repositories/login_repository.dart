@@ -25,8 +25,11 @@ class LoginRepository {
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
         final message = jsonData['message'];
+        if (message is Map && message['user'] is Map) {
+          return LoginResponse.fromJson(jsonData);
+        }
         if (message == null || message['ok'] == false) {
-          final error = message?['error'] ?? 'Unknown error';
+          final error = (message is Map ? message['error'] : null) ?? 'Unknown error';
           throw RepositoryException('Login failed: $error');
         }
         return LoginResponse.fromJson(jsonData);

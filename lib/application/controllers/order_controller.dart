@@ -104,16 +104,24 @@ class OrderController extends GetxController {
 
   // ── Order submission ─────────────────────────────────────────────────────
 
-  Future<bool> confirmOrder() async {
-    if (cart.isEmpty) return false;
+  Future<String?> confirmOrder() async {
+    if (cart.isEmpty) return 'Cart is empty';
     isSubmitting.value = true;
     try {
       final payload = cart.map((item) => item.toJson()).toList();
       final result  = await _repo.submitOrder(payload);
-      if (result) cart.clear();
-      return result;
-    } catch (_) {
-      return false;
+      if (result) {
+        cart.clear();
+        return null; // Success
+      }
+      return 'Failed to place order';
+    } catch (e, stacktrace) {
+      print('Order submission error: $e');
+      print(stacktrace);
+      if (e.toString().startsWith('RepositoryException: ')) {
+        return e.toString().substring('RepositoryException: '.length);
+      }
+      return e.toString();
     } finally {
       isSubmitting.value = false;
     }

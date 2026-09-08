@@ -8,7 +8,7 @@ import '../../domain/response/item.dart';
 class OrderPage extends StatelessWidget {
   const OrderPage({super.key});
 
-  // ── Palette ──────────────────────────────────────────────────────────────
+  // â”€â”€ Palette â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static const Color _teal     = Color(0xFF008075);
   static const Color _darkBlue = Color(0xFF1F2837);
   static const Color _bg       = Color(0xFFF7FFFD);
@@ -17,7 +17,7 @@ class OrderPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = Get.find<OrderController>();
     // cart.clear() is now called by clearCart() via the BindingsBuilder in
-    // main.dart — fires once per route push, not on every rebuild.
+    // main.dart â€” fires once per route push, not on every rebuild.
 
     return GetBuilder<LanguageController>(
       builder: (_) => Scaffold(
@@ -28,16 +28,17 @@ class OrderPage extends StatelessWidget {
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
           centerTitle: true,
-          backgroundColor: Colors.white,
+          backgroundColor: const Color(0xFFF7FFFD),
           elevation: 0,
           leading: BackButton(color: _teal),
         ),
         body: Column(children: [
-          // ── Search bar ─────────────────────────────────────────────────────
+          // â”€â”€ Search bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           Padding(
             padding: const EdgeInsets.fromLTRB(15, 15, 15, 8),
             child: SearchAnchor(
               viewBackgroundColor: _bg,
+              viewSurfaceTintColor: Colors.transparent,
               viewElevation: 0,
               viewShape: const RoundedRectangleBorder(
                 borderRadius: BorderRadius.vertical(bottom: Radius.circular(25)),
@@ -54,7 +55,7 @@ class OrderPage extends StatelessWidget {
                 ),
               ),
 
-              // ✅ FIX : Future<List<Widget>> — compatible avec suggestionsBuilder
+              // âœ… FIX : Future<List<Widget>> â€” compatible avec suggestionsBuilder
               suggestionsBuilder: (context, controller) async {
                 final q = controller.text.trim();
 
@@ -67,7 +68,7 @@ class OrderPage extends StatelessWidget {
                   ];
                 }
 
-                // ✅ Appel direct à search_items via le controller
+                // âœ… Appel direct Ã  search_items via le controller
                 final results = await c.searchItems(q);
 
                 if (results.isEmpty) {
@@ -86,7 +87,7 @@ class OrderPage extends StatelessWidget {
             ),
           ),
 
-          // ── Cart list ──────────────────────────────────────────────────────
+          // â”€â”€ Cart list â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           Expanded(
             child: Obx(() => c.cart.isEmpty
                 ? Center(
@@ -112,14 +113,14 @@ class OrderPage extends StatelessWidget {
                   )),
           ),
 
-          // ── Summary / Confirm ──────────────────────────────────────────────
+          // â”€â”€ Summary / Confirm â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           _buildSummary(c, context),
         ]),
       ),
     );
   }
 
-  // ── Search suggestion tile ───────────────────────────────────────────────
+  // â”€â”€ Search suggestion tile â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Widget _buildSuggestionTile(
     OrderController c,
@@ -129,6 +130,8 @@ class OrderPage extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       elevation: 0,
+      color: Colors.white,
+      surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(color: Colors.grey.shade200),
@@ -163,7 +166,7 @@ class OrderPage extends StatelessWidget {
     );
   }
 
-  // ── Cart item tile ───────────────────────────────────────────────────────
+  // â”€â”€ Cart item tile â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Widget _buildCartTile(OrderController c, int index) {
     final CartItem item = c.cart[index];
@@ -206,7 +209,7 @@ class OrderPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${item.rate.toStringAsFixed(2)} × $qty'
+                      '${item.rate.toStringAsFixed(2)} x $qty'
                       '  =  '
                       '${(item.rate * qty).toStringAsFixed(2)} ${item.currency}',
                       style: const TextStyle(
@@ -245,7 +248,7 @@ class OrderPage extends StatelessWidget {
     });
   }
 
-  // ── Summary panel ────────────────────────────────────────────────────────
+  // â”€â”€ Summary panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Widget _buildSummary(OrderController c, BuildContext context) {
     return Container(
@@ -285,8 +288,8 @@ class OrderPage extends StatelessWidget {
                 onPressed: c.isSubmitting.value
                     ? null
                     : () async {
-                        final ok = await c.confirmOrder();
-                        if (ok) {
+                        final error = await c.confirmOrder();
+                        if (error == null) {
                           Get.snackbar(
                             'success'.tr,
                             'order_success'.tr,
@@ -297,9 +300,10 @@ class OrderPage extends StatelessWidget {
                         } else {
                           Get.snackbar(
                             'error'.tr,
-                            'order_error'.tr,
+                            error,
                             backgroundColor: Colors.red,
                             colorText: Colors.white,
+                            duration: const Duration(seconds: 5),
                           );
                         }
                       },

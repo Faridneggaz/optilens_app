@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../application/controllers/material_request_detail_controller.dart';
 import '../../widgets/header.dart';
-import '../../../application/controllers/language_controller.dart';
-
+import '../../application/controllers/language_controller.dart';
+import '../../core/services/session_service.dart';
+import '../../data/repositories/employee_api.dart';
+import '../../app/routes/app_routes.dart';
 class MaterialRequestDetailPage extends StatelessWidget {
   const MaterialRequestDetailPage({super.key});
 
@@ -168,37 +170,120 @@ class MaterialRequestDetailPage extends StatelessWidget {
                 ),
               ),
 
-              // Bottom status button
+              // Bottom action area
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: SizedBox(
                   width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: mr.docstatus == 0
-                        ? () => c.submitRequest()
-                        : () => Get.back(),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      backgroundColor: Colors.teal,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: Text(
-                      mr.docstatus == 0
-                          ? 'submit'.tr
-                          : _translateStatus(mr.status),
-                      style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
-                    ),
-                  ),
+                  child: Obx(() {
+                    final isBusy = c.isLoading.value;
+                    if (isBusy) {
+                      return const Center(child: CircularProgressIndicator(color: Colors.teal));
+                    }
+                    if (mr.docstatus == 0) {
+                      return _actionButton(
+                        label: 'submit'.tr,
+                        icon: Icons.check,
+                        color: const Color.fromARGB(255, 0, 167, 155),
+                        onPressed: () => _handleSubmit(mr.name, c, context),
+                      );
+                    }
+                    if (mr.status == 'Pending' && mr.materialRequestType == 'Material Transfer') {
+                      return _actionButton(
+                        label: 'create_transfer'.tr,
+                        icon: Icons.swap_horiz,
+                        color: Colors.blue.shade600,
+                        onPressed: () => _handleCreateTransfer(mr.name, c, context),
+                      );
+                    }
+                    return const SizedBox(height: 16);
+                  }),
                 ),
               ),
             ],
           ),
         );
       }),
+    );
+  }
+
+  Widget _actionButton({
+    required String label,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
+    return ElevatedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, color: Colors.white),
+      label: Text(
+        label,
+        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+      ),
+      style: ElevatedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        backgroundColor: color,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+
+  void _handleSubmit(String name, MaterialRequestDetailController c, BuildContext context) {
+    Get.defaultDialog(
+      title: 'confirm'.tr,
+      middleText: 'confirm_submit_mr'.tr,
+      textConfirm: 'confirm'.tr,
+      textCancel: 'cancel'.tr,
+      confirmTextColor: Colors.white,
+      buttonColor: Colors.teal,
+      onConfirm: () async {
+        Get.back();
+        c.isLoading.value = true;
+        final result = await c.submitRequest();
+        c.isLoading.value = false;
+        if (EmployeeApi.isAuthHandled(result)) {
+          return;
+        }
+        if (result['message'] == 'Success') {
+          Get.snackbar('success'.tr, 'mr_submitted'.tr,
+              backgroundColor: Colors.green, colorText: Colors.white);
+        } else {
+          Get.snackbar('error'.tr, result['error']?.toString() ?? 'Error',
+              backgroundColor: Colors.red, colorText: Colors.white);
+        }
+      },
+    );
+  }
+
+  void _handleCreateTransfer(String name, MaterialRequestDetailController c, BuildContext context) {
+    Get.defaultDialog(
+      title: 'confirm_create_transfer'.tr,
+      middleText: 'confirm_create_transfer_msg'.tr,
+      textConfirm: 'confirm'.tr,
+      textCancel: 'cancel'.tr,
+      confirmTextColor: Colors.white,
+      buttonColor: Colors.teal,
+      onConfirm: () async {
+        Get.back();
+        c.isLoading.value = true;
+        final result = await c.createTransfer();
+        c.isLoading.value = false;
+        if (EmployeeApi.isAuthHandled(result)) {
+          return;
+        }
+        if (result['success'] == true || result['stock_entry_id'] != null) {
+          final stockEntryId = result['stock_entry_id'] ?? '';
+          Get.snackbar('success'.tr, '${'stock_entry_created'.tr}$stockEntryId',
+              backgroundColor: Colors.green, colorText: Colors.white);
+          Get.toNamed(AppRoutes.stockEntry, arguments: {
+            'name': stockEntryId,
+            'token': Get.find<SessionService>().authToken,
+          });
+        } else {
+          Get.snackbar('error'.tr, result['error']?.toString() ?? 'Error',
+              backgroundColor: Colors.red, colorText: Colors.white);
+        }
+      },
     );
   }
 
@@ -225,26 +310,5 @@ class MaterialRequestDetailPage extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  String _translateStatus(String status) {
-    switch (status) {
-      case 'Draft':
-        return 'Brouillon';
-      case 'Submitted':
-        return 'Soumis';
-      case 'Pending':
-        return 'En attente';
-      case 'Partially Received':
-        return 'Partiellement reçu';
-      case 'Received':
-        return 'Reçu';
-      case 'Stopped':
-        return 'Arrêté';
-      case 'Cancelled':
-        return 'Annulé';
-      default:
-        return status;
-    }
   }
 }

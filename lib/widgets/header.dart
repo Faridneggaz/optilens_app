@@ -3,6 +3,7 @@ import 'logout_dialogue.dart';
 import 'package:flutter_zoom_drawer/flutter_zoom_drawer.dart';
 import 'language_selector_widget.dart';
 import 'package:get/get.dart';
+import '../application/controllers/session_controller.dart';
 
 class AppHeader extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -37,13 +38,9 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 // Logo — on left in LTR, on right in RTL (auto by Directionality)
-                InkWell(
+                GestureDetector(
                   onTap: () {
-                    if (onMenuTap != null) {
-                      onMenuTap!();
-                    } else {
-                      ZoomDrawer.of(context)?.toggle();
-                    }
+                    Get.find<SessionController>().zoomDrawerCtrl.toggle?.call();
                   },
                   child: Image.asset(
                     'assets/images/optilensss.png',

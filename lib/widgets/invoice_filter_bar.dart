@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../application/controllers/invoice_controller.dart';
 import '../../application/controllers/language_controller.dart';
@@ -21,15 +21,15 @@ class InvoiceFilterBar extends StatelessWidget {
 
     return GetBuilder<LanguageController>(
       builder: (_) => Container(
-        color: const Color.fromRGBO(254, 255, 255, 1),
+        color: const Color.fromARGB(255, 247, 255, 253),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
+                  color: Color.fromARGB(255, 247, 255, 253),
+                                  borderRadius: BorderRadius.circular(12),
                   boxShadow: const [
                     BoxShadow(
                       color: Colors.black12,
@@ -59,8 +59,8 @@ class InvoiceFilterBar extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
+                color: Color.fromARGB(255, 247, 255, 253),
+                                  borderRadius: BorderRadius.circular(12),
               ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
@@ -81,3 +81,5 @@ class InvoiceFilterBar extends StatelessWidget {
     );
   }
 }
+
+

@@ -1,16 +1,16 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../application/controllers/language_controller.dart';
 
-// ── Point d'entrée public ─────────────────────────────────────────────────────
+// â”€â”€ Point d'entrÃ©e public â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class LanguageSelectorWidget {
   LanguageSelectorWidget._();
 
   static void show() {
     Get.bottomSheet(
-      _LanguageBottomSheet(), // PAS de const — instance fraîche à chaque appel
-      backgroundColor: Colors.white,
+      _LanguageBottomSheet(), // PAS de const â€” instance fraÃ®che Ã  chaque appel
+      backgroundColor: const Color.fromARGB(255, 247, 255, 253),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -19,7 +19,7 @@ class LanguageSelectorWidget {
   }
 }
 
-// ── Bottom sheet ──────────────────────────────────────────────────────────────
+// â”€â”€ Bottom sheet â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _LanguageBottomSheet extends StatelessWidget {
   // PAS de const constructeur (Rule 3)
@@ -48,14 +48,14 @@ class _LanguageBottomSheet extends StatelessWidget {
 
           // Titre (Rule 4)
           const Text(
-            'Langue / Language / اللغة',
+            'Langue / Language / Ø§Ù„Ù„ØºØ©',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
           const Divider(),
           const SizedBox(height: 8),
 
-          // Liste des langues — Obx rend la coche réactive (Rule 1)
+          // Liste des langues â€” Obx rend la coche rÃ©active (Rule 1)
           Obx(() => Column(
             children: LanguageController.available.map((lang) {
               final isSelected =
@@ -73,7 +73,7 @@ class _LanguageBottomSheet extends StatelessWidget {
                         : const Color(0xFF1F2837),
                   ),
                 ),
-                // Rule 5 — coche teal si langue active
+                // Rule 5 â€” coche teal si langue active
                 trailing: isSelected
                     ? const Icon(Icons.check_circle, color: Colors.teal)
                     : null,
@@ -82,7 +82,7 @@ class _LanguageBottomSheet extends StatelessWidget {
                     : null,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
-                // Rule 2 — changeLanguage + Get.back()
+                // Rule 2 â€” changeLanguage + Get.back()
                 onTap: () {
                   lc.changeLanguage(lang);
                   Get.back();
@@ -98,7 +98,7 @@ class _LanguageBottomSheet extends StatelessWidget {
   }
 }
 
-// ── Bouton compact pour AppBar ────────────────────────────────────────────────
+// â”€â”€ Bouton compact pour AppBar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /// ```dart
 /// actions: [const LanguageSelectorButton()],
@@ -136,3 +136,4 @@ class LanguageSelectorButton extends StatelessWidget {
     );
   }
 }
+

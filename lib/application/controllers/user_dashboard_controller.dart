@@ -23,7 +23,6 @@ class UserDashboardController extends GetxController {
 
   int _offset = 0;
   static const int _limit = 20;
-  String _actualToken = '';
 
   final searchController = TextEditingController();
 
@@ -59,11 +58,6 @@ class UserDashboardController extends GetxController {
   }
 
   Future<void> _loadToken() async {
-    if (_session.token.value.isNotEmpty) {
-      _actualToken = _session.token.value;
-    } else {
-      _actualToken = Get.find<SessionService>().authToken;
-    }
     fetchStockEntries();
   }
 
@@ -96,7 +90,7 @@ class UserDashboardController extends GetxController {
       }
 
       final response = await _repo.fetchLastStockEntries(
-        token: _actualToken,
+        token: Get.find<SessionService>().authToken,
         limit: _limit,
         offset: _offset,
         status: selectedStatus.value == 'All' ? null : selectedStatus.value,
@@ -125,7 +119,7 @@ class UserDashboardController extends GetxController {
     isSearching.value = true;
     try {
       final response = await _repo.fetchLastStockEntries(
-        token: _actualToken,
+        token: Get.find<SessionService>().authToken,
         limit: 20,
         offset: 0,
         searchText: searchQuery.value,
@@ -142,7 +136,6 @@ class UserDashboardController extends GetxController {
   void navigateToStockEntry(String name) {
     Get.toNamed(AppRoutes.stockEntry, arguments: {
       'name':  name,
-      'token': _actualToken,
     });
   }
 }

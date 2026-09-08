@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../widgets/header.dart';
 import '../../utils/invoice_utils.dart';
@@ -78,7 +78,7 @@ class InvoicePage extends StatelessWidget {
                               ),
                               child: const Icon(Icons.credit_card,
                                   size: 30,
-                                  color: Color.fromRGBO(254, 255, 255, 1)),
+                                  color: Color.fromARGB(255, 247, 255, 253)),
                             ),
                           ],
                         ),
@@ -127,8 +127,7 @@ class InvoicePage extends StatelessWidget {
                                               onPressed: c.onLoadMore,
                                               style: ElevatedButton
                                                   .styleFrom(
-                                                backgroundColor:
-                                                    Colors.white,
+                                                backgroundColor: const Color.fromARGB(255, 247, 255, 253),
                                                 foregroundColor:
                                                     const Color
                                                         .fromARGB(255,
@@ -255,8 +254,8 @@ class InvoicePage extends StatelessWidget {
             child: Container(
               height: 48,
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
+                color: Color.fromARGB(255, 247, 255, 253),
+                                  borderRadius: BorderRadius.circular(12),
                 boxShadow: const [
                   BoxShadow(
                     color: Colors.black12,
@@ -306,8 +305,8 @@ class InvoicePage extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             height: 48,
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
+              color: Color.fromARGB(255, 247, 255, 253),
+                                  borderRadius: BorderRadius.circular(12),
               boxShadow: const [
                 BoxShadow(
                   color: Colors.black12,
@@ -349,3 +348,5 @@ class InvoicePage extends StatelessWidget {
     );
   }
 }
+
+

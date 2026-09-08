@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../domain/response/announcement.dart';
 import '../../../application/controllers/language_controller.dart';
@@ -12,11 +12,11 @@ class AnnouncementDetailPage extends StatelessWidget {
 
     return GetBuilder<LanguageController>(
       builder: (_) => Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color.fromARGB(255, 247, 255, 253),
         appBar: AppBar(
           title: Text('announcement_detail_title'.tr),
           elevation: 0,
-          backgroundColor: Colors.white,
+          backgroundColor: const Color.fromARGB(255, 247, 255, 253),
           foregroundColor: const Color(0xFF1F2837),
         ),
         body: SingleChildScrollView(

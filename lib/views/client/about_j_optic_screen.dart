@@ -175,11 +175,11 @@ class AboutJethingsScreen extends StatelessWidget {
             ),
           ),
           _FeatureItem(
-            icon: Icons.badge_outlined,
-            title: 'feature_medical'.tr,
+            icon: Icons.account_balance_wallet_outlined,
+            title: 'feature_accounting'.tr,
             onTap: () => _openFeatureDetail(
-              'feature_medical_title'.tr,
-              'feature_medical_desc'.tr,
+              'feature_accounting_title'.tr,
+              'feature_accounting_desc'.tr,
               'assets/images/Donnees medicales optiques.png',
             ),
           ),
@@ -349,16 +349,12 @@ class FeatureDetailPage extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            Container(
-              width: double.infinity,
-              margin: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10, spreadRadius: 2)],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.asset(imagePath, fit: BoxFit.cover),
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
+              child: Image.asset(
+                imagePath,
+                width: double.infinity,
+                fit: BoxFit.cover,
               ),
             ),
             Padding(
@@ -381,7 +377,11 @@ class FeatureDetailPage extends StatelessWidget {
                   const SizedBox(height: 20),
                   Text(
                     description,
-                    style: const TextStyle(fontSize: 16, color: Colors.black87, height: 1.6)
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Color(0xFF6B7280),
+                      height: 1.5,
+                    ),
                   ),
                 ],
               ),

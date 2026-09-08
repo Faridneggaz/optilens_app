@@ -1,12 +1,12 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_zoom_drawer/flutter_zoom_drawer.dart';
 import 'package:get/get.dart';
 import '../application/controllers/language_controller.dart';
 import '../application/controllers/session_controller.dart';
 import '../app/routes/app_routes.dart';
 
-/// The slide-out drawer. Removed onLogout callback — uses SessionController
-/// directly. Removed onSelectPage callback — caller passes it in (ZoomDrawerPage).
+/// The slide-out drawer. Removed onLogout callback â€” uses SessionController
+/// directly. Removed onSelectPage callback â€” caller passes it in (ZoomDrawerPage).
 class DrawerScreen extends StatelessWidget {
   final Function(int) onSelectPage;
   final bool isUser;
@@ -21,7 +21,7 @@ class DrawerScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetBuilder<LanguageController>(
       builder: (_) => Scaffold(
-        backgroundColor: const Color.fromARGB(255, 254, 255, 255),
+        backgroundColor: const Color.fromARGB(255, 247, 255, 253),
         body: SafeArea(
           child: CustomScrollView(
             slivers: [

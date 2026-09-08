@@ -2,12 +2,15 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../utils/api_config.dart';
 import '../../domain/response/customer_response.dart';
+import '../../core/services/session_service.dart';
+import 'package:get/get.dart';
 import 'repository_exception.dart';
 
 class CustomerRepository {
   Future<CustomerResponse> fetchCustomer(String code) async {
+    final token = Get.find<SessionService>().getSid();
     final uri = Uri.parse(
-      '${ApiConfig.mobileAppApiPath}get_client_by_code?code=$code',
+      '${ApiConfig.mobileAppApiPath}get_client_by_code?code=$code&token=$token',
     );
     try {
       final response = await http.get(uri);
@@ -25,10 +28,12 @@ class CustomerRepository {
     required String oldPassword,
     required String newPassword,
   }) async {
+    final token = Get.find<SessionService>().getSid();
     final url = Uri.parse(
       'https://optilens.jethings.com/api/method/mobile_app.api.change_customer_code'
       '?old_code=${Uri.encodeComponent(oldPassword)}'
-      '&new_code=${Uri.encodeComponent(newPassword)}',
+      '&new_code=${Uri.encodeComponent(newPassword)}'
+      '&token=$token',
     );
     try {
       final response = await http.post(url);

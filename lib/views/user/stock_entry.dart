@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../application/controllers/stock_entry_details_controller.dart';
+import '../../data/repositories/employee_api.dart';
 import '../../domain/response/stock_entry_item.dart' as model;
 import '../../widgets/header.dart';
 import '../../../application/controllers/language_controller.dart';
@@ -212,7 +213,10 @@ class StockEntryPage extends StatelessWidget {
   }
 
   Future<void> _handleApprove(StockEntryDetailsController c) async {
-    final result = await c.approveStockEntry();
+        final result = await c.approveStockEntry();
+    if (EmployeeApi.isAuthHandled(result)) {
+      return;
+    }
     if (result['message'] == 'Success') {
       Get.snackbar(
         'Succès',
@@ -285,6 +289,7 @@ class StockEntryPage extends StatelessWidget {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setD) => AlertDialog(
+          backgroundColor: const Color.fromARGB(255, 247, 255, 253),
           scrollable: true,
           title: Text('add_item_dialog_title'.tr),
           content: SizedBox(

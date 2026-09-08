@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import '../../data/repositories/material_request_repository.dart';
+import '../../data/repositories/employee_api.dart';
 import '../../domain/response/material_request_response.dart';
 import '../../core/services/session_service.dart';
 
@@ -112,7 +113,7 @@ class MaterialRequestListController extends GetxController {
       return await _repo.manageMaterialRequest(
           token: _token, name: name, action: 'submit');
     } catch (e) {
-      return {'error': e.toString()};
+      return EmployeeApi.failureResult(e);
     }
   }
 
@@ -121,7 +122,7 @@ class MaterialRequestListController extends GetxController {
       return await _repo.manageMaterialRequest(
           token: _token, name: name, action: 'cancel');
     } catch (e) {
-      return {'error': e.toString()};
+      return EmployeeApi.failureResult(e);
     }
   }
 
@@ -130,7 +131,7 @@ class MaterialRequestListController extends GetxController {
       return await _repo.manageMaterialRequest(
           token: _token, name: name, action: 'delete');
     } catch (e) {
-      return {'error': e.toString()};
+      return EmployeeApi.failureResult(e);
     }
   }
 
@@ -150,7 +151,7 @@ class MaterialRequestListController extends GetxController {
         'material_request': mr,
       };
     } catch (e) {
-      return {'error': e.toString()};
+      return EmployeeApi.failureResult(e);
     }
   }
 
@@ -160,6 +161,7 @@ class MaterialRequestListController extends GetxController {
     required String requiredBy,
     required String setWarehouse,
     String? setFromWarehouse,
+    String? priceList,
     required List<Map<String, dynamic>> items,
   }) async {
     try {
@@ -170,10 +172,11 @@ class MaterialRequestListController extends GetxController {
         requiredBy:        requiredBy,
         setWarehouse:      setWarehouse,
         setFromWarehouse:  setFromWarehouse,
+        priceList:         priceList,
         items:             items,
       );
     } catch (e) {
-      return {'error': e.toString()};
+      return EmployeeApi.failureResult(e);
     }
   }
 }

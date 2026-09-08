@@ -13,9 +13,13 @@ class OrderRepository {
   // ── Item catalogue ──────────────────────────────────────────────────────────
 
   Future<List<Item>> fetchItems(String customerCode) async {
+    final token = Get.find<SessionService>().getSid();
     final url = Uri.parse(
       '${ApiConfig.baseUrl}/api/method/mobile_app.api.get_items_by_customer_code',
-    ).replace(queryParameters: {'customer_code': customerCode});
+    ).replace(queryParameters: {
+      'customer_code': customerCode,
+      'token': token,
+    });
 
     try {
       final response = await http.get(url).timeout(const Duration(seconds: 15));
@@ -46,11 +50,13 @@ class OrderRepository {
   Future<List<Item>> searchItems(String searchText) async {
     if (searchText.isEmpty) return [];
     final code = Get.find<SessionService>().userCode;
+    final token = Get.find<SessionService>().getSid();
     final url = Uri.parse(
       '${ApiConfig.mobileAppApiPath}search_items',
     ).replace(queryParameters: {
       'search_text': searchText,
       'customer_code': code,
+      'token': token,
     });
 
     try {
@@ -83,6 +89,7 @@ class OrderRepository {
 
   Future<bool> submitOrder(List<Map<String, dynamic>> items) async {
     final code = Get.find<SessionService>().userCode;
+    final token = Get.find<SessionService>().getSid();
     if (code.isEmpty) {
       throw const RepositoryException('Customer code not found in session');
     }
@@ -94,7 +101,11 @@ class OrderRepository {
               'Content-Type': 'application/json',
               'Accept': 'application/json',
             },
-            body: jsonEncode({'customer_code': code, 'items': items}),
+            body: jsonEncode({
+              'customer_code': code,
+              'items': items,
+              'token': token,
+            }),
           )
           .timeout(const Duration(seconds: 15));
 
@@ -104,7 +115,12 @@ class OrderRepository {
       final decoded = json.decode(response.body);
       final msg     = decoded['message'];
       if (msg == null) throw const RepositoryException('Null message in response');
-      return msg['status'] == 'success' || msg['order_id'] != null;
+      if (msg['status'] == 'success' || msg['order_id'] != null) {
+        return true;
+      } else {
+        final errorMsg = msg['message'] ?? 'Erreur inconnue du serveur';
+        throw RepositoryException(errorMsg.toString());
+      }
     } on TimeoutException {
       throw const RepositoryException('Request timeout');
     } catch (e) {
@@ -117,12 +133,16 @@ class OrderRepository {
 
   Future<List<dynamic>> fetchOrders() async {
     final code = Get.find<SessionService>().userCode;
+    final token = Get.find<SessionService>().getSid();
     if (code.isEmpty) {
       throw const RepositoryException('Customer code not found in session');
     }
     try {
       final url = Uri.parse('${_baseUrl}get_customer_orders')
-          .replace(queryParameters: {'customer_code': code});
+          .replace(queryParameters: {
+            'customer_code': code,
+            'token': token,
+          });
 
       final response =
           await http.get(url).timeout(const Duration(seconds: 15));
@@ -142,8 +162,12 @@ class OrderRepository {
 
   Future<List<dynamic>?> getOrderItems(String orderId) async {
     try {
+      final token = Get.find<SessionService>().getSid();
       final url = Uri.parse('${_baseUrl}get_order_details')
-          .replace(queryParameters: {'order_id': orderId});
+          .replace(queryParameters: {
+            'order_id': orderId,
+            'token': token,
+          });
 
       final response =
           await http.get(url).timeout(const Duration(seconds: 15));

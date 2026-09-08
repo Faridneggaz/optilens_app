@@ -32,7 +32,7 @@ class InvoiceList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color.fromRGBO(254, 255, 255, 1),
+      color: const Color.fromARGB(255, 247, 255, 253),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -42,8 +42,8 @@ class InvoiceList extends StatelessWidget {
               child: Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
+                  color: Color.fromARGB(255, 247, 255, 253),
+                                  borderRadius: BorderRadius.circular(12),
                 ),
                 padding: const EdgeInsets.all(16),
                 child: Row(
@@ -116,7 +116,7 @@ class InvoiceList extends StatelessWidget {
                         const SizedBox(height: 6),
 
                         Text(
-                          "● ${item.status}",
+                          " ${item.status}",
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -135,3 +135,4 @@ class InvoiceList extends StatelessWidget {
     );
   }
 }
+

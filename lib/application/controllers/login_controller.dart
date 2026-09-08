@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../data/repositories/login_repository.dart';
 import '../../data/repositories/customer_repository.dart';
+import '../../data/repositories/employee_api.dart';
 import '../../app/routes/app_routes.dart';
 import '../../core/services/session_service.dart';
 import 'session_controller.dart';
@@ -83,21 +84,29 @@ class LoginController extends GetxController {
     isLoading.value = true;
     try {
       final response = await _loginRepo.login(email: email, password: password);
-      
-      if (response.user.sid.isEmpty) {
+      final sid = response.user.sid;
+
+      if (sid.isEmpty) {
         errorMessage.value = 'error_token_missing'.tr;
         return;
       }
+
+      EmployeeApi.resetAuthGuards();
 
       final sessionService = Get.find<SessionService>();
       await sessionService.saveSession(
         code: response.user.email ?? email,
         role: 'user',
-        token: response.user.sid,
+        token: sid,
+      );
+      
+      await sessionService.saveUserPermissions(
+        response.user.allowedCompanies,
+        response.user.allowedWarehouses,
       );
 
       final session = Get.find<SessionController>();
-      session.token.value    = response.user.sid;
+      session.token.value    = sid;
       session.userName.value = response.user.name ?? 'Utilisateur';
       session.isUser.value   = true;
 

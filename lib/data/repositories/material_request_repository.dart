@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../utils/api_config.dart';
 import '../../domain/response/material_request_response.dart';
+import 'employee_api.dart';
 import 'repository_exception.dart';
 
 class MaterialRequestRepository {
@@ -12,6 +13,9 @@ class MaterialRequestRepository {
   static const String _manageEndpoint = 'mobile_app.api.manage_material_request';
   static const String _searchEndpoint = 'mobile_app.api.search_items';
   static const String _warehousesEndpoint = 'mobile_app.api.get_warehouses';
+  static const String _companiesEndpoint = 'mobile_app.api.get_companies';
+  static const String _priceListsEndpoint = 'mobile_app.api.get_price_lists';
+  static const String _createTransferEndpoint = 'mobile_app.api.create_stock_entry_from_mr';
 
   Future<MaterialRequestResponse> fetchMaterialRequests({
     required String token,
@@ -21,7 +25,7 @@ class MaterialRequestRepository {
     String? status,
   }) async {
     String urlStr =
-        '$_baseUrl$_getEndpoint?token=$token&limit=$limit&offset=$offset';
+        '$_baseUrl$_getEndpoint?token=${Uri.encodeComponent(token)}&limit=$limit&offset=$offset';
     if (searchText != null && searchText.isNotEmpty) {
       urlStr += '&search_text=$searchText';
     }
@@ -32,7 +36,9 @@ class MaterialRequestRepository {
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
-        return MaterialRequestResponse.fromJson(json.decode(response.body));
+        final decoded = json.decode(response.body);
+        EmployeeApi.unwrap(decoded);
+        return MaterialRequestResponse.fromJson(decoded);
       }
       throw RepositoryException('Server error: ${response.statusCode}');
     } catch (e) {
@@ -46,17 +52,17 @@ class MaterialRequestRepository {
     required String name,
   }) async {
     final url = Uri.parse(
-      '$_baseUrl$_getDetailEndpoint?token=$token&name=${Uri.encodeComponent(name)}',
+      '$_baseUrl$_getDetailEndpoint?token=${Uri.encodeComponent(token)}&name=${Uri.encodeComponent(name)}',
     );
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
-        final msg = body['message'] ?? body;
-        if (msg['success'] == true && msg['material_request'] != null) {
-          final mrData = msg['material_request'];
+        final msg = EmployeeApi.unwrap(body);
+        if (msg is Map && msg['success'] == true && msg['material_request'] != null) {
+          final mrData = Map<String, dynamic>.from(msg['material_request'] as Map);
           mrData['items'] = msg['items'] ?? [];
-          return MaterialRequest.fromJson(Map<String, dynamic>.from(mrData));
+          return MaterialRequest.fromJson(mrData);
         } else if (msg is Map<String, dynamic> && msg.containsKey('name')) {
            return MaterialRequest.fromJson(msg);
         }
@@ -74,20 +80,68 @@ class MaterialRequestRepository {
     required String company,
   }) async {
     final url = Uri.parse(
-      '$_baseUrl$_warehousesEndpoint?token=$token&company=${Uri.encodeComponent(company)}',
+      '$_baseUrl$_warehousesEndpoint?token=${Uri.encodeComponent(token)}&company=${Uri.encodeComponent(company)}',
     );
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
-        final msg = body['message'] ?? body;
-        if (msg['warehouses'] != null) {
+        final msg = EmployeeApi.unwrap(body);
+        if (msg is Map && msg['warehouses'] != null) {
           final whList = msg['warehouses'] as List;
           return whList.map<Map<String, String>>((w) => {
             'name': w['name']?.toString() ?? '',
             'warehouse_name': w['warehouse_name']?.toString() ?? '',
             'company': w['company']?.toString() ?? '',
           }).toList();
+        }
+        return [];
+      }
+      throw RepositoryException('Server error: ${response.statusCode}');
+    } catch (e) {
+      if (e is RepositoryException) rethrow;
+      throw RepositoryException('Network error: $e');
+    }
+  }
+
+  Future<List<String>> fetchCompanies({required String token}) async {
+    final url = Uri.parse(
+      '$_baseUrl$_companiesEndpoint?token=${Uri.encodeComponent(token)}',
+    );
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final body = jsonDecode(response.body);
+        final msg = EmployeeApi.unwrap(body);
+        if (msg is Map && msg['companies'] != null) {
+          return (msg['companies'] as List)
+              .map((c) => (c['name'] ?? c['company_name'] ?? '').toString())
+              .where((name) => name.isNotEmpty)
+              .toList();
+        }
+        return [];
+      }
+      throw RepositoryException('Server error: ${response.statusCode}');
+    } catch (e) {
+      if (e is RepositoryException) rethrow;
+      throw RepositoryException('Network error: $e');
+    }
+  }
+
+  Future<List<String>> fetchPriceLists({required String token}) async {
+    final url = Uri.parse(
+      '$_baseUrl$_priceListsEndpoint?token=${Uri.encodeComponent(token)}',
+    );
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final body = jsonDecode(response.body);
+        final msg = EmployeeApi.unwrap(body);
+        if (msg is Map && msg['price_lists'] != null) {
+          return (msg['price_lists'] as List)
+              .map((p) => (p['name'] ?? '').toString())
+              .where((name) => name.isNotEmpty)
+              .toList();
         }
         return [];
       }
@@ -105,9 +159,10 @@ class MaterialRequestRepository {
     required String requiredBy,
     required String setWarehouse,
     String? setFromWarehouse,
+    String? priceList,
     required List<Map<String, dynamic>> items,
   }) async {
-    final url = Uri.parse('$_baseUrl$_createEndpoint?token=$token');
+    final url = Uri.parse('$_baseUrl$_createEndpoint?token=${Uri.encodeComponent(token)}');
     try {
       final body = {
         'company':     company,
@@ -120,6 +175,9 @@ class MaterialRequestRepository {
       if (setFromWarehouse != null && setFromWarehouse.isNotEmpty) {
         body['set_from_warehouse'] = setFromWarehouse;
       }
+      if (priceList != null && priceList.isNotEmpty) {
+        body['price_list'] = priceList;
+      }
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
@@ -127,7 +185,8 @@ class MaterialRequestRepository {
       );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        return Map<String, dynamic>.from(data['message'] ?? data);
+        final msg = EmployeeApi.unwrap(data);
+        return Map<String, dynamic>.from(msg as Map);
       }
       throw RepositoryException('Server error: ${response.statusCode}');
     } catch (e) {
@@ -141,7 +200,7 @@ class MaterialRequestRepository {
     required String name,
     required String action,
   }) async {
-    final url = Uri.parse('$_baseUrl$_manageEndpoint?token=$token');
+    final url = Uri.parse('$_baseUrl$_manageEndpoint?token=${Uri.encodeComponent(token)}');
     try {
       final response = await http.post(
         url,
@@ -154,17 +213,41 @@ class MaterialRequestRepository {
       );
       if (response.statusCode == 200) {
         final data    = jsonDecode(response.body);
-        final resData = data['message'] ?? data;
-        if (resData['message'] == 'Success') {
+        final resData = EmployeeApi.unwrap(data);
+        if (resData is Map && resData['message'] == 'Success') {
           return {
             'message': 'Success',
             'detail':  resData['detail'] ?? 'Operation completed',
             'status':  resData['status'] ?? '',
           };
-        } else if (resData['error'] != null) {
-          throw RepositoryException(resData['error'].toString());
         }
         throw const RepositoryException('Unknown response format');
+      }
+      throw RepositoryException('Server error: ${response.statusCode}');
+    } catch (e) {
+      if (e is RepositoryException) rethrow;
+      throw RepositoryException('Network error: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> createStockEntryFromMR({
+    required String token,
+    required String name,
+  }) async {
+    final url = Uri.parse('$_baseUrl$_createTransferEndpoint?token=${Uri.encodeComponent(token)}');
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'name':  name,
+          'token': token,
+        }),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final msg = EmployeeApi.unwrap(data);
+        return Map<String, dynamic>.from(msg as Map);
       }
       throw RepositoryException('Server error: ${response.statusCode}');
     } catch (e) {
@@ -178,16 +261,17 @@ class MaterialRequestRepository {
     required String searchText,
   }) async {
     final url = Uri.parse(
-        '$_baseUrl$_searchEndpoint?token=$token&search_text=$searchText');
+        '$_baseUrl$_searchEndpoint?token=${Uri.encodeComponent(token)}&search_text=${Uri.encodeComponent(searchText)}');
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
         final decoded = json.decode(response.body);
+        final message = EmployeeApi.unwrap(decoded);
         List itemsList;
-        if (decoded is Map && decoded['message'] != null) {
-          itemsList = decoded['message'] as List;
-        } else if (decoded is List) {
-          itemsList = decoded;
+        if (message is List) {
+          itemsList = message;
+        } else if (message is Map && message['message'] is List) {
+          itemsList = message['message'] as List;
         } else {
           return [];
         }

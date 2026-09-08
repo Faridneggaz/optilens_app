@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../utils/api_config.dart';
 import '../../domain/response/stock_entry_details_response.dart';
+import 'employee_api.dart';
 import 'repository_exception.dart';
 
 class StockEntryDetailsRepository {
@@ -15,14 +16,12 @@ class StockEntryDetailsRepository {
     required String name,
     required String token,
   }) async {
-    final url = Uri.parse('$_baseUrl$_fetchEndpoint?name=$name&token=$token');
+    final url = Uri.parse('$_baseUrl$_fetchEndpoint?name=${Uri.encodeComponent(name)}&token=${Uri.encodeComponent(token)}');
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
         final decoded = json.decode(response.body);
-        if (decoded['error'] != null) {
-          throw RepositoryException('API error: ${decoded['error']}');
-        }
+        EmployeeApi.unwrap(decoded);
         return StockEntryDetailsResponse.fromJson(decoded);
       }
       throw RepositoryException('Server error: ${response.statusCode}');
@@ -38,7 +37,7 @@ class StockEntryDetailsRepository {
     required List<Map<String, dynamic>> items,
     required String action,
   }) async {
-    final url = Uri.parse('$_baseUrl$_manageEndpoint?token=$token');
+    final url = Uri.parse('$_baseUrl$_manageEndpoint?token=${Uri.encodeComponent(token)}');
     try {
       final response = await http.post(
         url,
@@ -52,14 +51,12 @@ class StockEntryDetailsRepository {
       );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final resData = data['message'] ?? data;
-        if (resData['message'] == 'Success') {
+        final resData = EmployeeApi.unwrap(data);
+        if (resData is Map && resData['message'] == 'Success') {
           return {
             'message': 'Success',
             'detail': resData['detail'] ?? 'Operation completed successfully',
           };
-        } else if (resData['error'] != null) {
-          throw RepositoryException(resData['error'].toString());
         }
         throw const RepositoryException('Unknown response format');
       }
@@ -76,16 +73,17 @@ class StockEntryDetailsRepository {
     required String searchText,
   }) async {
     final url = Uri.parse(
-        '$_baseUrl$_searchEndpoint?token=$token&search_text=$searchText');
+        '$_baseUrl$_searchEndpoint?token=${Uri.encodeComponent(token)}&search_text=${Uri.encodeComponent(searchText)}');
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
         final decoded = json.decode(response.body);
+        final message = EmployeeApi.unwrap(decoded);
         List itemsList;
-        if (decoded is Map && decoded['message'] != null) {
-          itemsList = decoded['message'] as List;
-        } else if (decoded is List) {
-          itemsList = decoded;
+        if (message is List) {
+          itemsList = message;
+        } else if (message is Map && message['message'] is List) {
+          itemsList = message['message'] as List;
         } else {
           return [];
         }

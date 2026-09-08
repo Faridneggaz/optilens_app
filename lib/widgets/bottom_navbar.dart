@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../application/controllers/language_controller.dart';
 class BottomNavBar extends StatelessWidget {
@@ -20,7 +20,7 @@ class BottomNavBar extends StatelessWidget {
         selectedItemColor: Colors.teal,
         unselectedItemColor: Colors.grey,
         type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.white,
+        backgroundColor: const Color.fromARGB(255, 247, 255, 253),
         items: [
           BottomNavigationBarItem(icon: const Icon(Icons.home),         label: 'nav_home'.tr),
           BottomNavigationBarItem(icon: const Icon(Icons.receipt_long), label: 'nav_invoices'.tr),
@@ -31,3 +31,4 @@ class BottomNavBar extends StatelessWidget {
     );
   }
 }
+

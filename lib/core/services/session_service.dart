@@ -7,6 +7,7 @@ class SessionService extends GetxService {
   String get userCode => _prefs.getString('user_code') ?? '';
   String get userRole => _prefs.getString('user_role') ?? ''; 
   String get authToken => _prefs.getString('auth_token') ?? '';
+  String getSid() => authToken;
   String get tokenExpiry => _prefs.getString('token_expiry') ?? '';
 
   Future<SessionService> init() async {
@@ -34,6 +35,10 @@ class SessionService extends GetxService {
     await _prefs.remove('auth_token');
     await _prefs.remove('token_expiry');
     
+    // Clear user permissions
+    await _prefs.remove('allowed_companies');
+    await _prefs.remove('allowed_warehouses');
+    
     // Clear legacy keys to prevent corrupted state
     await _prefs.remove('custom_customer_code');
     await _prefs.remove('sid');
@@ -55,5 +60,26 @@ class SessionService extends GetxService {
     } catch (_) {
       return false;
     }
+  }
+
+  Future<void> saveUserPermissions(List<String> companies, List<String> warehouses) async {
+    await _prefs.setStringList('allowed_companies', companies);
+    await _prefs.setStringList('allowed_warehouses', warehouses);
+  }
+
+  List<String> getAllowedCompanies() {
+    return _prefs.getStringList('allowed_companies') ?? [];
+  }
+
+  List<String> getAllowedWarehouses() {
+    return _prefs.getStringList('allowed_warehouses') ?? [];
+  }
+
+  bool hasCompanyRestriction() {
+    return getAllowedCompanies().isNotEmpty;
+  }
+
+  bool hasWarehouseRestriction() {
+    return getAllowedWarehouses().isNotEmpty;
   }
 }

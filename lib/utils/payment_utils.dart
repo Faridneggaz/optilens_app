@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../application/controllers/payment_controller.dart';
 
@@ -55,7 +55,7 @@ class PaymentList extends StatelessWidget {
             final isExpanded = controller.expandedIndex.value == index;
 
             return Card(
-            color: const Color.fromRGBO(254, 255, 255, 1),
+            color: const Color.fromARGB(255, 247, 255, 253),
             elevation: 2,
             shadowColor: Colors.black.withValues(alpha: 0.1),
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -111,7 +111,7 @@ class PaymentList extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        // Flèche animée
+                        // FlÃ¨che animÃ©e
                         AnimatedRotation(
                           turns: isExpanded ? 0.5 : 0,
                           duration: const Duration(milliseconds: 200),

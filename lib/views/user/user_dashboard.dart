@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../widgets/header.dart';
 import '../../../application/controllers/user_dashboard_controller.dart';
@@ -176,7 +176,7 @@ class UserDashboardPage extends StatelessWidget {
         child: ElevatedButton(
           onPressed: c.onLoadMore,
           style: ElevatedButton.styleFrom(
-            backgroundColor:  Colors.white,
+            backgroundColor: const Color.fromARGB(255, 247, 255, 253),
             foregroundColor:  Colors.teal,
             elevation:        0,
             side: const BorderSide(color: Colors.teal),
@@ -273,8 +273,8 @@ class UserDashboardPage extends StatelessWidget {
             child: Container(
               height: 48,
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
+                color: Color.fromARGB(255, 247, 255, 253),
+                                  borderRadius: BorderRadius.circular(12),
                 boxShadow: const [
                   BoxShadow(
                     color: Colors.black12,
@@ -324,8 +324,8 @@ class UserDashboardPage extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             height: 48,
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
+              color: Color.fromARGB(255, 247, 255, 253),
+                                  borderRadius: BorderRadius.circular(12),
               boxShadow: const [
                 BoxShadow(
                   color: Colors.black12,
@@ -366,3 +366,4 @@ class UserDashboardPage extends StatelessWidget {
     );
   }
 }
+

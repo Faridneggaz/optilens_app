@@ -12,25 +12,16 @@ class InvoiceDetailPage extends StatelessWidget {
 
     return GetBuilder<LanguageController>(
       builder: (_) => Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color.fromARGB(255, 247, 255, 253),
         appBar: AppBar(
           title: const Text('',
               style: TextStyle(
                   color: Color(0xFF00A69C), fontWeight: FontWeight.bold)),
-          backgroundColor: Colors.white,
+          backgroundColor: const Color.fromARGB(255, 247, 255, 253),
           elevation: 0,
           centerTitle: true,
           iconTheme: const IconThemeData(color: Colors.black),
         ),
-
-        floatingActionButton: Obx(() => FloatingActionButton(
-              onPressed:
-                  (c.isLoading.value || c.error.value != null)
-                      ? null
-                      : _handlePrint(c),
-              backgroundColor: const Color(0xFF00A69C),
-              child: const Icon(Icons.print, color: Colors.white),
-            )),
 
         body: Obx(() {
           if (c.isLoading.value) {
@@ -146,56 +137,4 @@ class InvoiceDetailPage extends StatelessWidget {
     );
   }
 
-  /// Returns a callback: if already connected print directly, else show dialog.
-  VoidCallback _handlePrint(InvoiceDetailController c) {
-    return () async {
-      if (c.connected.value) {
-        final isConn = await c.bluetooth.isConnected;
-        if (isConn == true) {
-          c.printTicketSmall();
-          return;
-        } else {
-          c.connected.value = false;
-        }
-      }
-      _showDeviceDialog(c);
-    };
-  }
-
-  void _showDeviceDialog(InvoiceDetailController c) async {
-    final devices = await c.bluetooth.getBondedDevices();
-    final printers = devices.where((d) {
-      final name = (d.name ?? '').toLowerCase();
-      return name.contains('pt') ||
-          name.contains('mtp') ||
-          name.contains('print') ||
-          name.contains('pos') ||
-          name.contains('goojprt');
-    }).toList();
-    final list = printers.isNotEmpty ? printers : devices;
-
-    Get.dialog(AlertDialog(
-      title: Text('printer_dialog_title'.tr),
-      content: SizedBox(
-        width: double.maxFinite,
-        height: 300,
-        child: list.isEmpty
-            ? Center(
-                child: Text('no_printer_found'.tr))
-            : ListView.builder(
-                itemCount: list.length,
-                itemBuilder: (context, i) => ListTile(
-                  leading:
-                      const Icon(Icons.print, color: Color(0xFF00A69C)),
-                  title: Text(list[i].name ?? 'unknown_device'.tr),
-                  subtitle: Text(list[i].address ?? ''),
-                  onTap: () {
-                    Get.back();
-                    c.connectAndPrint(list[i]);
-                  },
-                ),
-              ),
-      ),
-    ));
-  }
 }

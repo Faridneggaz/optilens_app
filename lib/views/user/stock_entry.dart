@@ -11,9 +11,7 @@ class StockEntryPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Controller is registered by UserDashboardController.navigateToStockEntry
-    // via BindingsBuilder before this page is pushed. Fallback to Get.put.
-    final c = Get.put(StockEntryDetailsController());
+    final c = Get.find<StockEntryDetailsController>();
 
     return GetBuilder<LanguageController>(
       builder: (_) => Obx(() {
@@ -219,7 +217,7 @@ class StockEntryPage extends StatelessWidget {
     }
     if (result['message'] == 'Success') {
       Get.snackbar(
-        'Succès',
+        'success'.tr,
         result['detail'] ?? 'approve_success'.tr,
         backgroundColor: Colors.green,
         colorText: Colors.white,
@@ -227,7 +225,7 @@ class StockEntryPage extends StatelessWidget {
       Get.back();
     } else {
       Get.snackbar(
-        'Erreur',
+        'error'.tr,
         result['error'] ?? 'approve_error'.tr,
         backgroundColor: Colors.red,
         colorText: Colors.white,

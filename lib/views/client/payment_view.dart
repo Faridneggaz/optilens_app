@@ -4,7 +4,7 @@ import '../../widgets/header.dart';
 import '../../utils/payment_utils.dart';
 import '../../../application/controllers/language_controller.dart';
 import '../../../application/controllers/payment_controller.dart';
-import '../../../application/controllers/session_controller.dart';
+import '../../widgets/client_session_gate.dart';
 
 class PaymentPage extends StatelessWidget {
   PaymentPage({super.key});
@@ -13,9 +13,8 @@ class PaymentPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final customer = Get.find<SessionController>().customer.value!;
-
-    return GetBuilder<LanguageController>(
+    return ClientSessionGate(
+      builder: (customer) => GetBuilder<LanguageController>(
       builder: (_) => Scaffold(
         backgroundColor: const Color.fromRGBO(247, 255, 253, 1),
         body: Column(
@@ -114,6 +113,7 @@ class PaymentPage extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }

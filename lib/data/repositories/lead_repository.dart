@@ -1,25 +1,18 @@
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import '../../core/network/api_client.dart';
 
 class LeadRepository {
-  final String _apiUrl = 'https://erp.jethings.com/api/resource/Lead';
+  LeadRepository(this._client);
 
-  Future<http.Response> createLead({required String name, required String phone}) async {
-    return await http.post(
-      Uri.parse(_apiUrl),
-      headers: {
-        'Authorization': 'token b70ed3816bf7925:7eeea71d843b299',
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: jsonEncode({
-        'lead_name': name,
-        'company_name': name,
-        'mobile_no': phone,
-        //'source': 'Mobile App',
-        'status': 'Lead',
-        'description': 'Demande d\'abonnement via l\'application mobile J-Optic'
-      }),
-    );
+  final ApiClient _client;
+
+  Future<void> createLead({required String name, required String phone}) {
+    return _client.postErpResource('Lead', {
+      'lead_name': name,
+      'company_name': name,
+      'mobile_no': phone,
+      'status': 'Lead',
+      'description':
+          'Demande d\'abonnement via l\'application mobile J-Optic',
+    });
   }
 }

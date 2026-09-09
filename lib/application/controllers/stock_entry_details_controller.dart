@@ -4,9 +4,13 @@ import '../../data/repositories/employee_api.dart';
 import '../../domain/response/stock_entry_details_response.dart';
 import '../../domain/response/stock_entry_item.dart' as model;
 import '../../core/services/session_service.dart';
+import '../../utils/error_feedback.dart';
 
 class StockEntryDetailsController extends GetxController {
-  final _repo = StockEntryDetailsRepository();
+  StockEntryDetailsController({StockEntryDetailsRepository? repo})
+      : _repo = repo ?? Get.find<StockEntryDetailsRepository>();
+
+  final StockEntryDetailsRepository _repo;
 
   final data            = Rxn<StockEntryDetailsResponse>();
   final isLoading       = true.obs;
@@ -62,7 +66,8 @@ class StockEntryDetailsController extends GetxController {
           ..clear()
           ..addAll(Set.from(List.generate(data.value!.items.length, (i) => i)));
       }
-    } catch (_) {
+    } catch (e) {
+      ErrorFeedback.snackbar(e, fallbackKey: 'failed_load_stock');
     } finally {
       isLoading.value = false;
     }

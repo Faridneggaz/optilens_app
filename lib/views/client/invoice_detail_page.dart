@@ -8,7 +8,7 @@ class InvoiceDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = Get.put(InvoiceDetailController());
+    final c = Get.find<InvoiceDetailController>();
 
     return GetBuilder<LanguageController>(
       builder: (_) => Scaffold(

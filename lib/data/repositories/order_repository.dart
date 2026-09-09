@@ -1,191 +1,108 @@
-import 'dart:async';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:get/get.dart';
-import '../../core/services/session_service.dart';
+import '../../core/network/api_client.dart';
 import '../../domain/response/item.dart';
-import '../../utils/api_config.dart';
 import 'repository_exception.dart';
 
 class OrderRepository {
-  final String _baseUrl = ApiConfig.mobileAppApiPath;
+  OrderRepository(this._client);
 
-  // ── Item catalogue ──────────────────────────────────────────────────────────
+  final ApiClient _client;
 
   Future<List<Item>> fetchItems(String customerCode) async {
-    final token = Get.find<SessionService>().getSid();
-    final url = Uri.parse(
-      '${ApiConfig.baseUrl}/api/method/mobile_app.api.get_items_by_customer_code',
-    ).replace(queryParameters: {
-      'customer_code': customerCode,
-      'token': token,
-    });
-
-    try {
-      final response = await http.get(url).timeout(const Duration(seconds: 15));
-      if (response.statusCode != 200) {
-        throw RepositoryException('Server error: ${response.statusCode}');
-      }
-      final data = json.decode(response.body);
-      final msg  = data['message'];
-      if (msg == null) throw const RepositoryException('Empty response');
-      if (msg['status'] != 'success') {
-        throw RepositoryException(
-            msg['message']?.toString() ?? 'Failed to load items');
-      }
-      final rawItems = msg['items'] as List<dynamic>? ?? [];
-      return rawItems
-          .map((e) => Item.fromJson(e as Map<String, dynamic>))
-          .toList();
-    } on TimeoutException {
-      throw const RepositoryException('Request timeout');
-    } catch (e) {
-      if (e is RepositoryException) rethrow;
-      throw RepositoryException('Network error: $e');
+    final data = await _client.getMobile(
+      'get_items_by_customer_code',
+      query: {'customer_code': customerCode},
+    );
+    final msg = data['message'];
+    if (msg == null) throw const RepositoryException('Empty response');
+    if (msg is! Map || msg['status'] != 'success') {
+      throw RepositoryException(
+        (msg is Map ? msg['message']?.toString() : null) ??
+            'Failed to load items',
+      );
     }
+    final rawItems = msg['items'] as List<dynamic>? ?? [];
+    return rawItems
+        .map((e) => Item.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList();
   }
 
-  // ── Item search ─────────────────────────────────────────────────────────────
-
-  Future<List<Item>> searchItems(String searchText) async {
+  Future<List<Item>> searchItems({
+    required String searchText,
+    required String customerCode,
+  }) async {
     if (searchText.isEmpty) return [];
-    final code = Get.find<SessionService>().userCode;
-    final token = Get.find<SessionService>().getSid();
-    final url = Uri.parse(
-      '${ApiConfig.mobileAppApiPath}search_items',
-    ).replace(queryParameters: {
-      'search_text': searchText,
-      'customer_code': code,
-      'token': token,
-    });
-
     try {
-      final response = await http.get(url).timeout(const Duration(seconds: 10));
-
-      if (response.statusCode != 200) {
-        throw RepositoryException('Server error: ${response.statusCode}');
-      }
-
-      final data = json.decode(response.body);
-
+      final data = await _client.getMobile(
+        'search_items',
+        query: {
+          'search_text': searchText,
+          'customer_code': customerCode,
+        },
+      );
       List rawItems = [];
-      if (data is Map && data['message'] != null) {
-        rawItems = data['message'] as List;
-      } else if (data is List) {
-        rawItems = data;
+      final message = data['message'];
+      if (message is List) {
+        rawItems = message;
+      } else if (message is Map && message['items'] is List) {
+        rawItems = message['items'] as List;
       }
-
       return rawItems
-          .map((e) => Item.fromJson(e as Map<String, dynamic>))
+          .map((e) => Item.fromJson(Map<String, dynamic>.from(e as Map)))
           .toList();
-    } on TimeoutException {
-      return [];
-    } catch (e) {
+    } catch (_) {
       return [];
     }
   }
 
-  // ── Order submission ────────────────────────────────────────────────────────
-
-  Future<bool> submitOrder(List<Map<String, dynamic>> items) async {
-    final code = Get.find<SessionService>().userCode;
-    final token = Get.find<SessionService>().getSid();
-    if (code.isEmpty) {
+  Future<bool> submitOrder({
+    required String customerCode,
+    required List<Map<String, dynamic>> items,
+  }) async {
+    if (customerCode.isEmpty) {
       throw const RepositoryException('Customer code not found in session');
     }
-    try {
-      final response = await http
-          .post(
-            Uri.parse('${_baseUrl}create_sales_order'),
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            body: jsonEncode({
-              'customer_code': code,
-              'items': items,
-              'token': token,
-            }),
-          )
-          .timeout(const Duration(seconds: 15));
-
-      if (response.statusCode != 200) {
-        throw RepositoryException('Server error: ${response.statusCode}');
-      }
-      final decoded = json.decode(response.body);
-      final msg     = decoded['message'];
-      if (msg == null) throw const RepositoryException('Null message in response');
-      if (msg['status'] == 'success' || msg['order_id'] != null) {
-        return true;
-      } else {
-        final errorMsg = msg['message'] ?? 'Erreur inconnue du serveur';
-        throw RepositoryException(errorMsg.toString());
-      }
-    } on TimeoutException {
-      throw const RepositoryException('Request timeout');
-    } catch (e) {
-      if (e is RepositoryException) rethrow;
-      throw RepositoryException('Network error: $e');
+    final decoded = await _client.postMobile(
+      'create_sales_order',
+      body: {
+        'customer_code': customerCode,
+        'items': items,
+        'token': _client.currentToken,
+      },
+      attachToken: false,
+    );
+    final msg = decoded['message'];
+    if (msg == null) {
+      throw const RepositoryException('Null message in response');
     }
+    if (msg is Map &&
+        (msg['status'] == 'success' || msg['order_id'] != null)) {
+      return true;
+    }
+    final errorMsg =
+        (msg is Map ? msg['message'] : null) ?? 'Erreur inconnue du serveur';
+    throw RepositoryException(errorMsg.toString());
   }
 
-  // ── Order history ───────────────────────────────────────────────────────────
-
-  Future<List<dynamic>> fetchOrders() async {
-    final code = Get.find<SessionService>().userCode;
-    final token = Get.find<SessionService>().getSid();
-    if (code.isEmpty) {
+  Future<List<dynamic>> fetchOrders(String customerCode) async {
+    if (customerCode.isEmpty) {
       throw const RepositoryException('Customer code not found in session');
     }
-    try {
-      final url = Uri.parse('${_baseUrl}get_customer_orders')
-          .replace(queryParameters: {
-            'customer_code': code,
-            'token': token,
-          });
-
-      final response =
-          await http.get(url).timeout(const Duration(seconds: 15));
-
-      if (response.statusCode != 200) {
-        throw RepositoryException('Server error: ${response.statusCode}');
-      }
-      final data = json.decode(response.body);
-      return (data['message']?['orders'] as List<dynamic>?) ?? [];
-    } on TimeoutException {
-      throw const RepositoryException('Request timeout');
-    } catch (e) {
-      if (e is RepositoryException) rethrow;
-      throw RepositoryException('Network error: $e');
-    }
+    final data = await _client.getMobile(
+      'get_customer_orders',
+      query: {'customer_code': customerCode},
+    );
+    return (data['message']?['orders'] as List<dynamic>?) ?? [];
   }
 
   Future<List<dynamic>?> getOrderItems(String orderId) async {
-    try {
-      final token = Get.find<SessionService>().getSid();
-      final url = Uri.parse('${_baseUrl}get_order_details')
-          .replace(queryParameters: {
-            'order_id': orderId,
-            'token': token,
-          });
-
-      final response =
-          await http.get(url).timeout(const Duration(seconds: 15));
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final msg  = data['message'];
-        if (msg != null && msg['status'] == 'success') {
-          return msg['items'] as List<dynamic>?;
-        }
-        return null;
-      }
-      throw RepositoryException('Server error: ${response.statusCode}');
-    } on TimeoutException {
-      throw const RepositoryException('Request timeout');
-    } catch (e) {
-      if (e is RepositoryException) rethrow;
-      throw RepositoryException('Network error: $e');
+    final data = await _client.getMobile(
+      'get_order_details',
+      query: {'order_id': orderId},
+    );
+    final msg = data['message'];
+    if (msg is Map && msg['status'] == 'success') {
+      return msg['items'] as List<dynamic>?;
     }
+    return null;
   }
 }

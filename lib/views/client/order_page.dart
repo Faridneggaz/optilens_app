@@ -16,8 +16,6 @@ class OrderPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = Get.find<OrderController>();
-    // cart.clear() is now called by clearCart() via the BindingsBuilder in
-    // main.dart â€” fires once per route push, not on every rebuild.
 
     return GetBuilder<LanguageController>(
       builder: (_) => Scaffold(

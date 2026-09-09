@@ -33,7 +33,8 @@ class SessionController extends GetxController {
       if (!isUser.value) {
         isRestoring.value = true;
         try {
-          final response = await CustomerRepository().fetchCustomer(service.userCode);
+          final response =
+              await Get.find<CustomerRepository>().fetchCustomer(service.userCode);
           customer.value = response.customer;
         } catch (e) {
           await logout();

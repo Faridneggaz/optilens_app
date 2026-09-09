@@ -5,11 +5,18 @@ import '../../data/repositories/customer_repository.dart';
 import '../../data/repositories/employee_api.dart';
 import '../../app/routes/app_routes.dart';
 import '../../core/services/session_service.dart';
+import '../../utils/error_feedback.dart';
 import 'session_controller.dart';
 
 class LoginController extends GetxController {
-  final _loginRepo    = LoginRepository();
-  final _customerRepo = CustomerRepository();
+  LoginController({
+    required LoginRepository loginRepo,
+    required CustomerRepository customerRepo,
+  })  : _loginRepo = loginRepo,
+        _customerRepo = customerRepo;
+
+  final LoginRepository _loginRepo;
+  final CustomerRepository _customerRepo;
 
   // Form controllers — disposed in onClose
   final clientCodeController = TextEditingController();
@@ -61,12 +68,9 @@ class LoginController extends GetxController {
 
       Get.offAllNamed(AppRoutes.main);
     } catch (e) {
-      final errorStr = e.toString().toLowerCase();
-      if (errorStr.contains('network') || errorStr.contains('socket') || errorStr.contains('connection')) {
-        errorMessage.value = 'connection_error'.tr;
-      } else {
-        errorMessage.value = 'incorrect_code'.tr;
-      }
+      errorMessage.value = ErrorFeedback.isNetwork(e)
+          ? 'connection_error'.tr
+          : 'incorrect_code'.tr;
     } finally {
       isLoading.value = false;
     }
@@ -112,12 +116,9 @@ class LoginController extends GetxController {
 
       Get.offAllNamed(AppRoutes.main);
     } catch (e) {
-      final errorStr = e.toString().toLowerCase();
-      if (errorStr.contains('network') || errorStr.contains('socket') || errorStr.contains('connection')) {
-        errorMessage.value = 'connection_error'.tr;
-      } else {
-        errorMessage.value = 'login_error'.tr;
-      }
+      errorMessage.value = ErrorFeedback.isNetwork(e)
+          ? 'connection_error'.tr
+          : 'login_error'.tr;
     } finally {
       isLoading.value = false;
     }

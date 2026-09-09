@@ -248,7 +248,7 @@ class MaterialRequestDetailPage extends StatelessWidget {
           Get.snackbar('success'.tr, 'mr_submitted'.tr,
               backgroundColor: Colors.green, colorText: Colors.white);
         } else {
-          Get.snackbar('error'.tr, result['error']?.toString() ?? 'Error',
+          Get.snackbar('error'.tr, result['error']?.toString() ?? 'error_occurred'.tr,
               backgroundColor: Colors.red, colorText: Colors.white);
         }
       },
@@ -280,7 +280,7 @@ class MaterialRequestDetailPage extends StatelessWidget {
             'token': Get.find<SessionService>().authToken,
           });
         } else {
-          Get.snackbar('error'.tr, result['error']?.toString() ?? 'Error',
+          Get.snackbar('error'.tr, result['error']?.toString() ?? 'error_occurred'.tr,
               backgroundColor: Colors.red, colorText: Colors.white);
         }
       },

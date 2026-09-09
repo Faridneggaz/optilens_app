@@ -3,21 +3,21 @@ import 'package:get/get.dart';
 import '../../application/controllers/complaint_controller.dart';
 import '../../widgets/header.dart';
 import '../../../application/controllers/language_controller.dart';
-import '../../../application/controllers/session_controller.dart';
+import '../../widgets/client_session_gate.dart';
 
 class ComplaintFormPage extends StatelessWidget {
   const ComplaintFormPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final c        = Get.put(ComplaintController());
-    final customer = Get.find<SessionController>().customer.value!;
+    final c        = Get.find<ComplaintController>();
     final formKey  = GlobalKey<FormState>();
     final descCtrl = TextEditingController();
 
     const Color themeColor = Color.fromARGB(255, 0, 169, 157);
 
-    return GetBuilder<LanguageController>(
+    return ClientSessionGate(
+      builder: (customer) => GetBuilder<LanguageController>(
       builder: (_) => Scaffold(
         backgroundColor: const Color.fromARGB(255, 247, 255, 253),
         body: Column(
@@ -118,6 +118,7 @@ class ComplaintFormPage extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }

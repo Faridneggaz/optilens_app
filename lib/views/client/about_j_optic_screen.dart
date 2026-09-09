@@ -15,7 +15,7 @@ class AboutJethingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(AboutController());
+    final controller = Get.find<AboutController>();
 
     return GetBuilder<LanguageController>(
       builder: (_) => Scaffold(

@@ -4,8 +4,8 @@ import '../../widgets/header.dart';
 import '../../utils/announcement_utils.dart';
 import '../../../application/controllers/dashboard_controller.dart';
 import '../../../application/controllers/language_controller.dart';
-import '../../../application/controllers/session_controller.dart';
 import '../../../app/routes/app_routes.dart';
+import '../../widgets/client_session_gate.dart';
 
 class DashboardPage extends StatelessWidget {
   DashboardPage({super.key});
@@ -14,11 +14,8 @@ class DashboardPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final customer = Get.find<SessionController>().customer.value!;
-
-    // GetBuilder<LanguageController> force la reconstruction du Scaffold entier
-    // à chaque changement de langue (update() est appelé dans changeLanguage()).
-    return GetBuilder<LanguageController>(
+    return ClientSessionGate(
+      builder: (customer) => GetBuilder<LanguageController>(
       builder: (_) => Scaffold(
         backgroundColor: const Color.fromARGB(255, 246, 255, 253),
         body: Column(
@@ -121,6 +118,7 @@ class DashboardPage extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }

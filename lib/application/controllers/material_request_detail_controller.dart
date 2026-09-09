@@ -5,15 +5,18 @@ import '../../domain/response/material_request_response.dart';
 import '../../core/services/session_service.dart';
 
 class MaterialRequestDetailController extends GetxController {
-  final _repo = MaterialRequestRepository();
+  MaterialRequestDetailController(
+    this.mrName, {
+    MaterialRequestRepository? repo,
+  }) : _repo = repo ?? Get.find<MaterialRequestRepository>();
+
+  final MaterialRequestRepository _repo;
 
   final mr           = Rxn<MaterialRequest>();
   final isLoading    = true.obs;
   final errorMessage = ''.obs;
   
   final String mrName;
-
-  MaterialRequestDetailController(this.mrName);
 
   String get _token => Get.find<SessionService>().authToken;
 

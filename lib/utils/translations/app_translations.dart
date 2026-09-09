@@ -1,7 +1,7 @@
 import 'package:get/get.dart';
-import 'fr_FR.dart';
-import 'en_US.dart';
-import 'ar_DZ.dart';
+import 'fr_fr.dart';
+import 'en_us.dart';
+import 'ar_dz.dart';
 
 /// GetX Translations class.
 /// Register it in GetMaterialApp:

@@ -9,6 +9,7 @@ abstract class AppRoutes {
   static const stockEntry     = '/stock-entry';
   static const changePassword = '/change-password';
   static const about          = '/about';
+  static const aboutJoptic    = '/about-joptic';
   static const notifications      = '/notifications';
   static const materialRequests   = '/material-requests';
   static const materialRequestDetail = '/material-request-detail';

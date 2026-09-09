@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../data/repositories/payment_repository.dart';
 import '../../utils/payment_utils.dart';
+import '../../utils/error_feedback.dart';
 import 'session_controller.dart';
 
 class PaymentController extends GetxController {
-  final _repo = PaymentRepository();
+  PaymentController({PaymentRepository? repo})
+      : _repo = repo ?? Get.find<PaymentRepository>();
+
+  final PaymentRepository _repo;
 
   final payments      = <PaymentItemData>[].obs;
   final isLoading     = true.obs;
@@ -77,7 +81,7 @@ class PaymentController extends GetxController {
       hasMore.value  = response.hasMore;
       _offset        = payments.length;
     } catch (e) {
-      // Ignored for production
+      ErrorFeedback.snackbar(e, fallbackKey: 'error_load_payments');
     } finally {
       isLoading.value = false;
     }
@@ -98,7 +102,7 @@ class PaymentController extends GetxController {
       hasMore.value = response.hasMore;
       _offset       = payments.length;
     } catch (e) {
-      // Ignored for production
+      ErrorFeedback.snackbar(e, fallbackKey: 'error_load_payments');
     } finally {
       isLoadingMore.value = false;
     }
@@ -120,8 +124,8 @@ class PaymentController extends GetxController {
         status: selectedStatus.value == 'All' ? null : selectedStatus.value,
       );
       searchPayments.value = _mapPayments(response.payments);
-    } catch (_) {
-      // Ignored for production
+    } catch (e) {
+      ErrorFeedback.snackbar(e, fallbackKey: 'error_search_payments');
     } finally {
       isSearching.value = false;
     }

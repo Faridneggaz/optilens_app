@@ -2,19 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../widgets/header.dart';
 import '../../../application/controllers/language_controller.dart';
-import '../../../application/controllers/session_controller.dart';
 import '../../../app/routes/app_routes.dart';
+import '../../widgets/client_session_gate.dart';
 
 class ProfilePage extends StatelessWidget {
-  ProfilePage({super.key});
-
-  final SessionController _session = Get.find<SessionController>();
+  const ProfilePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final customer = _session.customer.value!;
-
-    return GetBuilder<LanguageController>(
+    return ClientSessionGate(
+      builder: (customer) => GetBuilder<LanguageController>(
       builder: (_) => Scaffold(
         backgroundColor: const Color.fromARGB(255, 247, 255, 253),
         body: Column(
@@ -90,6 +87,7 @@ class ProfilePage extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }

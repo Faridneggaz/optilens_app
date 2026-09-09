@@ -6,13 +6,12 @@ import 'bottom_navbar.dart';
 import '../views/client/dashboard_view.dart';
 import '../views/client/invoice_view.dart';
 import '../views/client/payment_view.dart';
-import '../views/client/profil_view.dart';
+import '../views/client/profile_view.dart';
 import '../views/user/user_dashboard.dart';
 import '../application/controllers/session_controller.dart';
 import '../application/controllers/main_controller.dart';
 import '../application/controllers/language_controller.dart';
 import '../application/controllers/user_dashboard_controller.dart';
-import '../views/client/about_j_optic_screen.dart';
 import '../app/routes/app_routes.dart';
 
 class ZoomDrawerPage extends StatelessWidget {
@@ -197,7 +196,7 @@ class DrawerScreen extends StatelessWidget {
                         title: Text('app_joptic'.tr),
                         onTap: () {
                           ZoomDrawer.of(context)?.close();
-                          Get.to(() => const AboutJethingsScreen());
+                          Get.toNamed(AppRoutes.aboutJoptic);
                         },
                       ),
                       const SizedBox(height: 10),

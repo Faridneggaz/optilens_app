@@ -9,8 +9,6 @@ class OrderHistoryPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = Get.find<OrderController>();
-    // loadOrders() is now triggered by the BindingsBuilder in main.dart
-    // (fires once per route push, not on every rebuild).
 
     const Color primaryTeal = Color(0xFF008075);
     const Color bgColor     = Color(0xFFF7FFFD);

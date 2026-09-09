@@ -4,11 +4,13 @@ import '../../data/repositories/stock_entry_repository.dart';
 import '../../domain/response/stock_entry.dart';
 import '../../app/routes/app_routes.dart';
 import '../../core/services/session_service.dart';
-import 'session_controller.dart';
+import '../../utils/error_feedback.dart';
 
 class UserDashboardController extends GetxController {
-  final _repo    = StockEntryRepository();
-  final _session = Get.find<SessionController>();
+  UserDashboardController({StockEntryRepository? repo})
+      : _repo = repo ?? Get.find<StockEntryRepository>();
+
+  final StockEntryRepository _repo;
 
   final stockEntries    = <StockEntry>[].obs;
   final isLoading       = true.obs;
@@ -108,7 +110,7 @@ class UserDashboardController extends GetxController {
         _offset += _limit;
       }
     } catch (e) {
-      // silently fail — UI shows empty state
+      ErrorFeedback.snackbar(e, fallbackKey: 'failed_load_stock');
     } finally {
       isLoading.value     = false;
       isLoadingMore.value = false;
@@ -126,8 +128,8 @@ class UserDashboardController extends GetxController {
         status: selectedStatus.value == 'All' ? null : selectedStatus.value,
       );
       searchStockEntries.value = response.stockEntries;
-    } catch (_) {
-      // silently fail
+    } catch (e) {
+      ErrorFeedback.snackbar(e, fallbackKey: 'error_search_stock');
     } finally {
       isSearching.value = false;
     }

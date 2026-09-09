@@ -3,10 +3,14 @@ import 'package:get/get.dart';
 import '../../data/repositories/invoice_repository.dart';
 import '../../domain/response/sales_invoice.dart';
 import '../../utils/invoice_utils.dart';
+import '../../utils/error_feedback.dart';
 import 'session_controller.dart';
 
 class InvoiceController extends GetxController {
-  final _repo = InvoiceRepository();
+  InvoiceController({InvoiceRepository? repo})
+      : _repo = repo ?? Get.find<InvoiceRepository>();
+
+  final InvoiceRepository _repo;
 
   final salesInvoices     = <SalesInvoice>[].obs;
   final posInvoices       = <SalesInvoice>[].obs;
@@ -141,8 +145,8 @@ class InvoiceController extends GetxController {
       } else {
         _offset += _limit;
       }
-    } catch (_) {
-      Get.snackbar('Erreur', 'Impossible de charger les factures');
+    } catch (e) {
+      ErrorFeedback.snackbar(e, fallbackKey: 'error_load_invoices');
     } finally {
       isLoading.value     = false;
       isLoadingMore.value = false;
@@ -161,8 +165,8 @@ class InvoiceController extends GetxController {
       );
       searchSalesInvoices.value = response.salesInvoices;
       searchPosInvoices.value   = response.posInvoices;
-    } catch (_) {
-      Get.snackbar('Erreur', 'Impossible de chercher les factures');
+    } catch (e) {
+      ErrorFeedback.snackbar(e, fallbackKey: 'error_search_invoices');
     } finally {
       isSearching.value = false;
     }

@@ -4,8 +4,8 @@ import '../../widgets/header.dart';
 import '../../utils/invoice_utils.dart';
 import '../../../application/controllers/invoice_controller.dart';
 import '../../../application/controllers/language_controller.dart';
-import '../../../application/controllers/session_controller.dart';
 import '../../../app/routes/app_routes.dart';
+import '../../widgets/client_session_gate.dart';
 
 class InvoicePage extends StatelessWidget {
   InvoicePage({super.key});
@@ -14,9 +14,8 @@ class InvoicePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final customer = Get.find<SessionController>().customer.value!;
-
-    return GetBuilder<LanguageController>(
+    return ClientSessionGate(
+      builder: (customer) => GetBuilder<LanguageController>(
       builder: (_) => Scaffold(
         backgroundColor: const Color.fromRGBO(247, 255, 253, 1),
         body: Obx(() => Column(
@@ -182,6 +181,7 @@ class InvoicePage extends StatelessWidget {
               ),
             ],
           )),
+      ),
       ),
     );
   }

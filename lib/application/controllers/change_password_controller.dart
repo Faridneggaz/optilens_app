@@ -5,7 +5,10 @@ import 'session_controller.dart';
 import '../../core/services/session_service.dart';
 
 class ChangePasswordController extends GetxController {
-  final _repo = CustomerRepository();
+  ChangePasswordController({CustomerRepository? repo})
+      : _repo = repo ?? Get.find<CustomerRepository>();
+
+  final CustomerRepository _repo;
 
   final oldPassword     = ''.obs;
   final newPassword     = ''.obs;

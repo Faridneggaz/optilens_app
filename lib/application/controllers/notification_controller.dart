@@ -1,9 +1,13 @@
 import 'package:get/get.dart';
 import '../../core/services/session_service.dart';
 import '../../data/repositories/notification_repository.dart';
+import '../../utils/error_feedback.dart';
 
 class NotificationController extends GetxController {
-  final _repo = NotificationRepository();
+  NotificationController({NotificationRepository? repo})
+      : _repo = repo ?? Get.find<NotificationRepository>();
+
+  final NotificationRepository _repo;
 
   final notifications = <dynamic>[].obs;
   final isLoading     = false.obs;
@@ -25,8 +29,9 @@ class NotificationController extends GetxController {
       }
       final result = await _repo.fetchNotifications(code);
       notifications.value = result;
-    } catch (_) {
+    } catch (e) {
       notifications.value = [];
+      ErrorFeedback.snackbar(e, fallbackKey: 'error_load_notifications');
     } finally {
       isLoading.value = false;
     }

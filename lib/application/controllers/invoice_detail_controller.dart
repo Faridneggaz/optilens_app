@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
 import 'package:get/get.dart';
-import 'package:permission_handler/permission_handler.dart';
 import '../../data/repositories/invoice_detail_repository.dart';
 import '../../domain/response/invoice_detail_response.dart';
 
 class InvoiceDetailController extends GetxController {
-  final _repo     = InvoiceDetailRepository();
+  InvoiceDetailController({InvoiceDetailRepository? repo})
+      : _repo = repo ?? Get.find<InvoiceDetailRepository>();
+
+  final InvoiceDetailRepository _repo;
 
   // Data state
   final invoiceData = Rxn<InvoiceDetailResponse>();

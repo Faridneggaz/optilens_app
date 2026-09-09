@@ -2,9 +2,13 @@ import 'package:get/get.dart';
 import '../../data/repositories/stock_entry_repository.dart';
 import '../../domain/response/stock_entry_response.dart';
 import '../../core/services/session_service.dart';
+import '../../utils/error_feedback.dart';
 
 class StockEntryController extends GetxController {
-  final StockEntryRepository _repo = StockEntryRepository();
+  StockEntryController({StockEntryRepository? repo})
+      : _repo = repo ?? Get.find<StockEntryRepository>();
+
+  final StockEntryRepository _repo;
 
   Future<StockEntryResponse?> fetchLastStockEntries({
     int limit  = 20,
@@ -21,7 +25,8 @@ class StockEntryController extends GetxController {
         status: status,
       );
       return response;
-    } catch (_) {
+    } catch (e) {
+      ErrorFeedback.snackbar(e, fallbackKey: 'failed_load_stock');
       return null;
     }
   }

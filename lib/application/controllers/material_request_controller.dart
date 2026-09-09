@@ -3,9 +3,13 @@ import '../../data/repositories/material_request_repository.dart';
 import '../../data/repositories/employee_api.dart';
 import '../../domain/response/material_request_response.dart';
 import '../../core/services/session_service.dart';
+import '../../utils/error_feedback.dart';
 
 class MaterialRequestController extends GetxController {
-  final _repo = MaterialRequestRepository();
+  MaterialRequestController({MaterialRequestRepository? repo})
+      : _repo = repo ?? Get.find<MaterialRequestRepository>();
+
+  final MaterialRequestRepository _repo;
 
   final materialRequests = <MaterialRequest>[].obs;
   final searchResults    = <MaterialRequest>[].obs;
@@ -92,8 +96,8 @@ class MaterialRequestController extends GetxController {
         status:     selectedStatus.value != 'All' ? selectedStatus.value : null,
       );
       searchResults.value = result.materialRequests;
-    } catch (_) {
-      // silently fail
+    } catch (e) {
+      ErrorFeedback.snackbar(e, fallbackKey: 'error_load_material_requests');
     } finally {
       isSearching.value = false;
     }
@@ -124,7 +128,8 @@ class MaterialRequestController extends GetxController {
         _offset      += _limit;
         hasMore.value = true;
       }
-    } catch (_) {
+    } catch (e) {
+      ErrorFeedback.snackbar(e, fallbackKey: 'error_load_material_requests');
     } finally {
       isLoading.value     = false;
       isLoadingMore.value = false;

@@ -5,11 +5,19 @@ import '../../data/repositories/announcement_repository.dart';
 import '../../domain/response/sales_invoice.dart';
 import '../../domain/response/announcement.dart';
 import 'session_controller.dart';
+import '../../utils/error_feedback.dart';
 
 class DashboardController extends GetxController {
-  final _invoiceRepo      = InvoiceRepository();
-  final _announcementRepo = AnnouncementRepository();
-  final _session          = Get.find<SessionController>();
+  DashboardController({
+    InvoiceRepository? invoiceRepo,
+    AnnouncementRepository? announcementRepo,
+  })  : _invoiceRepo = invoiceRepo ?? Get.find<InvoiceRepository>(),
+        _announcementRepo =
+            announcementRepo ?? Get.find<AnnouncementRepository>();
+
+  final InvoiceRepository _invoiceRepo;
+  final AnnouncementRepository _announcementRepo;
+  final _session = Get.find<SessionController>();
 
   final invoices          = <SalesInvoice>[].obs;
   final announcements     = <Announcement>[].obs;
@@ -49,11 +57,6 @@ class DashboardController extends GetxController {
     hasMore.value    = true;
     isInitialLoading.value = true;
     
-    // Debug print for priceList
-    if (_session.customer.value != null) {
-      print('>>> priceList value: ${_session.customer.value!.priceList}');
-    }
-
     await Future.wait([_fetchInvoices(), _fetchAnnouncements()]);
     isInitialLoading.value = false;
   }
@@ -62,7 +65,9 @@ class DashboardController extends GetxController {
     try {
       final r = await _invoiceRepo.fetchInvoices(_customerCode, limit: 5);
       invoices.value = r.salesInvoices;
-    } catch (_) {}
+    } catch (e) {
+      ErrorFeedback.snackbar(e, fallbackKey: 'error_load_invoices');
+    }
   }
 
   Future<void> _fetchAnnouncements() async {
@@ -72,7 +77,9 @@ class DashboardController extends GetxController {
       announcements.value = result;
       _offset             = _limit;
       if (result.length < _limit) hasMore.value = false;
-    } catch (_) {}
+    } catch (e) {
+      ErrorFeedback.snackbar(e, fallbackKey: 'error_load_announcements');
+    }
   }
 
   Future<void> fetchMoreAnnouncements() async {
@@ -87,7 +94,8 @@ class DashboardController extends GetxController {
         _offset += _limit;
         if (result.length < _limit) hasMore.value = false;
       }
-    } catch (_) {
+    } catch (e) {
+      ErrorFeedback.snackbar(e, fallbackKey: 'error_load_announcements');
     } finally {
       isMoreLoading.value = false;
     }

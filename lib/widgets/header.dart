@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'logout_dialogue.dart';
-import 'package:flutter_zoom_drawer/flutter_zoom_drawer.dart';
 import 'language_selector_widget.dart';
 import 'package:get/get.dart';
 import '../application/controllers/session_controller.dart';

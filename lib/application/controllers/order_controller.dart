@@ -3,9 +3,14 @@ import '../../core/services/session_service.dart';
 import '../../data/repositories/order_repository.dart';
 import '../../domain/response/item.dart';
 import '../../domain/response/cart_item.dart';
+import '../../data/repositories/repository_exception.dart';
+import '../../utils/error_feedback.dart';
 
 class OrderController extends GetxController {
-  final _repo = OrderRepository();
+  OrderController({OrderRepository? repo})
+      : _repo = repo ?? Get.find<OrderRepository>();
+
+  final OrderRepository _repo;
 
   // ── Item catalogue state ─────────────────────────────────────────────────
 
@@ -55,17 +60,23 @@ class OrderController extends GetxController {
     isLoadingItems.value = true;
     try {
       items.value = await _repo.fetchItems(code);
-    } catch (_) {
+    } catch (e) {
+      ErrorFeedback.snackbar(e, fallbackKey: 'load_error');
       items.value = [];
     } finally {
       isLoadingItems.value = false;
     }
   }
 
+  String get _customerCode => Get.find<SessionService>().userCode;
+
   Future<List<Item>> searchItems(String searchText) async {
     if (searchText.trim().isEmpty) return [];
     try {
-      return await _repo.searchItems(searchText.trim());
+      return await _repo.searchItems(
+        searchText: searchText.trim(),
+        customerCode: _customerCode,
+      );
     } catch (_) {
       return [];
     }
@@ -105,23 +116,26 @@ class OrderController extends GetxController {
   // ── Order submission ─────────────────────────────────────────────────────
 
   Future<String?> confirmOrder() async {
-    if (cart.isEmpty) return 'Cart is empty';
+    if (cart.isEmpty) return 'cart_empty'.tr;
     isSubmitting.value = true;
     try {
       final payload = cart.map((item) => item.toJson()).toList();
-      final result  = await _repo.submitOrder(payload);
+      final result = await _repo.submitOrder(
+        customerCode: _customerCode,
+        items: payload,
+      );
       if (result) {
         cart.clear();
-        return null; // Success
+        return null;
       }
-      return 'Failed to place order';
-    } catch (e, stacktrace) {
-      print('Order submission error: $e');
-      print(stacktrace);
-      if (e.toString().startsWith('RepositoryException: ')) {
-        return e.toString().substring('RepositoryException: '.length);
+      return 'order_error'.tr;
+    } catch (e) {
+      if (e is RepositoryException) {
+        return ErrorFeedback.isNetwork(e)
+            ? 'connection_error'.tr
+            : e.message;
       }
-      return e.toString();
+      return ErrorFeedback.message(e, fallbackKey: 'order_error');
     } finally {
       isSubmitting.value = false;
     }
@@ -132,8 +146,9 @@ class OrderController extends GetxController {
   Future<void> loadOrders() async {
     isLoading.value = true;
     try {
-      orders.value = await _repo.fetchOrders();
-    } catch (_) {
+      orders.value = await _repo.fetchOrders(_customerCode);
+    } catch (e) {
+      ErrorFeedback.snackbar(e, fallbackKey: 'error_load_orders');
       orders.value = [];
     } finally {
       isLoading.value = false;

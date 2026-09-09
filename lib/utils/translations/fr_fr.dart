@@ -53,6 +53,7 @@ const Map<String, String> frFR = {
   'status_label'               : 'Statut',
   'status_colon'               : 'Statut : ',
   'error_load_invoices'        : 'Impossible de charger les factures',
+  'error_search_invoices'      : 'Impossible de chercher les factures',
   'invoice_load_error'         : 'Impossible de charger les détails de la facture',
 
   // ── Bluetooth / Impression ────────────────────────────────────────────────
@@ -142,6 +143,8 @@ const Map<String, String> frFR = {
   'payment_for'                : 'Paiement ',
   'no_payments'                : 'Aucun paiement trouvé',
   'all_payments_loaded'        : 'Tous les paiements chargés',
+  'error_load_payments'        : 'Impossible de charger les paiements',
+  'error_search_payments'      : 'Impossible de chercher les paiements',
 
   // ── Profil ────────────────────────────────────────────────────────────────
   'profile_info'               : 'Informations du profil',
@@ -221,6 +224,7 @@ const Map<String, String> frFR = {
   'view_more'                  : 'Voir plus',
   'success'                    : 'Succès',
   'error'                      : 'Erreur',
+  'warning'                    : 'Attention',
   'change_your_password'      : 'Changer votre mot de passe',
   'enter_old_and_new_password': 'Entrez votre mot de passe actuel et nouveau',
   'current_password'          : 'Mot de passe actuel',
@@ -300,4 +304,15 @@ const Map<String, String> frFR = {
   'status_transferred'        : 'Transféré',
   'status_stopped'            : 'Arrêté',
   'status_cancelled'          : 'Annulé',
+  'submit_direct'             : 'Soumettre',
+  'error_load_announcements'  : 'Impossible de charger les annonces',
+  'error_load_orders'         : 'Impossible de charger les commandes',
+  'error_load_notifications'  : 'Impossible de charger les notifications',
+  'error_load_material_requests': 'Impossible de charger les demandes',
+  'error_search_stock'        : 'Impossible de chercher les bons de stock',
+  'mr_add_item_required'      : 'Ajoutez au moins un article',
+  'mr_select_both_warehouses' : 'Sélectionnez les entrepôts source et cible',
+  'mr_select_source_warehouse': 'Sélectionnez l\'entrepôt source',
+  'mr_select_target_warehouse': 'Sélectionnez l\'entrepôt cible',
+  'mr_draft_submit_failed'    : 'Brouillon créé mais la soumission a échoué',
 };

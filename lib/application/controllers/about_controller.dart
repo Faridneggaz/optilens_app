@@ -1,17 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../core/network/api_client.dart';
 import '../../data/repositories/lead_repository.dart';
 import '../../data/repositories/complaint_joptic_repository.dart';
 
 class AboutController extends GetxController {
-  final LeadRepository _leadRepository = LeadRepository();
-  final ComplaintRepository _complaintRepository = ComplaintRepository();
+  AboutController({
+    LeadRepository? leadRepository,
+    JopticComplaintRepository? complaintRepository,
+  })  : _leadRepository =
+            leadRepository ?? LeadRepository(Get.find<ApiClient>()),
+        _complaintRepository = complaintRepository ??
+            JopticComplaintRepository(Get.find<ApiClient>());
+
+  final LeadRepository _leadRepository;
+  final JopticComplaintRepository _complaintRepository;
 
   final nameController = TextEditingController();
   final phoneController = TextEditingController();
   final complaintClientController = TextEditingController();
   final complaintDescController = TextEditingController();
-  
+
   var isLoading = false.obs;
   var isSubmittingComplaint = false.obs;
 
@@ -26,16 +35,11 @@ class AboutController extends GetxController {
 
     isLoading.value = true;
     try {
-      final response = await _leadRepository.createLead(name: name, phone: phone);
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        Get.back();
-        Get.snackbar('success'.tr, 'request_received'.tr);
-        nameController.clear();
-        phoneController.clear();
-      } else {
-        Get.snackbar('error'.tr, 'server_error'.tr);
-      }
+      await _leadRepository.createLead(name: name, phone: phone);
+      Get.back();
+      Get.snackbar('success'.tr, 'request_received'.tr);
+      nameController.clear();
+      phoneController.clear();
     } catch (e) {
       Get.snackbar('error'.tr, 'erp_connection_error'.tr);
     } finally {
@@ -54,19 +58,14 @@ class AboutController extends GetxController {
 
     isSubmittingComplaint.value = true;
     try {
-      final response = await _complaintRepository.submitComplaint(
+      await _complaintRepository.submitComplaint(
         clientName: clientName,
         description: desc,
       );
-      
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        Get.back();
-        Get.snackbar('success'.tr, 'complaint_sent'.tr);
-        complaintClientController.clear();
-        complaintDescController.clear();
-      } else {
-        Get.snackbar('error'.tr, 'server_error'.tr);
-      }
+      Get.back();
+      Get.snackbar('success'.tr, 'complaint_sent'.tr);
+      complaintClientController.clear();
+      complaintDescController.clear();
     } catch (e) {
       Get.snackbar('error'.tr, 'complaint_send_error'.tr);
     } finally {

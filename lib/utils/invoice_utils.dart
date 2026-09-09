@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/theme/app_colors.dart';
 import 'status_color.dart';
 
 class InvoiceItemData {
@@ -32,7 +33,7 @@ class InvoiceList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color.fromARGB(255, 247, 255, 253),
+      color: AppColors.scaffold,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -42,7 +43,7 @@ class InvoiceList extends StatelessWidget {
               child: Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Color.fromARGB(255, 247, 255, 253),
+                  color: AppColors.scaffold,
                                   borderRadius: BorderRadius.circular(12),
                 ),
                 padding: const EdgeInsets.all(16),

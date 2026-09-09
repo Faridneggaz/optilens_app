@@ -1,9 +1,12 @@
+// ignore_for_file: annotate_overrides
 import '../../core/network/api_client.dart';
-import '../../domain/response/login_response.dart';
-import 'repository_exception.dart';
+import '../../domain/entities/login_response.dart';
+import '../../domain/failures/failures.dart';
+import '../../domain/repositories/login_repository.dart';
+import '../mappers/json_mappers.dart';
 
-class LoginRepository {
-  LoginRepository(this._client);
+class LoginRepositoryImpl implements LoginRepository {
+  LoginRepositoryImpl(this._client);
 
   final ApiClient _client;
 
@@ -18,13 +21,13 @@ class LoginRepository {
     );
     final message = jsonData['message'];
     if (message is Map && message['user'] is Map) {
-      return LoginResponse.fromJson(jsonData);
+      return LoginResponseMapper.fromJson(jsonData);
     }
     if (message == null || message['ok'] == false) {
       final error =
           (message is Map ? message['error'] : null) ?? 'Unknown error';
       throw RepositoryException('Login failed: $error');
     }
-    return LoginResponse.fromJson(jsonData);
+    return LoginResponseMapper.fromJson(jsonData);
   }
 }

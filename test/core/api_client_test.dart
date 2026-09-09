@@ -5,7 +5,7 @@ import 'package:optilens/core/network/api_client.dart';
 import 'package:optilens/data/repositories/invoice_repository.dart';
 import 'package:optilens/data/repositories/login_repository.dart';
 import 'package:optilens/data/repositories/order_repository.dart';
-import 'package:optilens/data/repositories/repository_exception.dart';
+import 'package:optilens/domain/failures/failures.dart';
 import 'package:optilens/utils/api_config.dart';
 import 'package:optilens/utils/error_feedback.dart';
 
@@ -80,7 +80,7 @@ void main() {
         }),
       );
 
-      final result = await LoginRepository(client).login(
+      final result = await LoginRepositoryImpl(client).login(
         email: 'a@b.c',
         password: 'secret',
       );
@@ -100,7 +100,7 @@ void main() {
       );
 
       expect(
-        () => LoginRepository(client).login(email: 'a', password: 'b'),
+        () => LoginRepositoryImpl(client).login(email: 'a', password: 'b'),
         throwsA(isA<RepositoryException>()),
       );
     });
@@ -123,7 +123,7 @@ void main() {
         }),
       );
 
-      final result = await InvoiceRepository(client).fetchInvoices(
+      final result = await InvoiceRepositoryImpl(client).fetchInvoices(
         'C1',
         searchText: 'INV',
         status: 'Unpaid',
@@ -155,7 +155,7 @@ void main() {
         }),
       );
 
-      final items = await OrderRepository(client).fetchItems('C1');
+      final items = await OrderRepositoryImpl(client).fetchItems('C1');
       expect(items, hasLength(1));
       expect(items.first.itemCode, 'X');
       expect(items.first.rate, 12.5);

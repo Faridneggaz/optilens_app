@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'app/routes/app_routes.dart';
 import 'app/routes/app_pages.dart';
-import 'application/controllers/session_controller.dart';
-import 'application/controllers/language_controller.dart';
+import 'presentation/controllers/session_controller.dart';
+import 'presentation/controllers/language_controller.dart';
 import 'utils/translations/app_translations.dart';
 import 'core/services/session_service.dart';
+import 'core/auth/auth_events.dart';
 import 'core/network/api_client.dart';
 import 'core/theme/app_theme.dart';
 import 'app/bindings/repository_binding.dart';
@@ -21,6 +22,21 @@ Future<void> main() async {
   RepositoryBinding.register();
   Get.put(SessionController(), permanent: true);
   Get.put(LanguageController(), permanent: true);
+
+  AuthEvents.onInvalidSession = () {
+    if (Get.isRegistered<SessionController>()) {
+      Get.find<SessionController>().logout();
+    }
+  };
+  AuthEvents.onAccessDenied = () {
+    Get.snackbar(
+      'error'.tr,
+      'error_access_denied'.tr,
+      backgroundColor: Colors.orange,
+      colorText: Colors.white,
+      snackPosition: SnackPosition.BOTTOM,
+    );
+  };
 
   runApp(const MyApp());
 }

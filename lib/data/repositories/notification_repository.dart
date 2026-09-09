@@ -1,7 +1,9 @@
+// ignore_for_file: annotate_overrides
 import '../../core/network/api_client.dart';
+import '../../domain/repositories/notification_repository.dart';
 
-class NotificationRepository {
-  NotificationRepository(this._client);
+class NotificationRepositoryImpl implements NotificationRepository {
+  NotificationRepositoryImpl(this._client);
 
   final ApiClient _client;
 

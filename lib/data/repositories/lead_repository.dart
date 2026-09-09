@@ -1,7 +1,9 @@
+// ignore_for_file: annotate_overrides
 import '../../core/network/api_client.dart';
+import '../../domain/repositories/lead_repository.dart';
 
-class LeadRepository {
-  LeadRepository(this._client);
+class LeadRepositoryImpl implements LeadRepository {
+  LeadRepositoryImpl(this._client);
 
   final ApiClient _client;
 

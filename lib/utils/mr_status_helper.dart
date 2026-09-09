@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../core/theme/app_colors.dart';
 
 String translateMRStatus(String status) {
   switch (status) {
@@ -22,7 +23,7 @@ Color getMRStatusColor(String status) {
     case 'Pending':             return Colors.orange;
     case 'Partially Received':  return Colors.amber.shade700;
     case 'Received':            return Colors.green;
-    case 'Transferred':         return const Color.fromARGB(255, 0, 167, 155);
+    case 'Transferred':         return AppColors.primary;
     case 'Stopped':             return Colors.red;
     case 'Cancelled':           return Colors.red;
     default:                    return Colors.grey;

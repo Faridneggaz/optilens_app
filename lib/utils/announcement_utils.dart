@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../domain/response/announcement.dart';
+import '../core/theme/announcement_color.dart';
+import '../core/theme/app_colors.dart';
+import '../domain/entities/announcement.dart';
 
 class AnnouncementCard extends StatelessWidget {
   final Announcement announcement;
@@ -52,7 +54,7 @@ class AnnouncementCard extends StatelessWidget {
                     Text("${'published_on'.tr}${announcement.postedTime}", style: TextStyle(fontSize: 11, color: Colors.grey[400])),
                     ElevatedButton(
                       onPressed: onTap,
-                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00A89C), foregroundColor: Colors.white),
+                      style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white),
                       child: Text('view_more'.tr),
                     ),
                   ],

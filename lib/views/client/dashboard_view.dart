@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../widgets/header.dart';
 import '../../utils/announcement_utils.dart';
-import '../../../application/controllers/dashboard_controller.dart';
-import '../../../application/controllers/language_controller.dart';
+import '../../../presentation/controllers/dashboard_controller.dart';
+import '../../../presentation/controllers/language_controller.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../widgets/client_session_gate.dart';
+import '../../core/theme/app_colors.dart';
 
 class DashboardPage extends StatelessWidget {
   DashboardPage({super.key});
@@ -17,7 +18,7 @@ class DashboardPage extends StatelessWidget {
     return ClientSessionGate(
       builder: (customer) => GetBuilder<LanguageController>(
       builder: (_) => Scaffold(
-        backgroundColor: const Color.fromARGB(255, 246, 255, 253),
+        backgroundColor: AppColors.scaffoldAlt,
         body: Column(
           children: [
             AppHeader(
@@ -28,7 +29,7 @@ class DashboardPage extends StatelessWidget {
             Expanded(
               child: Obx(() => RefreshIndicator(
                     onRefresh: c.loadInitialData,
-                    color: const Color.fromARGB(255, 0, 167, 155),
+                    color: AppColors.primary,
                     child: c.isInitialLoading.value && c.announcements.isEmpty
                         ? const Center(child: CircularProgressIndicator())
                         : ListView(
@@ -52,7 +53,7 @@ class DashboardPage extends StatelessWidget {
                                           style: const TextStyle(
                                               fontSize: 20,
                                               fontWeight: FontWeight.w700,
-                                              color: Color(0xFF1F2837))),
+                                              color: AppColors.ink)),
                                     ),
                                   ],
                                 ),
@@ -72,7 +73,7 @@ class DashboardPage extends StatelessWidget {
                                           style: const TextStyle(
                                               fontSize: 20,
                                               fontWeight: FontWeight.bold,
-                                              color: Color(0xFF1F2837))),
+                                              color: AppColors.ink)),
                                     ),
                                   ],
                                 ),
@@ -146,7 +147,7 @@ class DashboardPage extends StatelessWidget {
             style: const TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.w900,
-                color: Color(0xFF1F2837)),
+                color: AppColors.ink),
           ),
         ],
       ),
@@ -174,7 +175,7 @@ class DashboardPage extends StatelessWidget {
             child: Text(title,
                 style: const TextStyle(
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF1F2837))),
+                    color: AppColors.ink)),
           ),
           Text(value,
               style: const TextStyle(

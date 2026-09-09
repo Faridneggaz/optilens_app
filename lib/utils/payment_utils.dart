@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../application/controllers/payment_controller.dart';
+import '../presentation/controllers/payment_controller.dart';
+import '../core/theme/app_colors.dart';
 
 class PaidInvoice {
   final String invoiceId;
@@ -55,14 +56,14 @@ class PaymentList extends StatelessWidget {
             final isExpanded = controller.expandedIndex.value == index;
 
             return Card(
-            color: const Color.fromARGB(255, 247, 255, 253),
+            color: AppColors.scaffold,
             elevation: 2,
             shadowColor: Colors.black.withValues(alpha: 0.1),
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
               side: isExpanded 
-                  ? const BorderSide(color: Color(0xFF00A89C), width: 1.5) 
+                  ? const BorderSide(color: AppColors.primary, width: 1.5) 
                   : BorderSide.none,
             ),
             child: Column(

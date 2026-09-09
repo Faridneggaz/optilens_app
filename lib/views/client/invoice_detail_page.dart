@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../application/controllers/invoice_detail_controller.dart';
-import '../../../application/controllers/language_controller.dart';
+import '../../presentation/controllers/invoice_detail_controller.dart';
+import '../../../presentation/controllers/language_controller.dart';
+import '../../core/theme/app_colors.dart';
 
 class InvoiceDetailPage extends StatelessWidget {
   const InvoiceDetailPage({super.key});
@@ -12,12 +13,12 @@ class InvoiceDetailPage extends StatelessWidget {
 
     return GetBuilder<LanguageController>(
       builder: (_) => Scaffold(
-        backgroundColor: const Color.fromARGB(255, 247, 255, 253),
+        backgroundColor: AppColors.scaffold,
         appBar: AppBar(
           title: const Text('',
               style: TextStyle(
-                  color: Color(0xFF00A69C), fontWeight: FontWeight.bold)),
-          backgroundColor: const Color.fromARGB(255, 247, 255, 253),
+                  color: AppColors.primary, fontWeight: FontWeight.bold)),
+          backgroundColor: AppColors.scaffold,
           elevation: 0,
           centerTitle: true,
           iconTheme: const IconThemeData(color: Colors.black),
@@ -27,7 +28,7 @@ class InvoiceDetailPage extends StatelessWidget {
           if (c.isLoading.value) {
             return const Center(
                 child: CircularProgressIndicator(
-                    color: Color(0xFF00A69C)));
+                    color: AppColors.primary));
           }
           if (c.error.value != null) {
             return Center(child: Text(c.error.value!));

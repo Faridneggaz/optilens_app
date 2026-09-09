@@ -1,8 +1,11 @@
+// ignore_for_file: annotate_overrides
 import '../../core/network/api_client.dart';
-import '../../domain/response/customer_response.dart';
+import '../../domain/entities/customer_response.dart';
+import '../../domain/repositories/customer_repository.dart';
+import '../mappers/json_mappers.dart';
 
-class CustomerRepository {
-  CustomerRepository(this._client);
+class CustomerRepositoryImpl implements CustomerRepository {
+  CustomerRepositoryImpl(this._client);
 
   final ApiClient _client;
 
@@ -11,7 +14,7 @@ class CustomerRepository {
       'get_client_by_code',
       query: {'code': code},
     );
-    return CustomerResponse.fromJson(json);
+    return CustomerResponseMapper.fromJson(json);
   }
 
   Future<Map<String, dynamic>> changePassword({

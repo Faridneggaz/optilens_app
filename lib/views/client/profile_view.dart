@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../widgets/header.dart';
-import '../../../application/controllers/language_controller.dart';
+import '../../../presentation/controllers/language_controller.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../widgets/client_session_gate.dart';
+import '../../core/theme/app_colors.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -13,7 +14,7 @@ class ProfilePage extends StatelessWidget {
     return ClientSessionGate(
       builder: (customer) => GetBuilder<LanguageController>(
       builder: (_) => Scaffold(
-        backgroundColor: const Color.fromARGB(255, 247, 255, 253),
+        backgroundColor: AppColors.scaffold,
         body: Column(
           children: [
             AppHeader(

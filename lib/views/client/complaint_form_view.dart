@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../application/controllers/complaint_controller.dart';
+import '../../presentation/controllers/complaint_controller.dart';
 import '../../widgets/header.dart';
-import '../../../application/controllers/language_controller.dart';
+import '../../../presentation/controllers/language_controller.dart';
 import '../../widgets/client_session_gate.dart';
+import '../../core/theme/app_colors.dart';
 
 class ComplaintFormPage extends StatelessWidget {
   const ComplaintFormPage({super.key});
@@ -14,12 +15,12 @@ class ComplaintFormPage extends StatelessWidget {
     final formKey  = GlobalKey<FormState>();
     final descCtrl = TextEditingController();
 
-    const Color themeColor = Color.fromARGB(255, 0, 169, 157);
+    const Color themeColor = AppColors.primary;
 
     return ClientSessionGate(
       builder: (customer) => GetBuilder<LanguageController>(
       builder: (_) => Scaffold(
-        backgroundColor: const Color.fromARGB(255, 247, 255, 253),
+        backgroundColor: AppColors.scaffold,
         body: Column(
           children: [
             AppHeader(
@@ -95,7 +96,7 @@ class ComplaintFormPage extends StatelessWidget {
                                       }
                                     },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF1F2837),
+                                backgroundColor: AppColors.ink,
                                 elevation: 10,
                                 shape: RoundedRectangleBorder(
                                     borderRadius:
@@ -132,7 +133,7 @@ class ComplaintFormPage extends StatelessWidget {
             style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF1F2837))),
+                color: AppColors.ink)),
       ],
     );
   }

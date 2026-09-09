@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../application/controllers/language_controller.dart';
+import '../presentation/controllers/language_controller.dart';
+import '../core/theme/app_colors.dart';
 
 // â”€â”€ Point d'entrÃ©e public â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -70,7 +71,7 @@ class _LanguageBottomSheet extends StatelessWidget {
                         isSelected ? FontWeight.w700 : FontWeight.w500,
                     color: isSelected
                         ? Colors.teal
-                        : const Color(0xFF1F2837),
+                        : AppColors.ink,
                   ),
                 ),
                 // Rule 5 â€” coche teal si langue active
@@ -116,7 +117,7 @@ class LanguageSelectorButton extends StatelessWidget {
           margin:  const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
-            color: const Color(0xFF00A69C).withValues(alpha: 0.10),
+            color: AppColors.primary.withValues(alpha: 0.10),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Row(
@@ -128,7 +129,7 @@ class LanguageSelectorButton extends StatelessWidget {
               ),
               const SizedBox(width: 4),
               const Icon(Icons.expand_more,
-                  color: Color(0xFF00A69C), size: 18),
+                  color: AppColors.primary, size: 18),
             ],
           ),
         ),

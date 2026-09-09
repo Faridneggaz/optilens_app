@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../core/services/session_service.dart';
+import '../core/theme/app_colors.dart';
 import '../app/routes/app_routes.dart';
 
 class LogoutDialog {
@@ -8,15 +9,15 @@ class LogoutDialog {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        backgroundColor: Color.fromARGB(255, 247, 255, 253),
-        surfaceTintColor: Color.fromARGB(255, 247, 255, 253),
+        backgroundColor: AppColors.scaffold,
+        surfaceTintColor: AppColors.scaffold,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
         ),
         title: Text(
           'logout_confirm_title'.tr,
           style: const TextStyle(
-            color: Color(0xFF1F2837),
+            color: AppColors.ink,
             fontWeight: FontWeight.bold,
             fontSize: 18,
           ),
@@ -28,7 +29,7 @@ class LogoutDialog {
             child: Text(
               'btn_cancel'.tr,
               style: const TextStyle(
-                color: Color(0xFF008075),
+                color: AppColors.primaryDark,
                 fontWeight: FontWeight.w600,
                 fontSize: 14,
               ),
@@ -36,8 +37,8 @@ class LogoutDialog {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color.fromARGB(255, 223, 54, 38),
-              foregroundColor: Color.fromARGB(255, 247, 255, 253),
+              backgroundColor: AppColors.danger,
+              foregroundColor: AppColors.scaffold,
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(24),

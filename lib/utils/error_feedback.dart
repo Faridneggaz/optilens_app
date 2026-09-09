@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../data/repositories/repository_exception.dart';
+import '../domain/failures/failures.dart';
 
 /// Maps API failures to translated snackbars / messages.
 class ErrorFeedback {

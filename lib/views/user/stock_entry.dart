@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../application/controllers/stock_entry_details_controller.dart';
-import '../../data/repositories/employee_api.dart';
-import '../../domain/response/stock_entry_item.dart' as model;
+import '../../presentation/controllers/stock_entry_details_controller.dart';
+import '../../domain/entities/stock_entry_item.dart' as model;
 import '../../widgets/header.dart';
-import '../../../application/controllers/language_controller.dart';
+import '../../../presentation/controllers/language_controller.dart';
+import '../../core/theme/app_colors.dart';
 
 class StockEntryPage extends StatelessWidget {
   const StockEntryPage({super.key});
@@ -30,7 +30,7 @@ class StockEntryPage extends StatelessWidget {
       }
 
       return Scaffold(
-        backgroundColor: const Color.fromARGB(255, 247, 255, 254),
+        backgroundColor: AppColors.scaffoldTint,
         body: Column(children: [
           AppHeader(
               title: 'stock_entry_page_title'.tr, customer: null, customerCode: ''),
@@ -38,7 +38,7 @@ class StockEntryPage extends StatelessWidget {
           Expanded(
             child: RefreshIndicator(
               onRefresh: c.onRefresh,
-              color: const Color.fromARGB(255, 0, 167, 155),
+              color: AppColors.primary,
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: ListView(
@@ -212,13 +212,13 @@ class StockEntryPage extends StatelessWidget {
 
   Future<void> _handleApprove(StockEntryDetailsController c) async {
         final result = await c.approveStockEntry();
-    if (EmployeeApi.isAuthHandled(result)) {
+    if (result.isAuthHandled) {
       return;
     }
-    if (result['message'] == 'Success') {
+    if (result.isSuccess) {
       Get.snackbar(
         'success'.tr,
-        result['detail'] ?? 'approve_success'.tr,
+        result.detail ?? 'approve_success'.tr,
         backgroundColor: Colors.green,
         colorText: Colors.white,
       );
@@ -226,7 +226,7 @@ class StockEntryPage extends StatelessWidget {
     } else {
       Get.snackbar(
         'error'.tr,
-        result['error'] ?? 'approve_error'.tr,
+        result.error ?? 'approve_error'.tr,
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
@@ -287,7 +287,7 @@ class StockEntryPage extends StatelessWidget {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setD) => AlertDialog(
-          backgroundColor: const Color.fromARGB(255, 247, 255, 253),
+          backgroundColor: AppColors.scaffold,
           scrollable: true,
           title: Text('add_item_dialog_title'.tr),
           content: SizedBox(

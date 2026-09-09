@@ -1,8 +1,11 @@
+// ignore_for_file: annotate_overrides
 import '../../core/network/api_client.dart';
-import '../../domain/response/payment_response.dart';
+import '../../domain/entities/payment_response.dart';
+import '../../domain/repositories/payment_repository.dart';
+import '../mappers/json_mappers.dart';
 
-class PaymentRepository {
-  PaymentRepository(this._client);
+class PaymentRepositoryImpl implements PaymentRepository {
+  PaymentRepositoryImpl(this._client);
 
   final ApiClient _client;
   static const int pageSize = 20;
@@ -30,6 +33,6 @@ class PaymentRepository {
       query: query,
       attachToken: false,
     );
-    return PaymentResponse.fromJson(json, limit);
+    return PaymentResponseMapper.fromJson(json, limit);
   }
 }

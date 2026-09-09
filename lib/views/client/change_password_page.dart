@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../application/controllers/change_password_controller.dart';
-import '../../../application/controllers/language_controller.dart';
+import '../../../presentation/controllers/change_password_controller.dart';
+import '../../../presentation/controllers/language_controller.dart';
+import '../../core/theme/app_colors.dart';
 
 class ChangePasswordPage extends StatelessWidget {
   const ChangePasswordPage({super.key});
@@ -12,7 +13,7 @@ class ChangePasswordPage extends StatelessWidget {
 
     return GetBuilder<LanguageController>(
       builder: (_) => Scaffold(
-        backgroundColor: const Color.fromRGBO(247, 255, 253, 1),
+        backgroundColor: AppColors.scaffold,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -81,7 +82,7 @@ class ChangePasswordPage extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: c.isLoading.value ? null : c.changePassword,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 0, 167, 155),
+                        backgroundColor: AppColors.primary,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -138,7 +139,7 @@ class ChangePasswordPage extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color.fromARGB(255, 0, 167, 155)),
+          borderSide: const BorderSide(color: AppColors.primary),
         ),
         suffixIcon: IconButton(
           icon: Icon(

@@ -1,9 +1,11 @@
 import 'package:intl/intl.dart';
 
+// ignore_for_file: annotate_overrides
 import '../../core/network/api_client.dart';
+import '../../domain/repositories/joptic_complaint_repository.dart';
 
-class JopticComplaintRepository {
-  JopticComplaintRepository(this._client);
+class JopticComplaintRepositoryImpl implements JopticComplaintRepository {
+  JopticComplaintRepositoryImpl(this._client);
 
   final ApiClient _client;
 

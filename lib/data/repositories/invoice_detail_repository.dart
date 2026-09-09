@@ -1,9 +1,12 @@
+// ignore_for_file: annotate_overrides
 import '../../core/network/api_client.dart';
-import '../../domain/response/invoice_detail_response.dart';
-import 'repository_exception.dart';
+import '../../domain/entities/invoice_detail_response.dart';
+import '../../domain/failures/failures.dart';
+import '../../domain/repositories/invoice_detail_repository.dart';
+import '../mappers/json_mappers.dart';
 
-class InvoiceDetailRepository {
-  InvoiceDetailRepository(this._client);
+class InvoiceDetailRepositoryImpl implements InvoiceDetailRepository {
+  InvoiceDetailRepositoryImpl(this._client);
 
   final ApiClient _client;
 
@@ -19,7 +22,7 @@ class InvoiceDetailRepository {
     if (message == null) {
       throw const RepositoryException('Empty message in response');
     }
-    return InvoiceDetailResponse.fromJson(
+    return InvoiceDetailResponseMapper.fromJson(
       Map<String, dynamic>.from(message as Map),
     );
   }

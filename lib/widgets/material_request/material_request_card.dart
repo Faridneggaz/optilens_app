@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../app/routes/app_routes.dart';
-import '../../application/controllers/material_request_controller.dart';
+import '../../presentation/controllers/material_request_controller.dart';
 import '../../core/theme/app_colors.dart';
-import '../../data/repositories/employee_api.dart';
-import '../../domain/response/material_request_response.dart';
+import '../../domain/entities/material_request_response.dart';
 import '../../utils/mr_status_helper.dart';
 
 class MaterialRequestCard extends StatelessWidget {
@@ -168,9 +167,9 @@ class MaterialRequestCard extends StatelessWidget {
             barrierDismissible: false);
         final res = await controller.submitRequest(name);
         Get.back();
-        if (EmployeeApi.isAuthHandled(res)) return;
-        if (res.containsKey('error')) {
-          Get.snackbar('error'.tr, res['error'],
+        if (res.isAuthHandled) return;
+        if (!res.isSuccess) {
+          Get.snackbar('error'.tr, res.error ?? 'error_occurred'.tr,
               backgroundColor: Colors.red.shade100, colorText: Colors.red);
         } else {
           Get.snackbar('success'.tr, 'mr_submitted'.tr,
@@ -195,9 +194,9 @@ class MaterialRequestCard extends StatelessWidget {
             barrierDismissible: false);
         final res = await controller.deleteRequest(name);
         Get.back();
-        if (EmployeeApi.isAuthHandled(res)) return;
-        if (res.containsKey('error')) {
-          Get.snackbar('error'.tr, res['error'],
+        if (res.isAuthHandled) return;
+        if (!res.isSuccess) {
+          Get.snackbar('error'.tr, res.error ?? 'error_occurred'.tr,
               backgroundColor: Colors.red.shade100, colorText: Colors.red);
         } else {
           Get.snackbar('success'.tr, 'mr_deleted'.tr,

@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'logout_dialogue.dart';
 import 'language_selector_widget.dart';
 import 'package:get/get.dart';
-import '../application/controllers/session_controller.dart';
+import '../core/theme/app_colors.dart';
+import '../presentation/controllers/session_controller.dart';
 
 class AppHeader extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -57,7 +58,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
                       textAlign: TextAlign.center,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        color: Color(0xFF1F2837),
+                        color: AppColors.ink,
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
                       ),

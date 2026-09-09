@@ -3,8 +3,8 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
-import '../../data/repositories/employee_api.dart';
-import '../../data/repositories/repository_exception.dart';
+import '../../domain/failures/failures.dart';
+import 'frappe_message.dart';
 import '../../utils/api_config.dart';
 
 /// Shared HTTP client for Frappe `/api/method` and optional ERP `/api/resource`.
@@ -29,7 +29,7 @@ class ApiClient {
   String get _token => currentToken;
 
   /// Unwraps Frappe `{ message: ... }` and maps session / access errors.
-  dynamic unwrap(Map<String, dynamic> decoded) => EmployeeApi.unwrap(decoded);
+  dynamic unwrap(Map<String, dynamic> decoded) => FrappeMessage.unwrap(decoded);
 
   Uri methodUri(
     String method, {

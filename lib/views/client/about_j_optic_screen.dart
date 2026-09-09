@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../application/controllers/about_controller.dart';
-import '../../../application/controllers/language_controller.dart';
+import '../../presentation/controllers/about_controller.dart';
+import '../../../presentation/controllers/language_controller.dart';
 
 // --- Palette J-Optic (Couleurs neutres) ---
 const _primaryBlue = Color(0xFF5C8DB8);

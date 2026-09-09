@@ -1,8 +1,11 @@
+// ignore_for_file: annotate_overrides
 import '../../core/network/api_client.dart';
-import '../../domain/response/invoices_response.dart';
+import '../../domain/entities/invoices_response.dart';
+import '../../domain/repositories/invoice_repository.dart';
+import '../mappers/json_mappers.dart';
 
-class InvoiceRepository {
-  InvoiceRepository(this._client);
+class InvoiceRepositoryImpl implements InvoiceRepository {
+  InvoiceRepositoryImpl(this._client);
 
   final ApiClient _client;
 
@@ -29,6 +32,6 @@ class InvoiceRepository {
       query: query,
       attachToken: false,
     );
-    return InvoicesResponse.fromJson(json);
+    return InvoicesResponseMapper.fromJson(json);
   }
 }

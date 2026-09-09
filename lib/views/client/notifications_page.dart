@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../application/controllers/session_controller.dart';
-import '../../application/controllers/language_controller.dart';
-import '../../application/controllers/notification_controller.dart';
+import '../../presentation/controllers/session_controller.dart';
+import '../../presentation/controllers/language_controller.dart';
+import '../../presentation/controllers/notification_controller.dart';
 import '../../widgets/header.dart';
+import '../../core/theme/app_colors.dart';
 
 class NotificationsPage extends StatelessWidget {
   const NotificationsPage({super.key});
@@ -15,7 +16,7 @@ class NotificationsPage extends StatelessWidget {
 
     return GetBuilder<LanguageController>(
       builder: (_) => Scaffold(
-        backgroundColor: const Color.fromARGB(255, 247, 255, 254),
+        backgroundColor: AppColors.scaffoldTint,
         body: Column(
           children: [
             AppHeader(
@@ -33,7 +34,7 @@ class NotificationsPage extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF1F2837),
+                    color: AppColors.ink,
                   ),
                 ),
               ),
@@ -44,14 +45,14 @@ class NotificationsPage extends StatelessWidget {
                 if (c.isLoading.value) {
                   return const Center(
                     child: CircularProgressIndicator(
-                      color: Color.fromARGB(255, 0, 167, 155),
+                      color: AppColors.primary,
                     ),
                   );
                 }
                 if (c.notifications.isEmpty) {
                   return RefreshIndicator(
                     onRefresh: c.onRefresh,
-                    color: const Color.fromARGB(255, 0, 167, 155),
+                    color: AppColors.primary,
                     child: ListView(
                       physics: const AlwaysScrollableScrollPhysics(),
                       children: [
@@ -84,7 +85,7 @@ class NotificationsPage extends StatelessWidget {
                 }
                 return RefreshIndicator(
                   onRefresh: c.onRefresh,
-                  color: const Color.fromARGB(255, 0, 167, 155),
+                  color: AppColors.primary,
                   child: ListView.builder(
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.all(16),
@@ -122,7 +123,7 @@ class NotificationsPage extends StatelessWidget {
                                 ),
                                 child: const Icon(
                                   Icons.notifications,
-                                  color: Color.fromARGB(255, 0, 167, 155),
+                                  color: AppColors.primary,
                                   size: 22,
                                 ),
                               ),
@@ -136,14 +137,14 @@ class NotificationsPage extends StatelessWidget {
                                       style: const TextStyle(
                                         fontWeight: FontWeight.w800,
                                         fontSize: 15,
-                                        color: Color(0xFF1F2837),
+                                        color: AppColors.ink,
                                       ),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
                                       notif['msg'] ?? '',
                                       style: const TextStyle(
-                                        color: Color(0xFF6B7280),
+                                        color: AppColors.muted,
                                         fontSize: 13,
                                         height: 1.4,
                                       ),
@@ -206,7 +207,7 @@ class NotificationsPage extends StatelessWidget {
                     ),
                     child: const Icon(
                       Icons.notifications,
-                      color: Color.fromARGB(255, 0, 167, 155),
+                      color: AppColors.primary,
                       size: 24,
                     ),
                   ),
@@ -217,7 +218,7 @@ class NotificationsPage extends StatelessWidget {
                       style: const TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 18,
-                        color: Color(0xFF1F2837),
+                        color: AppColors.ink,
                       ),
                     ),
                   ),
@@ -225,7 +226,7 @@ class NotificationsPage extends StatelessWidget {
               ),
 
               const SizedBox(height: 20),
-              const Divider(height: 1, color: Color(0xFFE8F3F0)),
+              const Divider(height: 1, color: AppColors.dividerMint),
               const SizedBox(height: 20),
 
               // Full message
@@ -256,7 +257,7 @@ class NotificationsPage extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () => Get.back(),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color.fromARGB(255, 0, 167, 155),
+                    backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(

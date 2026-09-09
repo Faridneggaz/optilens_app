@@ -1,8 +1,11 @@
+// ignore_for_file: annotate_overrides
 import '../../core/network/api_client.dart';
-import '../../domain/response/stock_entry_response.dart';
+import '../../domain/entities/stock_entry_response.dart';
+import '../../domain/repositories/stock_entry_repository.dart';
+import '../mappers/json_mappers.dart';
 
-class StockEntryRepository {
-  StockEntryRepository(this._client);
+class StockEntryRepositoryImpl implements StockEntryRepository {
+  StockEntryRepositoryImpl(this._client);
 
   final ApiClient _client;
 
@@ -30,6 +33,6 @@ class StockEntryRepository {
       attachToken: false,
     );
     _client.unwrap(decoded);
-    return StockEntryResponse.fromJson(decoded);
+    return StockEntryResponseMapper.fromJson(decoded);
   }
 }

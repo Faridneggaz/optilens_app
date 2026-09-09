@@ -1,11 +1,11 @@
 import 'package:get/get.dart';
-import '../../application/controllers/main_controller.dart';
-import '../../application/controllers/user_dashboard_controller.dart';
-import '../../application/controllers/dashboard_controller.dart';
-import '../../application/controllers/invoice_controller.dart';
-import '../../application/controllers/payment_controller.dart';
-import '../../application/controllers/stock_entry_controller.dart';
-import '../../application/controllers/material_request_controller.dart';
+import '../../presentation/controllers/main_controller.dart';
+import '../../presentation/controllers/user_dashboard_controller.dart';
+import '../../presentation/controllers/dashboard_controller.dart';
+import '../../presentation/controllers/invoice_controller.dart';
+import '../../presentation/controllers/payment_controller.dart';
+import '../../presentation/controllers/stock_entry_controller.dart';
+import '../../presentation/controllers/material_request_controller.dart';
 
 /// Registers shell controllers for the `/main` route.
 /// Per-push detail pages (invoice, stock entry, orders, etc.) use

@@ -1,9 +1,12 @@
+// ignore_for_file: annotate_overrides
 import '../../core/network/api_client.dart';
-import '../../domain/response/stock_entry_details_response.dart';
-import 'repository_exception.dart';
+import '../../domain/entities/stock_entry_details_response.dart';
+import '../../domain/failures/failures.dart';
+import '../../domain/repositories/stock_entry_details_repository.dart';
+import '../mappers/json_mappers.dart';
 
-class StockEntryDetailsRepository {
-  StockEntryDetailsRepository(this._client);
+class StockEntryDetailsRepositoryImpl implements StockEntryDetailsRepository {
+  StockEntryDetailsRepositoryImpl(this._client);
 
   final ApiClient _client;
 
@@ -17,7 +20,7 @@ class StockEntryDetailsRepository {
       attachToken: false,
     );
     _client.unwrap(decoded);
-    return StockEntryDetailsResponse.fromJson(decoded);
+    return StockEntryDetailsResponseMapper.fromJson(decoded);
   }
 
   Future<Map<String, dynamic>> approveStockEntry({

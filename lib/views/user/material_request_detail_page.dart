@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../application/controllers/material_request_detail_controller.dart';
+import '../../presentation/controllers/material_request_detail_controller.dart';
 import '../../widgets/header.dart';
-import '../../application/controllers/language_controller.dart';
+import '../../presentation/controllers/language_controller.dart';
 import '../../core/services/session_service.dart';
-import '../../data/repositories/employee_api.dart';
 import '../../app/routes/app_routes.dart';
+import '../../core/theme/app_colors.dart';
 class MaterialRequestDetailPage extends StatelessWidget {
   const MaterialRequestDetailPage({super.key});
 
@@ -18,7 +18,7 @@ class MaterialRequestDetailPage extends StatelessWidget {
       builder: (_) => Obx(() {
         if (c.isLoading.value) {
           return const Scaffold(
-            backgroundColor: Color.fromARGB(255, 247, 255, 254),
+            backgroundColor: AppColors.scaffoldTint,
             body: Center(child: CircularProgressIndicator(color: Colors.teal)),
           );
         }
@@ -26,7 +26,7 @@ class MaterialRequestDetailPage extends StatelessWidget {
         final mr = c.mr.value;
         if (mr == null) {
           return Scaffold(
-            backgroundColor: const Color.fromARGB(255, 247, 255, 254),
+            backgroundColor: AppColors.scaffoldTint,
             body: Center(child: Text('failed_load_stock'.tr)),
           );
         }
@@ -35,14 +35,14 @@ class MaterialRequestDetailPage extends StatelessWidget {
             fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black);
 
         return Scaffold(
-          backgroundColor: const Color.fromARGB(255, 247, 255, 254),
+          backgroundColor: AppColors.scaffoldTint,
           body: Column(
             children: [
               AppHeader(title: mr.name, customer: null, customerCode: ''),
               Expanded(
                 child: RefreshIndicator(
                   onRefresh: () async => c.fetchDetail(),
-                  color: const Color.fromARGB(255, 0, 167, 155),
+                  color: AppColors.primary,
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: ListView(
@@ -184,7 +184,7 @@ class MaterialRequestDetailPage extends StatelessWidget {
                       return _actionButton(
                         label: 'submit'.tr,
                         icon: Icons.check,
-                        color: const Color.fromARGB(255, 0, 167, 155),
+                        color: AppColors.primary,
                         onPressed: () => _handleSubmit(mr.name, c, context),
                       );
                     }
@@ -241,14 +241,14 @@ class MaterialRequestDetailPage extends StatelessWidget {
         c.isLoading.value = true;
         final result = await c.submitRequest();
         c.isLoading.value = false;
-        if (EmployeeApi.isAuthHandled(result)) {
+        if (result.isAuthHandled) {
           return;
         }
-        if (result['message'] == 'Success') {
+        if (result.isSuccess) {
           Get.snackbar('success'.tr, 'mr_submitted'.tr,
               backgroundColor: Colors.green, colorText: Colors.white);
         } else {
-          Get.snackbar('error'.tr, result['error']?.toString() ?? 'error_occurred'.tr,
+          Get.snackbar('error'.tr, result.error ?? 'error_occurred'.tr,
               backgroundColor: Colors.red, colorText: Colors.white);
         }
       },
@@ -268,11 +268,11 @@ class MaterialRequestDetailPage extends StatelessWidget {
         c.isLoading.value = true;
         final result = await c.createTransfer();
         c.isLoading.value = false;
-        if (EmployeeApi.isAuthHandled(result)) {
+        if (result.isAuthHandled) {
           return;
         }
-        if (result['success'] == true || result['stock_entry_id'] != null) {
-          final stockEntryId = result['stock_entry_id'] ?? '';
+        if (result.isSuccess || result.stockEntryId != null) {
+          final stockEntryId = result.stockEntryId ?? '';
           Get.snackbar('success'.tr, '${'stock_entry_created'.tr}$stockEntryId',
               backgroundColor: Colors.green, colorText: Colors.white);
           Get.toNamed(AppRoutes.stockEntry, arguments: {
@@ -280,7 +280,7 @@ class MaterialRequestDetailPage extends StatelessWidget {
             'token': Get.find<SessionService>().authToken,
           });
         } else {
-          Get.snackbar('error'.tr, result['error']?.toString() ?? 'error_occurred'.tr,
+          Get.snackbar('error'.tr, result.error ?? 'error_occurred'.tr,
               backgroundColor: Colors.red, colorText: Colors.white);
         }
       },

@@ -1,14 +1,14 @@
 import 'package:get/get.dart';
 
-import '../../application/controllers/about_controller.dart';
-import '../../application/controllers/change_password_controller.dart';
-import '../../application/controllers/complaint_controller.dart';
-import '../../application/controllers/invoice_detail_controller.dart';
-import '../../application/controllers/material_request_controller.dart';
-import '../../application/controllers/material_request_detail_controller.dart';
-import '../../application/controllers/notification_controller.dart';
-import '../../application/controllers/order_controller.dart';
-import '../../application/controllers/stock_entry_details_controller.dart';
+import '../../presentation/controllers/about_controller.dart';
+import '../../presentation/controllers/change_password_controller.dart';
+import '../../presentation/controllers/complaint_controller.dart';
+import '../../presentation/controllers/invoice_detail_controller.dart';
+import '../../presentation/controllers/material_request_controller.dart';
+import '../../presentation/controllers/material_request_detail_controller.dart';
+import '../../presentation/controllers/notification_controller.dart';
+import '../../presentation/controllers/order_controller.dart';
+import '../../presentation/controllers/stock_entry_details_controller.dart';
 
 class InvoiceDetailBinding extends Bindings {
   @override

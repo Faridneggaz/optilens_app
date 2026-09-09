@@ -1,25 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../core/theme/app_colors.dart';
 
 class AboutPage extends StatelessWidget {
   const AboutPage({super.key});
 
-  static const Color _teal = Color(0xFF00A79B);
-  static const Color _darkBlue = Color(0xFF1F2837);
-  static const Color _bg = Color(0xFFF7FFFD);
-  static const Color _cardColor = Color(0xFFEBF8F6);
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: AppColors.scaffold,
       appBar: AppBar(
-        backgroundColor: _bg,
+        backgroundColor: AppColors.scaffold,
         elevation: 0,
-        leading: const BackButton(color: _teal),
+        leading: const BackButton(color: AppColors.primary),
         title: Text(
           'about'.tr,
-          style: const TextStyle(color: _darkBlue, fontWeight: FontWeight.bold, fontSize: 16),
+          style: const TextStyle(color: AppColors.ink, fontWeight: FontWeight.bold, fontSize: 16),
         ),
         centerTitle: true,
       ),
@@ -97,12 +93,12 @@ class AboutPage extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _cardColor,
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         children: [
-          Icon(icon, color: _teal, size: 22),
+          Icon(icon, color: AppColors.primary, size: 22),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -115,7 +111,7 @@ class AboutPage extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   value,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: _darkBlue),
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.ink),
                 ),
               ],
             ),

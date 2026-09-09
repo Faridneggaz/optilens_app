@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../application/controllers/order_controller.dart';
-import '../../../application/controllers/language_controller.dart';
+import '../../presentation/controllers/order_controller.dart';
+import '../../../presentation/controllers/language_controller.dart';
+import '../../core/theme/app_colors.dart';
 
 class OrderHistoryPage extends StatelessWidget {
   const OrderHistoryPage({super.key});
@@ -10,8 +11,8 @@ class OrderHistoryPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = Get.find<OrderController>();
 
-    const Color primaryTeal = Color(0xFF008075);
-    const Color bgColor     = Color(0xFFF7FFFD);
+    const Color primaryTeal = AppColors.primaryDark;
+    const Color bgColor     = AppColors.scaffold;
 
     return GetBuilder<LanguageController>(
       builder: (_) => Scaffold(

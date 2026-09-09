@@ -2,10 +2,11 @@
 import 'package:get/get.dart';
 import '../../widgets/header.dart';
 import '../../utils/invoice_utils.dart';
-import '../../../application/controllers/invoice_controller.dart';
-import '../../../application/controllers/language_controller.dart';
+import '../../../presentation/controllers/invoice_controller.dart';
+import '../../../presentation/controllers/language_controller.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../widgets/client_session_gate.dart';
+import '../../core/theme/app_colors.dart';
 
 class InvoicePage extends StatelessWidget {
   InvoicePage({super.key});
@@ -77,7 +78,7 @@ class InvoicePage extends StatelessWidget {
                               ),
                               child: const Icon(Icons.credit_card,
                                   size: 30,
-                                  color: Color.fromARGB(255, 247, 255, 253)),
+                                  color: AppColors.scaffold),
                             ),
                           ],
                         ),
@@ -97,10 +98,10 @@ class InvoicePage extends StatelessWidget {
                   color: const Color.fromARGB(255, 252, 253, 253),
                   child: RefreshIndicator(
                     onRefresh:  c.onRefresh,
-                    color: const Color.fromARGB(255, 0, 167, 155),
+                    color: AppColors.primary,
                     child: (c.isLoading.value && !c.isLoadingMore.value) || c.isSearching.value
                         ? const Center(
-                            child: CircularProgressIndicator(color: Color.fromARGB(255, 0, 167, 155)))
+                            child: CircularProgressIndicator(color: AppColors.primary))
                         : SingleChildScrollView(
                             controller: c.scrollController,
                             physics:
@@ -126,7 +127,7 @@ class InvoicePage extends StatelessWidget {
                                               onPressed: c.onLoadMore,
                                               style: ElevatedButton
                                                   .styleFrom(
-                                                backgroundColor: const Color.fromARGB(255, 247, 255, 253),
+                                                backgroundColor: AppColors.scaffold,
                                                 foregroundColor:
                                                     const Color
                                                         .fromARGB(255,
@@ -221,7 +222,7 @@ class InvoicePage extends StatelessWidget {
               fontSize: 16,
               fontWeight: FontWeight.w700,
               color: c.selectedTab.value == index
-                  ? const Color.fromARGB(255, 0, 167, 155)
+                  ? AppColors.primary
                   : Colors.grey.shade700,
             ),
           ),
@@ -254,7 +255,7 @@ class InvoicePage extends StatelessWidget {
             child: Container(
               height: 48,
               decoration: BoxDecoration(
-                color: Color.fromARGB(255, 247, 255, 253),
+                color: AppColors.scaffold,
                                   borderRadius: BorderRadius.circular(12),
                 boxShadow: const [
                   BoxShadow(
@@ -305,7 +306,7 @@ class InvoicePage extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             height: 48,
             decoration: BoxDecoration(
-              color: Color.fromARGB(255, 247, 255, 253),
+              color: AppColors.scaffold,
                                   borderRadius: BorderRadius.circular(12),
               boxShadow: const [
                 BoxShadow(

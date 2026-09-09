@@ -1,9 +1,12 @@
+// ignore_for_file: annotate_overrides
 import '../../core/network/api_client.dart';
-import '../../domain/response/item.dart';
-import 'repository_exception.dart';
+import '../../domain/entities/item.dart';
+import '../../domain/failures/failures.dart';
+import '../../domain/repositories/order_repository.dart';
+import '../mappers/json_mappers.dart';
 
-class OrderRepository {
-  OrderRepository(this._client);
+class OrderRepositoryImpl implements OrderRepository {
+  OrderRepositoryImpl(this._client);
 
   final ApiClient _client;
 
@@ -22,7 +25,7 @@ class OrderRepository {
     }
     final rawItems = msg['items'] as List<dynamic>? ?? [];
     return rawItems
-        .map((e) => Item.fromJson(Map<String, dynamic>.from(e as Map)))
+        .map((e) => ItemMapper.fromJson(Map<String, dynamic>.from(e as Map)))
         .toList();
   }
 
@@ -47,7 +50,7 @@ class OrderRepository {
         rawItems = message['items'] as List;
       }
       return rawItems
-          .map((e) => Item.fromJson(Map<String, dynamic>.from(e as Map)))
+          .map((e) => ItemMapper.fromJson(Map<String, dynamic>.from(e as Map)))
           .toList();
     } catch (_) {
       return [];

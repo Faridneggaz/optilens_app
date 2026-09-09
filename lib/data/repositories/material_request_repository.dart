@@ -1,9 +1,12 @@
+// ignore_for_file: annotate_overrides
 import '../../core/network/api_client.dart';
-import '../../domain/response/material_request_response.dart';
-import 'repository_exception.dart';
+import '../../domain/entities/material_request_response.dart';
+import '../../domain/failures/failures.dart';
+import '../../domain/repositories/material_request_repository.dart';
+import '../mappers/json_mappers.dart';
 
-class MaterialRequestRepository {
-  MaterialRequestRepository(this._client);
+class MaterialRequestRepositoryImpl implements MaterialRequestRepository {
+  MaterialRequestRepositoryImpl(this._client);
 
   final ApiClient _client;
 
@@ -31,7 +34,7 @@ class MaterialRequestRepository {
       attachToken: false,
     );
     _client.unwrap(decoded);
-    return MaterialRequestResponse.fromJson(decoded);
+    return MaterialRequestResponseMapper.fromJson(decoded);
   }
 
   Future<MaterialRequest> fetchDetail({
@@ -49,9 +52,9 @@ class MaterialRequestRepository {
         msg['material_request'] != null) {
       final mrData = Map<String, dynamic>.from(msg['material_request'] as Map);
       mrData['items'] = msg['items'] ?? [];
-      return MaterialRequest.fromJson(mrData);
+      return MaterialRequestMapper.fromJson(mrData);
     } else if (msg is Map && msg.containsKey('name')) {
-      return MaterialRequest.fromJson(Map<String, dynamic>.from(msg));
+      return MaterialRequestMapper.fromJson(Map<String, dynamic>.from(msg));
     }
     throw const RepositoryException('Invalid response format');
   }

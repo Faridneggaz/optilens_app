@@ -1,12 +1,13 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../widgets/header.dart';
-import '../../../application/controllers/user_dashboard_controller.dart';
-import '../../../application/controllers/language_controller.dart';
-import '../../../application/controllers/session_controller.dart';
+import '../../../presentation/controllers/user_dashboard_controller.dart';
+import '../../../presentation/controllers/language_controller.dart';
+import '../../../presentation/controllers/session_controller.dart';
 import '../../utils/responsive_utils.dart';
-import '../../../domain/response/stock_entry.dart';
+import '../../../domain/entities/stock_entry.dart';
 import 'material_request_page.dart';
+import '../../core/theme/app_colors.dart';
 
 class UserDashboardPage extends StatelessWidget {
   UserDashboardPage({super.key});
@@ -31,7 +32,7 @@ class UserDashboardPage extends StatelessWidget {
   Widget _buildHome() {
     final userName = session.userName.value;
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 247, 255, 254),
+      backgroundColor: AppColors.scaffoldTint,
       body: Column(children: [
         AppHeader(
             title: 'nav_home'.tr,
@@ -43,13 +44,13 @@ class UserDashboardPage extends StatelessWidget {
           child: Center(
             child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
               const Icon(Icons.person_pin,
-                  size: 100, color: Color(0xFF3BADA2)),
+                  size: 100, color: AppColors.menuTeal),
               const SizedBox(height: 20),
               Text('${'welcome_user'.tr}$userName',
                   style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF1F2837))),
+                      color: AppColors.ink)),
               Text('select_service'.tr,
                   style: const TextStyle(color: Colors.grey)),
             ]),
@@ -61,7 +62,7 @@ class UserDashboardPage extends StatelessWidget {
 
   Widget _buildNotifications() {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 247, 255, 254),
+      backgroundColor: AppColors.scaffoldTint,
       body: Column(children: [
         AppHeader(
             title: 'notifications_title'.tr,
@@ -76,7 +77,7 @@ class UserDashboardPage extends StatelessWidget {
 
   Widget _buildStockManagement(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 247, 255, 254),
+      backgroundColor: AppColors.scaffoldTint,
       body: Column(children: [
         AppHeader(
             title: '',
@@ -176,7 +177,7 @@ class UserDashboardPage extends StatelessWidget {
         child: ElevatedButton(
           onPressed: c.onLoadMore,
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color.fromARGB(255, 247, 255, 253),
+            backgroundColor: AppColors.scaffold,
             foregroundColor:  Colors.teal,
             elevation:        0,
             side: const BorderSide(color: Colors.teal),
@@ -273,7 +274,7 @@ class UserDashboardPage extends StatelessWidget {
             child: Container(
               height: 48,
               decoration: BoxDecoration(
-                color: Color.fromARGB(255, 247, 255, 253),
+                color: AppColors.scaffold,
                                   borderRadius: BorderRadius.circular(12),
                 boxShadow: const [
                   BoxShadow(
@@ -324,7 +325,7 @@ class UserDashboardPage extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             height: 48,
             decoration: BoxDecoration(
-              color: Color.fromARGB(255, 247, 255, 253),
+              color: AppColors.scaffold,
                                   borderRadius: BorderRadius.circular(12),
               boxShadow: const [
                 BoxShadow(

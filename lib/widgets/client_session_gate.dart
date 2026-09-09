@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../application/controllers/session_controller.dart';
-import '../../domain/response/customer.dart';
+import '../../presentation/controllers/session_controller.dart';
+import '../../domain/entities/customer.dart';
 import '../../core/theme/app_colors.dart';
 
 /// Waits for a restored client session before building pages that need [Customer].

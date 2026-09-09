@@ -1,8 +1,11 @@
+// ignore_for_file: annotate_overrides
 import '../../core/network/api_client.dart';
-import '../../domain/response/announcement.dart';
+import '../../domain/entities/announcement.dart';
+import '../../domain/repositories/announcement_repository.dart';
+import '../mappers/json_mappers.dart';
 
-class AnnouncementRepository {
-  AnnouncementRepository(this._client);
+class AnnouncementRepositoryImpl implements AnnouncementRepository {
+  AnnouncementRepositoryImpl(this._client);
 
   final ApiClient _client;
 
@@ -23,7 +26,11 @@ class AnnouncementRepository {
     final message = json['message'];
     if (message is Map && message.containsKey('announcements')) {
       final list = message['announcements'] as List<dynamic>;
-      return list.map((item) => Announcement.fromJson(item)).toList();
+      return list
+          .map((item) => AnnouncementMapper.fromJson(
+                Map<String, dynamic>.from(item as Map),
+              ))
+          .toList();
     }
     return [];
   }

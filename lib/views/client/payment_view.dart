@@ -2,9 +2,10 @@
 import 'package:get/get.dart';
 import '../../widgets/header.dart';
 import '../../utils/payment_utils.dart';
-import '../../../application/controllers/language_controller.dart';
-import '../../../application/controllers/payment_controller.dart';
+import '../../../presentation/controllers/language_controller.dart';
+import '../../../presentation/controllers/payment_controller.dart';
 import '../../widgets/client_session_gate.dart';
+import '../../core/theme/app_colors.dart';
 
 class PaymentPage extends StatelessWidget {
   PaymentPage({super.key});
@@ -30,7 +31,7 @@ class PaymentPage extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF1F2837),
+                  color: AppColors.ink,
                 ),
               ),
             ),
@@ -39,10 +40,10 @@ class PaymentPage extends StatelessWidget {
             Expanded(
               child: Obx(() {
                 if (c.isLoading.value && !c.isLoadingMore.value) {
-                  return const Center(child: CircularProgressIndicator(color: Color(0xFF00A79B)));
+                  return const Center(child: CircularProgressIndicator(color: AppColors.primary));
                 }
                 if (c.isSearching.value) {
-                  return const Center(child: CircularProgressIndicator(color: Color(0xFF00A79B)));
+                  return const Center(child: CircularProgressIndicator(color: AppColors.primary));
                 }
                 if (c.displayPayments.isEmpty) {
                   return Center(child: Text('no_payments'.tr));

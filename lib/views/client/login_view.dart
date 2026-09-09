@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../application/controllers/login_controller.dart';
+import '../../../presentation/controllers/login_controller.dart';
+import '../../core/theme/app_colors.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
@@ -19,7 +20,7 @@ class LoginPage extends StatelessWidget {
                 width: double.infinity,
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [Color(0xFFE0F2F1), Color(0xFF80CBC4)],
+                    colors: [AppColors.loginStart, AppColors.loginEnd],
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                   ),

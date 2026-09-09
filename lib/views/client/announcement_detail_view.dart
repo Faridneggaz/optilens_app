@@ -1,7 +1,9 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../domain/response/announcement.dart';
-import '../../../application/controllers/language_controller.dart';
+import '../../core/theme/announcement_color.dart';
+import '../../core/theme/app_colors.dart';
+import '../../domain/entities/announcement.dart';
+import '../../../presentation/controllers/language_controller.dart';
 
 class AnnouncementDetailPage extends StatelessWidget {
   const AnnouncementDetailPage({super.key});
@@ -12,12 +14,12 @@ class AnnouncementDetailPage extends StatelessWidget {
 
     return GetBuilder<LanguageController>(
       builder: (_) => Scaffold(
-        backgroundColor: const Color.fromARGB(255, 247, 255, 253),
+        backgroundColor: AppColors.scaffold,
         appBar: AppBar(
           title: Text('announcement_detail_title'.tr),
           elevation: 0,
-          backgroundColor: const Color.fromARGB(255, 247, 255, 253),
-          foregroundColor: const Color(0xFF1F2837),
+          backgroundColor: AppColors.scaffold,
+          foregroundColor: AppColors.ink,
         ),
         body: SingleChildScrollView(
           child: Column(
@@ -58,7 +60,7 @@ class AnnouncementDetailPage extends StatelessWidget {
                       style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF1F2837)),
+                          color: AppColors.ink),
                     ),
                     const SizedBox(height: 8),
 
@@ -73,7 +75,7 @@ class AnnouncementDetailPage extends StatelessWidget {
                       style: const TextStyle(
                           fontSize: 16,
                           height: 1.6,
-                          color: Color(0xFF4B5563)),
+                          color: AppColors.body),
                     ),
                     const SizedBox(height: 40),
                   ],

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import '../../domain/entities/announcement.dart';
 import '../../domain/entities/customer.dart';
 import '../../domain/entities/customer_response.dart';
@@ -15,8 +17,11 @@ import '../../domain/entities/stock_entry_details.dart';
 import '../../domain/entities/stock_entry_details_response.dart';
 import '../../domain/entities/stock_entry_item.dart';
 import '../../domain/entities/stock_entry_response.dart';
+import '../../domain/entities/stock_summary.dart';
+import '../../domain/entities/task.dart';
 import '../../domain/entities/user.dart';
 import '../../utils/api_config.dart';
+import '../../utils/html_plain_text.dart';
 
 double jsonDouble(dynamic value) {
   if (value == null) return 0.0;
@@ -266,7 +271,7 @@ class MaterialRequestMapper {
       fromWarehouse: json['set_from_warehouse']?.toString() ??
           json['from_warehouse']?.toString() ??
           '',
-      docstatus: json['docstatus'] ?? 0,
+      docstatus: int.tryParse('${json['docstatus'] ?? 0}') ?? 0,
       items: itemsList != null
           ? itemsList
               .map((i) => MaterialRequestItemMapper.fromJson(
@@ -307,75 +312,351 @@ class MaterialRequestResponseMapper {
 }
 
 class StockEntryMapper {
-  static StockEntry fromJson(Map<String, dynamic> json) => StockEntry(
-        name: json['name'],
-        postingDate: json['posting_date'],
-        from: json['from'] ?? '',
-        to: json['to'] ?? '',
-        status: json['status'],
-      );
+  static StockEntry fromJson(Map<String, dynamic> json) {
+    dynamic rawName = json['name'] ??
+        json['stock_entry_id'] ??
+        json['stock_entry_name'] ??
+        json['docname'] ??
+        json['title'];
+    if (rawName == null && json['stock_entry'] is String) {
+      rawName = json['stock_entry'];
+    }
+    if (rawName == null && json['stock_entry'] is Map) {
+      rawName = json['stock_entry']['name'];
+    }
+    final from = json['from'] ??
+        json['from_warehouse'] ??
+        json['s_warehouse'] ??
+        json['source_warehouse'] ??
+        json['source'] ??
+        '';
+    final to = json['to'] ??
+        json['to_warehouse'] ??
+        json['t_warehouse'] ??
+        json['target_warehouse'] ??
+        json['target'] ??
+        '';
+    return StockEntry(
+      name: rawName?.toString() ?? '',
+      postingDate: (json['posting_date'] ??
+              json['postingDate'] ??
+              json['date'] ??
+              json['creation'] ??
+              '')
+          .toString(),
+      from: from.toString(),
+      to: to.toString(),
+      status: (json['status'] ?? json['workflow_state'] ?? 'Pending').toString(),
+    );
+  }
 }
 
 class StockEntryResponseMapper {
   static StockEntryResponse fromJson(Map<String, dynamic> json) {
-    final message = json['message'];
-    List<StockEntry> entries = [];
-    var isSearch = false;
-
-    if (message is List) {
-      entries = message
-          .map((e) =>
-              StockEntryMapper.fromJson(Map<String, dynamic>.from(e as Map)))
-          .toList();
-    } else if (message is Map && message.containsKey('stock_entries')) {
-      entries = (message['stock_entries'] as List)
-          .map((e) =>
-              StockEntryMapper.fromJson(Map<String, dynamic>.from(e as Map)))
-          .toList();
-      isSearch = message['is_search'] ?? false;
+    final raw = _stockEntryRows(json);
+    final entries = <StockEntry>[];
+    for (final row in raw) {
+      if (row is! Map) continue;
+      final entry = StockEntryMapper.fromJson(Map<String, dynamic>.from(row));
+      if (entry.name.isEmpty || entry.name == 'null') continue;
+      entries.add(entry);
     }
-
+    final msg = json['message'];
+    final isSearch = msg is Map && msg['is_search'] == true;
     return StockEntryResponse(
       stockEntries: entries,
       isSearch: isSearch,
     );
   }
+
+  static const _listKeys = [
+    'stock_entries',
+    'last_stock_entries',
+    'stock_entry_list',
+    'data',
+    'entries',
+    'docs',
+    'result',
+    'records',
+    'values',
+    'message',
+  ];
+
+  static List<dynamic> _stockEntryRows(dynamic json) {
+    if (json is String) {
+      final text = json.trim();
+      if (text.startsWith('[') || text.startsWith('{')) {
+        try {
+          return _stockEntryRows(jsonDecode(text));
+        } catch (_) {
+          return const [];
+        }
+      }
+      return const [];
+    }
+    if (json is List) {
+      if (json.isNotEmpty && json.first is Map && _looksLikeEntryList(json)) {
+        return json;
+      }
+      for (final item in json) {
+        final nested = _stockEntryRows(item);
+        if (nested.isNotEmpty) return nested;
+      }
+      return const [];
+    }
+    if (json is! Map) return const [];
+
+    for (final key in _listKeys) {
+      if (!json.containsKey(key)) continue;
+      final nested = _stockEntryRows(json[key]);
+      if (nested.isNotEmpty) return nested;
+    }
+
+    if (_looksLikeEntry(json)) {
+      return [json];
+    }
+    return const [];
+  }
+
+  static bool _looksLikeEntryList(List list) {
+    for (final item in list) {
+      if (item is Map && _looksLikeEntry(item)) return true;
+    }
+    return false;
+  }
+
+  static bool _looksLikeEntry(Map map) {
+    final name =
+        (map['name'] ?? map['stock_entry_id'] ?? map['stock_entry_name'] ?? '')
+            .toString()
+            .toUpperCase();
+    if (name.contains('STE')) return true;
+    return map.containsKey('posting_date') ||
+        map.containsKey('postingDate') ||
+        map.containsKey('stock_entry_type') ||
+        map.containsKey('from_warehouse') ||
+        map.containsKey('s_warehouse');
+  }
 }
 
 class StockEntryItemMapper {
   static StockEntryItem fromJson(Map<String, dynamic> json) => StockEntryItem(
-        id: json['id'] ?? '',
-        idx: json['idx'] ?? 0,
-        itemCode: json['itemCode'] ?? '',
-        itemName: json['itemName'] ?? '',
-        fromWarehouse: json['fromWarehouse'] ?? '',
-        toWarehouse: json['toWarehouse'] ?? '',
-        quantity: (json['quantity'] ?? 0).toInt(),
+        id: (json['id'] ?? json['name'] ?? '').toString(),
+        idx: _asInt(json['idx']),
+        itemCode: (json['itemCode'] ??
+                json['item_code'] ??
+                json['item'] ??
+                '')
+            .toString(),
+        itemName: (json['itemName'] ?? json['item_name'] ?? '').toString(),
+        fromWarehouse: (json['fromWarehouse'] ??
+                json['from_warehouse'] ??
+                json['s_warehouse'] ??
+                '')
+            .toString(),
+        toWarehouse: (json['toWarehouse'] ??
+                json['to_warehouse'] ??
+                json['t_warehouse'] ??
+                '')
+            .toString(),
+        quantity: _asInt(json['quantity'] ?? json['qty']),
       );
+
+  static int _asInt(dynamic value) {
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    return int.tryParse('$value') ?? 0;
+  }
 }
 
 class StockEntryDetailsMapper {
   static StockEntryDetails fromJson(Map<String, dynamic> json) =>
       StockEntryDetails(
-        name: json['name'],
-        postingDate: json['postingDate'],
-        fromWarehouse: json['fromWarehouse'] ?? '',
-        toWarehouse: json['toWarehouse'] ?? '',
-        company: json['company'],
-        status: json['status'],
+        name: (json['name'] ?? '').toString(),
+        postingDate: (json['postingDate'] ??
+                json['posting_date'] ??
+                json['date'] ??
+                '')
+            .toString(),
+        fromWarehouse: (json['fromWarehouse'] ??
+                json['from_warehouse'] ??
+                json['s_warehouse'] ??
+                '')
+            .toString(),
+        toWarehouse: (json['toWarehouse'] ??
+                json['to_warehouse'] ??
+                json['t_warehouse'] ??
+                '')
+            .toString(),
+        company: (json['company'] ?? '').toString(),
+        status: (json['status'] ?? json['workflow_state'] ?? 'Pending')
+            .toString(),
       );
 }
 
 class StockEntryDetailsResponseMapper {
-  static StockEntryDetailsResponse fromJson(Map<String, dynamic> json) =>
-      StockEntryDetailsResponse(
-        stockEntry: StockEntryDetailsMapper.fromJson(
-          Map<String, dynamic>.from(json['message']['stockEntry'] as Map),
-        ),
-        items: (json['message']['items'] as List)
-            .map((i) => StockEntryItemMapper.fromJson(
-                  Map<String, dynamic>.from(i as Map),
-                ))
-            .toList(),
+  static StockEntryDetailsResponse fromJson(Map<String, dynamic> json) {
+    final root = json['message'] is Map
+        ? Map<String, dynamic>.from(json['message'] as Map)
+        : json;
+
+    Map<String, dynamic> header = {};
+    for (final key in [
+      'stockEntry',
+      'stock_entry',
+      'doc',
+      'data',
+    ]) {
+      final value = root[key];
+      if (value is Map) {
+        header = Map<String, dynamic>.from(value);
+        break;
+      }
+    }
+    if (header.isEmpty && root.containsKey('name')) {
+      header = root;
+    }
+
+    List itemsRaw = const [];
+    for (final key in ['items', 'stock_entry_details', 'stock_items']) {
+      final value = root[key] ?? header[key];
+      if (value is List) {
+        itemsRaw = value;
+        break;
+      }
+    }
+
+    return StockEntryDetailsResponse(
+      stockEntry: StockEntryDetailsMapper.fromJson(header),
+      items: itemsRaw
+          .whereType<Map>()
+          .map((i) => StockEntryItemMapper.fromJson(
+                Map<String, dynamic>.from(i),
+              ))
+          .toList(),
+    );
+  }
+}
+
+class StockSummaryTotalsMapper {
+  static StockSummaryTotals fromJson(Map<String, dynamic> json) =>
+      StockSummaryTotals(
+        totalItems: int.tryParse('${json['total_items'] ?? 0}') ?? 0,
+        totalQty: jsonDouble(json['total_qty']),
+        lowStockCount: int.tryParse('${json['low_stock_count'] ?? 0}') ?? 0,
       );
+}
+
+class StockSummaryItemMapper {
+  static StockSummaryItem fromJson(Map<String, dynamic> json) =>
+      StockSummaryItem(
+        itemCode: json['item_code']?.toString() ?? '',
+        itemName: json['item_name']?.toString() ?? '',
+        warehouse: json['warehouse']?.toString() ?? '',
+        qty: jsonDouble(json['qty']),
+        uom: json['uom']?.toString() ?? 'Nos',
+        isLowStock: json['is_low_stock'] == true ||
+            json['is_low_stock'] == 1 ||
+            json['is_low_stock'] == '1',
+        reorderLevel: jsonDouble(json['reorder_level']),
+      );
+}
+
+class StockSummaryResponseMapper {
+  static StockSummaryResponse fromJson(Map<String, dynamic> json) {
+    final root = json['message'] is Map
+        ? Map<String, dynamic>.from(json['message'] as Map)
+        : json;
+    final summaryRaw = root['summary'];
+    final summary = summaryRaw is Map
+        ? StockSummaryTotalsMapper.fromJson(
+            Map<String, dynamic>.from(summaryRaw),
+          )
+        : const StockSummaryTotals(
+            totalItems: 0,
+            totalQty: 0,
+            lowStockCount: 0,
+          );
+    final itemsRaw = root['items'];
+    final items = <StockSummaryItem>[];
+    if (itemsRaw is List) {
+      for (final row in itemsRaw) {
+        if (row is! Map) continue;
+        items.add(
+          StockSummaryItemMapper.fromJson(Map<String, dynamic>.from(row)),
+        );
+      }
+    }
+    return StockSummaryResponse(
+      warehouse: root['warehouse']?.toString() ?? '',
+      company: root['company']?.toString() ?? '',
+      summary: summary,
+      items: items,
+      isSearch: root['is_search'] == true,
+      limit: int.tryParse('${root['limit'] ?? 20}') ?? 20,
+      offset: int.tryParse('${root['offset'] ?? 0}') ?? 0,
+      hasMore: root['has_more'] == true,
+    );
+  }
+}
+
+class TodoTaskMapper {
+  static TodoTask fromJson(Map<String, dynamic> json) => TodoTask(
+        name: json['name']?.toString() ?? '',
+        description: stripHtmlToPlainText(json['description']?.toString()),
+        status: json['status']?.toString() ?? 'Open',
+        priority: json['priority']?.toString() ?? 'Medium',
+        date: json['date']?.toString() ?? '',
+        allocatedTo: json['allocated_to']?.toString() ?? '',
+        assignedBy: json['assigned_by']?.toString() ?? '',
+        referenceType: json['reference_type']?.toString() ?? '',
+        referenceName: json['reference_name']?.toString() ?? '',
+        creation: json['creation']?.toString() ?? '',
+        modified: json['modified']?.toString() ?? '',
+      );
+}
+
+class TaskSummaryMapper {
+  static TaskSummary fromJson(Map<String, dynamic> json) => TaskSummary(
+        totalItems: int.tryParse('${json['total_items'] ?? 0}') ?? 0,
+        openCount: int.tryParse('${json['open_count'] ?? 0}') ?? 0,
+        closedCount: int.tryParse('${json['closed_count'] ?? 0}') ?? 0,
+        overdueCount: int.tryParse('${json['overdue_count'] ?? 0}') ?? 0,
+      );
+}
+
+class TaskListResponseMapper {
+  static TaskListResponse fromJson(Map<String, dynamic> json) {
+    final root = json['message'] is Map
+        ? Map<String, dynamic>.from(json['message'] as Map)
+        : json;
+    final summaryRaw = root['summary'];
+    final summary = summaryRaw is Map
+        ? TaskSummaryMapper.fromJson(Map<String, dynamic>.from(summaryRaw))
+        : const TaskSummary(
+            totalItems: 0,
+            openCount: 0,
+            closedCount: 0,
+            overdueCount: 0,
+          );
+    final tasksRaw = root['tasks'];
+    final tasks = <TodoTask>[];
+    if (tasksRaw is List) {
+      for (final row in tasksRaw) {
+        if (row is! Map) continue;
+        tasks.add(TodoTaskMapper.fromJson(Map<String, dynamic>.from(row)));
+      }
+    }
+    return TaskListResponse(
+      user: root['user']?.toString() ?? '',
+      date: root['date']?.toString() ?? '',
+      status: root['status']?.toString() ?? 'Open',
+      summary: summary,
+      tasks: tasks,
+      isSearch: root['is_search'] == true,
+      limit: int.tryParse('${root['limit'] ?? 20}') ?? 20,
+      offset: int.tryParse('${root['offset'] ?? 0}') ?? 0,
+      hasMore: root['has_more'] == true,
+    );
+  }
 }

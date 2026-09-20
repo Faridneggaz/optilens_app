@@ -42,6 +42,24 @@ class MaterialRequest {
     required this.docstatus,
     required this.items,
   });
+
+  MaterialRequest copyWith({
+    String? status,
+    int? docstatus,
+  }) {
+    return MaterialRequest(
+      name: name,
+      company: company,
+      transactionDate: transactionDate,
+      status: status ?? this.status,
+      materialRequestType: materialRequestType,
+      scheduleDate: scheduleDate,
+      warehouse: warehouse,
+      fromWarehouse: fromWarehouse,
+      docstatus: docstatus ?? this.docstatus,
+      items: items,
+    );
+  }
 }
 
 class MaterialRequestResponse {

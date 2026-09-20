@@ -10,17 +10,28 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
   final dynamic customer;
   final String customerCode;
   final VoidCallback? onMenuTap;
+  final String? subtitle;
 
   const AppHeader({
     super.key,
     required this.title,
     required this.customer,
     required this.customerCode,
-    this.onMenuTap, 
+    this.onMenuTap,
+    this.subtitle,
   });
 
   @override
-  Size get preferredSize => const Size.fromHeight(72);
+  Size get preferredSize =>
+      Size.fromHeight(subtitle == null || subtitle!.isEmpty ? 72 : 88);
+
+  void _handleLogoTap() {
+    if (onMenuTap != null) {
+      onMenuTap!();
+      return;
+    }
+    Get.find<SessionController>().openDrawer();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,36 +48,52 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Logo — on left in LTR, on right in RTL (auto by Directionality)
-                GestureDetector(
-                  onTap: () {
-                    Get.find<SessionController>().zoomDrawerCtrl.toggle?.call();
-                  },
-                  child: Image.asset(
-                    'assets/images/optilensss.png',
-                    height: 30,
-                    fit: BoxFit.contain,
-                  ),
-                ),
-
-                // Centered title
-                Expanded(
+                InkWell(
+                  onTap: _handleLogoTap,
+                  borderRadius: BorderRadius.circular(8),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: Text(
-                      title,
-                      textAlign: TextAlign.center,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppColors.ink,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                      ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 8,
+                    ),
+                    child: Image.asset(
+                      'assets/images/optilensss.png',
+                      height: 30,
+                      fit: BoxFit.contain,
                     ),
                   ),
                 ),
-
-                // Action icons — on right in LTR, on left in RTL
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          title,
+                          textAlign: TextAlign.center,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: AppColors.ink,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        if (subtitle != null && subtitle!.isNotEmpty)
+                          Text(
+                            subtitle!,
+                            textAlign: TextAlign.center,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: AppColors.muted,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -90,7 +117,8 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.logout, color: Colors.redAccent, size: 22),
+                              const Icon(Icons.logout,
+                                  color: Colors.redAccent, size: 22),
                               const SizedBox(width: 12),
                               Text(
                                 'btn_logout'.tr,

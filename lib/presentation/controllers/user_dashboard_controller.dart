@@ -5,6 +5,8 @@ import '../../domain/usecases/usecases.dart';
 import '../../app/routes/app_routes.dart';
 import '../../core/services/session_service.dart';
 import '../../utils/error_feedback.dart';
+import 'stock_summary_controller.dart';
+import 'task_controller.dart';
 
 class UserDashboardController extends GetxController {
   UserDashboardController({StockEntryUseCases? stock})
@@ -63,7 +65,18 @@ class UserDashboardController extends GetxController {
     fetchStockEntries();
   }
 
-  void setPage(int i) => selectedPageIndex.value = i;
+  void setPage(int i) {
+    selectedPageIndex.value = i;
+    if (i == 2) {
+      fetchStockEntries();
+    }
+    if (i == 4 && Get.isRegistered<StockSummaryController>()) {
+      Get.find<StockSummaryController>().onRefresh();
+    }
+    if (i == 5 && Get.isRegistered<TaskController>()) {
+      Get.find<TaskController>().onRefresh();
+    }
+  }
 
   List<StockEntry> get filteredEntries {
     return searchQuery.value.isNotEmpty ? searchStockEntries : stockEntries;

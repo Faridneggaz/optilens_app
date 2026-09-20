@@ -13,4 +13,6 @@ abstract class AppRoutes {
   static const notifications      = '/notifications';
   static const materialRequests   = '/material-requests';
   static const materialRequestDetail = '/material-request-detail';
+  static const tasks = '/tasks';
+  static const taskDetail = '/task-detail';
 }

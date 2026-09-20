@@ -9,6 +9,8 @@ import '../../presentation/controllers/material_request_detail_controller.dart';
 import '../../presentation/controllers/notification_controller.dart';
 import '../../presentation/controllers/order_controller.dart';
 import '../../presentation/controllers/stock_entry_details_controller.dart';
+import '../../presentation/controllers/task_controller.dart';
+import '../../presentation/controllers/task_detail_controller.dart';
 
 class InvoiceDetailBinding extends Bindings {
   @override
@@ -88,5 +90,21 @@ class AboutJopticBinding extends Bindings {
   @override
   void dependencies() {
     Get.put(AboutController());
+  }
+}
+
+class TaskBinding extends Bindings {
+  @override
+  void dependencies() {
+    if (!Get.isRegistered<TaskController>()) {
+      Get.lazyPut(() => TaskController());
+    }
+  }
+}
+
+class TaskDetailBinding extends Bindings {
+  @override
+  void dependencies() {
+    Get.put(TaskDetailController());
   }
 }

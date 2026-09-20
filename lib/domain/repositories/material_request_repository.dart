@@ -43,6 +43,7 @@ abstract class MaterialRequestRepository {
   Future<Map<String, dynamic>> createStockEntryFromMR({
     required String token,
     required String name,
+    String? purpose,
   });
 
   Future<List<Map<String, String>>> searchItems({

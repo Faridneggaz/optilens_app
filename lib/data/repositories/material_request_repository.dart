@@ -21,6 +21,7 @@ class MaterialRequestRepositoryImpl implements MaterialRequestRepository {
       'token': token,
       'limit': '$limit',
       'offset': '$offset',
+      'order_by': 'modified desc',
     };
     if (searchText != null && searchText.isNotEmpty) {
       query['search_text'] = searchText;
@@ -119,7 +120,7 @@ class MaterialRequestRepositoryImpl implements MaterialRequestRepository {
     required String company,
     required String purpose,
     required String requiredBy,
-    required String setWarehouse,
+    String? setWarehouse,
     String? setFromWarehouse,
     String? priceList,
     required List<Map<String, dynamic>> items,
@@ -128,10 +129,12 @@ class MaterialRequestRepositoryImpl implements MaterialRequestRepository {
       'company': company,
       'purpose': purpose,
       'required_by': requiredBy,
-      'set_warehouse': setWarehouse,
       'items': items,
       'token': token,
     };
+    if (setWarehouse != null && setWarehouse.isNotEmpty) {
+      body['set_warehouse'] = setWarehouse;
+    }
     if (setFromWarehouse != null && setFromWarehouse.isNotEmpty) {
       body['set_from_warehouse'] = setFromWarehouse;
     }
@@ -227,26 +230,14 @@ class MaterialRequestRepositoryImpl implements MaterialRequestRepository {
     required String name,
     String? purpose,
   }) async {
-    final seType = _stockEntryTypeForMr(purpose);
+    // Backend derives stock entry type from the Material Request.
     final body = <String, dynamic>{
       'name': name,
       'token': token,
-      'material_request': name,
     };
-    if (seType.isNotEmpty) {
-      body['stock_entry_type'] = seType;
-    }
-    final query = <String, String>{
-      'token': token,
-      'name': name,
-      'material_request': name,
-    };
-    if (seType.isNotEmpty) {
-      query['stock_entry_type'] = seType;
-    }
     final data = await _client.postMobile(
       'create_stock_entry_from_mr',
-      query: query,
+      query: {'token': token, 'name': name},
       body: body,
       attachToken: false,
     );
@@ -336,21 +327,6 @@ class MaterialRequestRepositoryImpl implements MaterialRequestRepository {
     if (upper.contains('MAT-MR')) return null;
     if (!id.contains(' ') && upper.startsWith('MAT-')) return id;
     return null;
-  }
-
-  String _stockEntryTypeForMr(String? purpose) {
-    switch (purpose) {
-      case 'Material Issue':
-        return 'Material Issue';
-      case 'Material Transfer':
-        return 'Material Transfer';
-      case 'Customer Provided':
-        return 'Material Receipt';
-      case 'Manufacture':
-        return 'Manufacture';
-      default:
-        return '';
-    }
   }
 
   Future<List<Map<String, String>>> searchItems({

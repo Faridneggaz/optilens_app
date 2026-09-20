@@ -48,7 +48,26 @@ class StockEntryDetailsController extends GetxController {
 
   bool get isPending => isUnapproved;
 
-  bool get canApprove => isUnapproved;
+  /// Approve only when every item (and present warehouses) are checked.
+  bool get canApprove {
+    if (!isUnapproved) return false;
+    final details = data.value;
+    if (details == null) return false;
+    final items = details.items;
+    if (items.isEmpty) return false;
+    if (validatedItemIndices.length < items.length) return false;
+    for (var i = 0; i < items.length; i++) {
+      if (!validatedItemIndices.contains(i)) return false;
+    }
+    final se = details.stockEntry;
+    if (se.fromWarehouse.isNotEmpty && !fromWarehouseValidated.value) {
+      return false;
+    }
+    if (se.toWarehouse.isNotEmpty && !toWarehouseValidated.value) {
+      return false;
+    }
+    return true;
+  }
 
   Future<void> fetchDetails() async {
     isLoading.value = true;

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../core/theme/app_colors.dart';
@@ -341,12 +342,14 @@ class MrSelectedItemTile extends StatelessWidget {
     required this.onDecrement,
     required this.onIncrement,
     required this.onRemove,
+    this.onQtyChanged,
   });
 
   final Map<String, dynamic> item;
   final VoidCallback onDecrement;
   final VoidCallback onIncrement;
   final VoidCallback onRemove;
+  final ValueChanged<int>? onQtyChanged;
 
   int get _qty {
     final q = item['qty'];
@@ -403,20 +406,45 @@ class MrSelectedItemTile extends StatelessWidget {
                 IconButton(
                   visualDensity: VisualDensity.compact,
                   padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  constraints:
+                      const BoxConstraints(minWidth: 32, minHeight: 32),
                   icon: const Icon(Icons.remove_circle_outline,
                       color: AppColors.primary, size: 20),
                   onPressed: onDecrement,
                 ),
-                Text(
-                  '$_qty',
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 15),
+                SizedBox(
+                  width: 52,
+                  height: 36,
+                  child: TextFormField(
+                    key: ValueKey('qty_${code}_$_qty'),
+                    initialValue: '$_qty',
+                    keyboardType: TextInputType.number,
+                    textAlign: TextAlign.center,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 15),
+                    decoration: InputDecoration(
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 4, vertical: 6),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    onChanged: (v) {
+                      final n = int.tryParse(v);
+                      if (n != null && n >= 1) {
+                        onQtyChanged?.call(n);
+                        item['qty'] = n;
+                      }
+                    },
+                  ),
                 ),
                 IconButton(
                   visualDensity: VisualDensity.compact,
                   padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  constraints:
+                      const BoxConstraints(minWidth: 32, minHeight: 32),
                   icon: const Icon(Icons.add_circle_outline,
                       color: AppColors.primary, size: 20),
                   onPressed: onIncrement,
@@ -424,7 +452,8 @@ class MrSelectedItemTile extends StatelessWidget {
                 IconButton(
                   visualDensity: VisualDensity.compact,
                   padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  constraints:
+                      const BoxConstraints(minWidth: 32, minHeight: 32),
                   icon: const Icon(Icons.delete_outline,
                       color: Colors.red, size: 18),
                   onPressed: onRemove,

@@ -28,6 +28,7 @@ class MaterialRequest {
   final String warehouse;
   final String fromWarehouse;
   final int docstatus;
+  final String modified;
   final List<MaterialRequestItem> items;
 
   MaterialRequest({
@@ -41,11 +42,18 @@ class MaterialRequest {
     required this.fromWarehouse,
     required this.docstatus,
     required this.items,
+    this.modified = '',
   });
+
+  DateTime? get modifiedAt {
+    if (modified.isEmpty) return null;
+    return DateTime.tryParse(modified);
+  }
 
   MaterialRequest copyWith({
     String? status,
     int? docstatus,
+    String? modified,
   }) {
     return MaterialRequest(
       name: name,
@@ -57,6 +65,7 @@ class MaterialRequest {
       warehouse: warehouse,
       fromWarehouse: fromWarehouse,
       docstatus: docstatus ?? this.docstatus,
+      modified: modified ?? this.modified,
       items: items,
     );
   }
@@ -65,9 +74,15 @@ class MaterialRequest {
 class MaterialRequestResponse {
   final List<MaterialRequest> materialRequests;
   final bool isSearch;
+  final bool hasMore;
+  final int limit;
+  final int offset;
 
   MaterialRequestResponse({
     required this.materialRequests,
     this.isSearch = false,
+    this.hasMore = false,
+    this.limit = 20,
+    this.offset = 0,
   });
 }

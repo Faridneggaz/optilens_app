@@ -257,13 +257,26 @@ class MaterialRequestItemMapper {
 
 class MaterialRequestMapper {
   static MaterialRequest fromJson(Map<String, dynamic> json) {
-    final itemsList = json['items'] as List?;
+    final itemsRaw = json['items'];
+    final items = <MaterialRequestItem>[];
+    if (itemsRaw is List) {
+      for (final row in itemsRaw) {
+        if (row is! Map) continue;
+        items.add(
+          MaterialRequestItemMapper.fromJson(Map<String, dynamic>.from(row)),
+        );
+      }
+    }
     return MaterialRequest(
       name: json['name']?.toString() ?? '',
       company: json['company']?.toString() ?? '',
       transactionDate: json['transaction_date']?.toString() ?? '',
       status: json['status']?.toString() ?? '',
-      materialRequestType: json['material_request_type']?.toString() ?? '',
+      materialRequestType: (json['material_request_type'] ??
+                  json['purpose'] ??
+                  json['type'] ??
+                  '')
+              .toString(),
       scheduleDate: json['schedule_date']?.toString() ?? '',
       warehouse: json['set_warehouse']?.toString() ??
           json['warehouse']?.toString() ??
@@ -272,42 +285,83 @@ class MaterialRequestMapper {
           json['from_warehouse']?.toString() ??
           '',
       docstatus: int.tryParse('${json['docstatus'] ?? 0}') ?? 0,
-      items: itemsList != null
-          ? itemsList
-              .map((i) => MaterialRequestItemMapper.fromJson(
-                    Map<String, dynamic>.from(i as Map),
-                  ))
-              .toList()
-          : const [],
+      modified: (json['modified'] ??
+              json['last_updated_on'] ??
+              json['updated_on'] ??
+              json['creation'] ??
+              '')
+          .toString(),
+      items: items,
     );
   }
 }
 
 class MaterialRequestResponseMapper {
   static MaterialRequestResponse fromJson(Map<String, dynamic> json) {
-    final msg = json['message'] ?? json;
-    List<MaterialRequest> entries = [];
-    var isSearch = false;
+    final root = json['message'] is Map
+        ? Map<String, dynamic>.from(json['message'] as Map)
+        : (json['message'] is List
+            ? <String, dynamic>{'material_requests': json['message']}
+            : json);
 
-    if (msg is List) {
-      entries = msg
-          .map((e) => MaterialRequestMapper.fromJson(
-                Map<String, dynamic>.from(e as Map),
-              ))
-          .toList();
-    } else if (msg is Map && msg.containsKey('material_requests')) {
-      entries = (msg['material_requests'] as List)
-          .map((e) => MaterialRequestMapper.fromJson(
-                Map<String, dynamic>.from(e as Map),
-              ))
-          .toList();
-      isSearch = msg['is_search'] ?? false;
+    final listRaw = _extractList(root) ?? _extractList(json);
+    final entries = <MaterialRequest>[];
+    if (listRaw != null) {
+      for (final row in listRaw) {
+        if (row is! Map) continue;
+        try {
+          final mr = MaterialRequestMapper.fromJson(
+            Map<String, dynamic>.from(row),
+          );
+          if (mr.name.isEmpty) continue;
+          entries.add(mr);
+        } catch (_) {
+          // Skip malformed rows so one bad doc doesn't empty the list.
+        }
+      }
     }
+
+    final limit = int.tryParse('${root['limit'] ?? json['limit'] ?? 20}') ?? 20;
+    final offset =
+        int.tryParse('${root['offset'] ?? json['offset'] ?? 0}') ?? 0;
+    final hasMoreFlag = root['has_more'] ?? json['has_more'];
+    final hasMore = hasMoreFlag == true ||
+        hasMoreFlag == 1 ||
+        hasMoreFlag == '1' ||
+        (hasMoreFlag == null && entries.length >= limit);
+
+    entries.sort((a, b) {
+      final da = a.modifiedAt;
+      final db = b.modifiedAt;
+      if (da == null && db == null) {
+        return b.name.compareTo(a.name);
+      }
+      if (da == null) return 1;
+      if (db == null) return -1;
+      return db.compareTo(da);
+    });
 
     return MaterialRequestResponse(
       materialRequests: entries,
-      isSearch: isSearch,
+      isSearch: root['is_search'] == true || json['is_search'] == true,
+      hasMore: hasMore,
+      limit: limit,
+      offset: offset,
     );
+  }
+
+  static List? _extractList(Map map) {
+    for (final key in [
+      'material_requests',
+      'data',
+      'requests',
+      'docs',
+      'message',
+    ]) {
+      final value = map[key];
+      if (value is List) return value;
+    }
+    return null;
   }
 }
 

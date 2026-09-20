@@ -6,6 +6,8 @@ import '../../presentation/controllers/invoice_controller.dart';
 import '../../presentation/controllers/payment_controller.dart';
 import '../../presentation/controllers/stock_entry_controller.dart';
 import '../../presentation/controllers/material_request_controller.dart';
+import '../../presentation/controllers/stock_summary_controller.dart';
+import '../../presentation/controllers/task_controller.dart';
 
 /// Registers shell controllers for the `/main` route.
 /// Per-push detail pages (invoice, stock entry, orders, etc.) use
@@ -22,5 +24,7 @@ class AppBinding extends Bindings {
     Get.lazyPut<UserDashboardController>(() => UserDashboardController());
     Get.lazyPut<StockEntryController>(() => StockEntryController());
     Get.lazyPut<MaterialRequestController>(() => MaterialRequestController());
+    Get.lazyPut<StockSummaryController>(() => StockSummaryController());
+    Get.lazyPut<TaskController>(() => TaskController());
   }
 }

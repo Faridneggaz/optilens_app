@@ -18,6 +18,11 @@ class ErrorFeedback {
 
   static String message(Object error, {required String fallbackKey}) {
     if (isNetwork(error)) return 'connection_error'.tr;
+    if (error is RepositoryException &&
+        error.message.isNotEmpty &&
+        error.message != 'Unknown response format') {
+      return error.message;
+    }
     return fallbackKey.tr;
   }
 

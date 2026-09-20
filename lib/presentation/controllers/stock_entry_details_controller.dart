@@ -4,6 +4,7 @@ import '../../domain/entities/stock_entry_item.dart' as model;
 import '../../domain/usecases/usecases.dart';
 import '../../core/services/session_service.dart';
 import '../../domain/results/action_result.dart';
+import '../../domain/failures/failures.dart';
 import '../../utils/error_feedback.dart';
 
 class StockEntryDetailsController extends GetxController {
@@ -32,25 +33,22 @@ class StockEntryDetailsController extends GetxController {
     fetchDetails();
   }
 
-  bool get isPending {
+  bool get isUnapproved {
     if (data.value == null) return false;
-    final s = data.value!.stockEntry.status.toLowerCase();
-    return s == 'pending' || s == 'draft';
+    final s = data.value!.stockEntry.status.toLowerCase().trim();
+    if (s.isEmpty) return true;
+    const done = {
+      'approved',
+      'rejected',
+      'cancelled',
+      'canceled',
+    };
+    return !done.contains(s);
   }
 
-  bool get canApprove {
-    if (!isPending) return false;
-    final itemsReady = data.value != null &&
-        validatedItemIndices.length == data.value!.items.length;
-    bool warehousesReady = true;
-    if (data.value?.stockEntry.fromWarehouse.isNotEmpty ?? false) {
-      warehousesReady = warehousesReady && fromWarehouseValidated.value;
-    }
-    if (data.value?.stockEntry.toWarehouse.isNotEmpty ?? false) {
-      warehousesReady = warehousesReady && toWarehouseValidated.value;
-    }
-    return itemsReady && warehousesReady;
-  }
+  bool get isPending => isUnapproved;
+
+  bool get canApprove => isUnapproved;
 
   Future<void> fetchDetails() async {
     isLoading.value = true;
@@ -67,7 +65,16 @@ class StockEntryDetailsController extends GetxController {
           ..addAll(Set.from(List.generate(data.value!.items.length, (i) => i)));
       }
     } catch (e) {
-      ErrorFeedback.snackbar(e, fallbackKey: 'failed_load_stock');
+      ErrorFeedback.snackbar(
+        e,
+        fallbackKey: 'failed_load_stock',
+      );
+      if (e is RepositoryException && e.message.isNotEmpty) {
+        // Keep last good data if refresh fails; only clear on first load.
+        if (data.value == null) {
+          data.value = null;
+        }
+      }
     } finally {
       isLoading.value = false;
     }
@@ -111,19 +118,29 @@ class StockEntryDetailsController extends GetxController {
     try {
       final itemsToSend = data.value!.items
           .map((e) => {
+                'item_code': e.itemCode,
                 'itemName': e.itemCode,
+                'item_name': e.itemName,
                 'quantity': e.quantity,
+                'qty': e.quantity,
                 'fromWarehouse': e.fromWarehouse,
+                'from_warehouse': e.fromWarehouse,
                 'toWarehouse': e.toWarehouse,
+                'to_warehouse': e.toWarehouse,
               })
           .toList();
 
-      return await _stock.approveStockEntry(
+      final res = await _stock.approveStockEntry(
         name: _name,
         token: Get.find<SessionService>().authToken,
         items: itemsToSend,
         action: 'approve',
       );
+      if (res.isSuccess) {
+        data.value?.stockEntry.status = 'Approved';
+        data.refresh();
+      }
+      return res;
     } catch (e) {
       return ActionResult.fromException(e);
     } finally {

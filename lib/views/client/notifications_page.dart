@@ -23,7 +23,7 @@ class NotificationsPage extends StatelessWidget {
               title: '',
               customer: session.isUser.value ? null : session.customer.value,
               customerCode: session.isUser.value ? '' : (session.customer.value?.code ?? ''),
-              onMenuTap: () => session.zoomDrawerCtrl.toggle?.call(),
+              onMenuTap: session.openDrawer,
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),

@@ -36,6 +36,15 @@ class _FakeCustomerRepository implements CustomerRepository {
 
 void main() {
   group('ActionResult', () {
+    test('maps a material_request document name', () {
+      final result = ActionResult.fromApiMap({
+        'success': true,
+        'material_request': 'MAT-MR-2026-0001',
+      });
+      expect(result.isSuccess, isTrue);
+      expect(result.documentName, 'MAT-MR-2026-0001');
+    });
+
     test('maps a Frappe success payload', () {
       final result = ActionResult.fromApiMap({
         'message': 'Success',
@@ -55,6 +64,16 @@ void main() {
       final result = ActionResult.fromException(const InvalidSessionException());
       expect(result.isAuthHandled, isTrue);
       expect(result.isSuccess, isFalse);
+    });
+
+    test('extracts a stock entry id and ignores material request names', () {
+      final result = ActionResult.fromApiMap({
+        'success': true,
+        'stock_entry_id': 'MAT-STE-2026-0004',
+        'name': 'MAT-MR-2026-0001',
+      });
+      expect(result.isSuccess, isTrue);
+      expect(result.navigableStockEntryId, 'MAT-STE-2026-0004');
     });
   });
 

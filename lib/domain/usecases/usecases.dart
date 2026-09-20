@@ -8,6 +8,8 @@ import '../entities/material_request_response.dart';
 import '../entities/payment_response.dart';
 import '../entities/stock_entry_details_response.dart';
 import '../entities/stock_entry_response.dart';
+import '../entities/stock_summary.dart';
+import '../entities/task.dart';
 import '../repositories/announcement_repository.dart';
 import '../repositories/complaint_repository.dart';
 import '../repositories/customer_repository.dart';
@@ -22,6 +24,7 @@ import '../repositories/order_repository.dart';
 import '../repositories/payment_repository.dart';
 import '../repositories/stock_entry_details_repository.dart';
 import '../repositories/stock_entry_repository.dart';
+import '../repositories/task_repository.dart';
 import '../results/action_result.dart';
 
 class AuthUseCases {
@@ -179,6 +182,29 @@ class StockEntryUseCases {
         status: status,
       );
 
+  Future<StockSummaryResponse> fetchStockSummary({
+    required String token,
+    int limit = 20,
+    int offset = 0,
+    String? searchText,
+    String? warehouse,
+    String? company,
+    bool onlyInStock = true,
+    bool onlyNegative = false,
+    bool includeLowStockOnly = false,
+  }) =>
+      _list.fetchStockSummary(
+        token: token,
+        limit: limit,
+        offset: offset,
+        searchText: searchText,
+        warehouse: warehouse,
+        company: company,
+        onlyInStock: onlyInStock,
+        onlyNegative: onlyNegative,
+        includeLowStockOnly: includeLowStockOnly,
+      );
+
   Future<StockEntryDetailsResponse> fetchDetails({
     required String name,
     required String token,
@@ -295,9 +321,14 @@ class MaterialRequestUseCases {
   Future<ActionResult> createStockEntryFromMR({
     required String token,
     required String name,
+    String? purpose,
   }) async {
     try {
-      final map = await _repo.createStockEntryFromMR(token: token, name: name);
+      final map = await _repo.createStockEntryFromMR(
+        token: token,
+        name: name,
+        purpose: purpose,
+      );
       return ActionResult.fromApiMap(map);
     } catch (e) {
       return ActionResult.fromException(e);
@@ -327,4 +358,41 @@ class JopticUseCases {
         clientName: clientName,
         description: description,
       );
+}
+
+class TaskUseCases {
+  TaskUseCases(this._repo);
+  final TaskRepository _repo;
+
+  Future<TaskListResponse> fetchMyTasks({
+    required String token,
+    String status = 'Open',
+    String? date,
+    bool includeOverdue = true,
+    String? searchText,
+    int limit = 20,
+    int offset = 0,
+  }) =>
+      _repo.fetchMyTasks(
+        token: token,
+        status: status,
+        date: date,
+        includeOverdue: includeOverdue,
+        searchText: searchText,
+        limit: limit,
+        offset: offset,
+      );
+
+  Future<TodoTask> fetchTaskDetail({
+    required String token,
+    required String name,
+  }) =>
+      _repo.fetchTaskDetail(token: token, name: name);
+
+  Future<ActionResult> updateTaskStatus({
+    required String token,
+    required String name,
+    required String status,
+  }) =>
+      _repo.updateTaskStatus(token: token, name: name, status: status);
 }

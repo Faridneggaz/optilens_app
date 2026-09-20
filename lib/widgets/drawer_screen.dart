@@ -55,23 +55,61 @@ class DrawerScreen extends StatelessWidget {
                     ),
                     if (isUser)
                       ListTile(
-                        leading: const Icon(Icons.inventory_2,
+                        leading: const Icon(Icons.checklist_rtl,
                             color: AppColors.menuTeal),
-                        title: Text('nav_stock'.tr),
+                        title: Text('nav_my_tasks'.tr),
                         onTap: () {
                           ZoomDrawer.of(context)?.close();
-                          onSelectPage(2);
+                          onSelectPage(5);
                         },
                       ),
                     if (isUser)
-                      ListTile(
-                        leading: const Icon(Icons.assignment_outlined,
-                            color: AppColors.menuTeal),
-                        title: Text('material_requests'.tr),
-                        onTap: () {
-                          ZoomDrawer.of(context)?.close();
-                          onSelectPage(3);
-                        },
+                      Theme(
+                        data: Theme.of(context).copyWith(
+                          dividerColor: Colors.transparent,
+                        ),
+                        child: ExpansionTile(
+                          initiallyExpanded: true,
+                          leading: const Icon(Icons.inventory_2,
+                              color: AppColors.menuTeal),
+                          title: Text(
+                            'nav_stock'.tr,
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                          iconColor: AppColors.menuTeal,
+                          collapsedIconColor: AppColors.menuTeal,
+                          childrenPadding: const EdgeInsetsDirectional.only(
+                              start: 12, end: 8),
+                          children: [
+                            ListTile(
+                              leading: const Icon(Icons.swap_horiz,
+                                  color: AppColors.menuTeal),
+                              title: Text('nav_stock_entries'.tr),
+                              onTap: () {
+                                ZoomDrawer.of(context)?.close();
+                                onSelectPage(2);
+                              },
+                            ),
+                            ListTile(
+                              leading: const Icon(Icons.analytics_outlined,
+                                  color: AppColors.menuTeal),
+                              title: Text('nav_stock_summary'.tr),
+                              onTap: () {
+                                ZoomDrawer.of(context)?.close();
+                                onSelectPage(4);
+                              },
+                            ),
+                            ListTile(
+                              leading: const Icon(Icons.assignment_outlined,
+                                  color: AppColors.menuTeal),
+                              title: Text('material_requests'.tr),
+                              onTap: () {
+                                ZoomDrawer.of(context)?.close();
+                                onSelectPage(3);
+                              },
+                            ),
+                          ],
+                        ),
                       ),
                   ],
                 ),

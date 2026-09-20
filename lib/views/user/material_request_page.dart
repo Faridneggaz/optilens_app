@@ -8,6 +8,7 @@ import '../../widgets/header.dart';
 import '../../widgets/material_request/create_material_request_sheet.dart';
 import '../../widgets/material_request/material_request_card.dart';
 import '../../widgets/material_request/material_request_filter_bar.dart';
+import '../../widgets/stock/document_ui.dart';
 
 class MaterialRequestPage extends StatelessWidget {
   const MaterialRequestPage({super.key});
@@ -25,6 +26,7 @@ class MaterialRequestPage extends StatelessWidget {
               onPressed: () => showModalBottomSheet(
                 context: context,
                 isScrollControlled: true,
+                useSafeArea: true,
                 backgroundColor: Colors.transparent,
                 builder: (_) => CreateMaterialRequestSheet(c: c),
               ),
@@ -59,11 +61,17 @@ class MaterialRequestPage extends StatelessWidget {
                   color: AppColors.primary,
                   child: ListView.builder(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    padding: const EdgeInsets.fromLTRB(0, 20, 0, 88),
                     itemCount: c.displayList.length + 1,
                     itemBuilder: (context, index) {
                       if (index == c.displayList.length) {
-                        return _LoadMoreFooter(controller: c);
+                        return DocumentLoadMoreFooter(
+                          hasMore: c.hasMore.value,
+                          isLoadingMore: c.isLoadingMore.value,
+                          hasItems: c.materialRequests.isNotEmpty,
+                          isSearching: c.searchQuery.value.isNotEmpty,
+                          onLoadMore: c.onLoadMore,
+                        );
                       }
                       return MaterialRequestCard(
                         request: c.displayList[index],
@@ -78,54 +86,5 @@ class MaterialRequestPage extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-class _LoadMoreFooter extends StatelessWidget {
-  const _LoadMoreFooter({required this.controller});
-
-  final MaterialRequestController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    if (controller.searchQuery.value.isNotEmpty ||
-        controller.isSearching.value) {
-      return const SizedBox.shrink();
-    }
-    if (!controller.hasMore.value && controller.materialRequests.isNotEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        child: Center(
-            child: Text('all_entries_loaded'.tr,
-                style: const TextStyle(color: Colors.grey))),
-      );
-    }
-    if (controller.isLoadingMore.value) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 20),
-        child: Center(child: CircularProgressIndicator()),
-      );
-    }
-    if (controller.hasMore.value && controller.materialRequests.isNotEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        child: ElevatedButton(
-          onPressed: controller.onLoadMore,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.scaffold,
-            foregroundColor: Colors.teal,
-            elevation: 0,
-            side: const BorderSide(color: Colors.teal),
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10)),
-          ),
-          child: Text('load_more'.tr,
-              style:
-                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-        ),
-      );
-    }
-    return const SizedBox.shrink();
   }
 }

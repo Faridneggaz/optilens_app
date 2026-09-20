@@ -41,11 +41,43 @@ class StockEntryDetailsRepositoryImpl implements StockEntryDetailsRepository {
       attachToken: false,
     );
     final resData = _client.unwrap(data);
-    if (resData is Map && resData['message'] == 'Success') {
-      return {
-        'message': 'Success',
-        'detail': resData['detail'] ?? 'Operation completed successfully',
-      };
+    if (resData is String) {
+      final text = resData.trim();
+      final lower = text.toLowerCase();
+      if (lower.contains('success') ||
+          lower.contains('approved') ||
+          lower.contains(action.toLowerCase())) {
+        return {'message': 'Success', 'detail': text};
+      }
+      throw RepositoryException(text.isEmpty ? 'Operation failed' : text);
+    }
+    if (resData is Map) {
+      final map = Map<String, dynamic>.from(resData);
+      final nested = map['message'];
+      final err = map['error']?.toString();
+      final ok = map['message'] == 'Success' ||
+          map['success'] == true ||
+          map['success'] == 1 ||
+          map['status'] == 'success' ||
+          (nested is String &&
+              (nested.toLowerCase().contains('success') ||
+                  nested.toLowerCase().contains('approved'))) ||
+          (nested is Map &&
+              (nested['success'] == true || nested['message'] == 'Success'));
+      if (err != null && err.isNotEmpty && err != 'null' && !ok) {
+        throw RepositoryException(err);
+      }
+      if (ok) {
+        return {
+          'message': 'Success',
+          'detail': map['detail'] ??
+              (nested is String ? nested : null) ??
+              'Operation completed successfully',
+        };
+      }
+      if (nested is String && nested.trim().isNotEmpty) {
+        throw RepositoryException(nested);
+      }
     }
     throw const RepositoryException('Unknown response format');
   }

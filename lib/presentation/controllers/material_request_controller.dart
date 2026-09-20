@@ -156,20 +156,72 @@ class MaterialRequestController extends GetxController {
     }
   }
 
-  Future<ActionResult> submitRequest(String name) {
-    return _materialRequests.manageMaterialRequest(
-      token: _token,
-      name: name,
-      action: 'submit',
-    );
+  final busyName = ''.obs;
+
+  bool isBusy(String name) => busyName.value == name;
+
+  void _removeFromLists(String name) {
+    materialRequests.removeWhere((e) => e.name == name);
+    searchResults.removeWhere((e) => e.name == name);
   }
 
-  Future<ActionResult> deleteRequest(String name) {
-    return _materialRequests.manageMaterialRequest(
-      token: _token,
-      name: name,
-      action: 'delete',
-    );
+  void _markSubmitted(String name) {
+    void patch(RxList<MaterialRequest> list) {
+      final i = list.indexWhere((e) => e.name == name);
+      if (i < 0) return;
+      list[i] = list[i].copyWith(docstatus: 1, status: 'Pending');
+    }
+
+    patch(materialRequests);
+    patch(searchResults);
+  }
+
+  Future<ActionResult> submitRequest(String name) async {
+    busyName.value = name;
+    try {
+      final res = await _materialRequests.manageMaterialRequest(
+        token: _token,
+        name: name,
+        action: 'submit',
+      );
+      if (res.isSuccess) {
+        _markSubmitted(name);
+        await onRefresh();
+      }
+      return res;
+    } finally {
+      if (busyName.value == name) busyName.value = '';
+    }
+  }
+
+  Future<ActionResult> deleteRequest(String name) async {
+    busyName.value = name;
+    try {
+      final res = await _materialRequests.manageMaterialRequest(
+        token: _token,
+        name: name,
+        action: 'delete',
+      );
+      if (res.isSuccess) {
+        _removeFromLists(name);
+      }
+      return res;
+    } finally {
+      if (busyName.value == name) busyName.value = '';
+    }
+  }
+
+  Future<ActionResult> createStockEntry(String name, {String? purpose}) async {
+    busyName.value = name;
+    try {
+      return await _materialRequests.createStockEntryFromMR(
+        token: _token,
+        name: name,
+        purpose: purpose,
+      );
+    } finally {
+      if (busyName.value == name) busyName.value = '';
+    }
   }
 
   Future<List<Map<String, String>>> searchItems(String searchText) async {

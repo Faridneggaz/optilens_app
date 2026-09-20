@@ -130,13 +130,43 @@ class ApiClient {
 
       final ok = response.statusCode == 200 ||
           (allowCreated && response.statusCode == 201);
-      if (!ok) {
-        throw RepositoryException('Server error: ${response.statusCode}');
+      if (response.body.isEmpty) {
+        if (!ok) {
+          throw RepositoryException('Server error: ${response.statusCode}');
+        }
+        return {};
       }
-      if (response.body.isEmpty) return {};
-      final decoded = json.decode(response.body);
-      if (decoded is Map<String, dynamic>) return decoded;
-      if (decoded is Map) return Map<String, dynamic>.from(decoded);
+      Map<String, dynamic>? decodedMap;
+      try {
+        final decoded = json.decode(response.body);
+        if (decoded is Map<String, dynamic>) {
+          decodedMap = decoded;
+        } else if (decoded is Map) {
+          decodedMap = Map<String, dynamic>.from(decoded);
+        }
+      } catch (_) {
+        decodedMap = null;
+      }
+      if (!ok) {
+        final fromFrappe = decodedMap == null
+            ? null
+            : FrappeMessage.exceptionMessage(decodedMap) ??
+                FrappeMessage.parseServerMessages(
+                    decodedMap['_server_messages']) ??
+                decodedMap['message']?.toString();
+        throw RepositoryException(
+          (fromFrappe != null && fromFrappe.trim().isNotEmpty)
+              ? fromFrappe
+              : 'Server error: ${response.statusCode}',
+        );
+      }
+      if (decodedMap != null) {
+        final fault = FrappeMessage.exceptionMessage(decodedMap);
+        if (fault != null && fault.trim().isNotEmpty) {
+          throw RepositoryException(fault);
+        }
+        return decodedMap;
+      }
       throw const RepositoryException('Invalid JSON response');
     } on TimeoutException {
       throw const RepositoryException('Request timeout');

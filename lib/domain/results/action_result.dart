@@ -52,22 +52,42 @@ class ActionResult {
     if (e is InvalidSessionException || e is AccessDeniedException) {
       return ActionResult.authHandled();
     }
-    return ActionResult.failure(e.toString());
+    return ActionResult.failure(
+      e is RepositoryException ? e.message : e.toString(),
+    );
+  }
+
+  /// Stock Entry name if the payload has one (never a Material Request name).
+  String? get navigableStockEntryId {
+    final id = stockEntryId ?? documentName;
+    if (id == null || id.isEmpty || id == 'Success') return null;
+    final upper = id.toUpperCase();
+    if (upper.contains('MAT-MR') && !upper.contains('STE')) return null;
+    return id;
   }
 
   factory ActionResult.fromApiMap(Map<String, dynamic> map) {
     final nested = map['message'];
     String? nestedName;
     if (nested is Map) {
-      nestedName = nested['name']?.toString();
+      nestedName = _documentNameFrom(nested);
+    } else if (nested is String &&
+        nested.isNotEmpty &&
+        nested != 'Success' &&
+        !nested.toLowerCase().startsWith('error')) {
+      nestedName = nested;
     }
 
-    final name =
-        map['name']?.toString() ?? map['id']?.toString() ?? nestedName;
-    final stockId = map['stock_entry_id']?.toString();
+    final name = _documentNameFrom(map) ?? nestedName;
+    final stockId = _stockEntryIdFrom(map, nested);
     final error = map['error']?.toString();
-    final successFlag = map['success'] == true;
-    final messageOk = map['message'] == 'Success';
+    final rawSuccess = map['success'];
+    final successFlag = rawSuccess == true ||
+        rawSuccess == 1 ||
+        rawSuccess == '1' ||
+        rawSuccess == 'true';
+    final messageOk = map['message'] == 'Success' ||
+        map['status'] == 'success';
 
     if (error != null &&
         error.isNotEmpty &&
@@ -88,6 +108,50 @@ class ActionResult {
     }
 
     return ActionResult.failure(error ?? 'Unknown response format');
+  }
+
+  static String? _documentNameFrom(Map map) {
+    for (final key in [
+      'name',
+      'id',
+      'material_request',
+      'docname',
+      'document_name',
+    ]) {
+      final value = map[key]?.toString().trim();
+      if (value != null && value.isNotEmpty) return value;
+    }
+    return null;
+  }
+
+  static String? _stockEntryIdFrom(Map<String, dynamic> map, dynamic nested) {
+    final nestedMap = nested is Map ? nested : null;
+    final candidates = <dynamic>[
+      map['stock_entry_id'],
+      map['stock_entry_name'],
+      nestedMap?['stock_entry_id'],
+      if (map['stock_entry'] is String) map['stock_entry'],
+      if (map['stock_entry'] is Map) map['stock_entry']['name'],
+      if (nestedMap?['stock_entry'] is String) nestedMap?['stock_entry'],
+      if (nestedMap?['stock_entry'] is Map) nestedMap?['stock_entry']['name'],
+      if (nested is String) nested,
+      map['name'],
+      nestedMap?['name'],
+    ];
+    for (final value in candidates) {
+      final id = value?.toString().trim() ?? '';
+      if (id.isEmpty || id == 'Success') continue;
+      if (id.toUpperCase().contains('STE')) return id;
+    }
+    for (final value in [
+      map['stock_entry_id'],
+      if (map['stock_entry'] is String) map['stock_entry'],
+      if (map['stock_entry'] is Map) map['stock_entry']['name'],
+    ]) {
+      final id = value?.toString().trim() ?? '';
+      if (id.isNotEmpty && id != 'Success') return id;
+    }
+    return null;
   }
 }
 

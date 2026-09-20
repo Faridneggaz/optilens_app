@@ -17,6 +17,27 @@ class SessionController extends GetxController {
   /// Shared ZoomDrawer controller so ZoomDrawerPage can be a StatelessWidget.
   final zoomDrawerCtrl = ZoomDrawerController();
 
+  /// Opens the side drawer from any screen (including pushed routes).
+  void openDrawer() {
+    void open() => zoomDrawerCtrl.open?.call();
+
+    if (Get.currentRoute == AppRoutes.main) {
+      open();
+      return;
+    }
+
+    Get.until(
+      (route) =>
+          route.settings.name == AppRoutes.main || route.isFirst,
+    );
+
+    Future.delayed(const Duration(milliseconds: 80), () {
+      if (Get.currentRoute == AppRoutes.main) {
+        open();
+      }
+    });
+  }
+
   @override
   void onInit() {
     super.onInit();

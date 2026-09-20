@@ -16,6 +16,7 @@ class MaterialRequestDetailController extends GetxController {
 
   final mr = Rxn<MaterialRequest>();
   final isLoading = true.obs;
+  final isBusy = false.obs;
   final errorMessage = ''.obs;
 
   final String mrName;
@@ -28,8 +29,8 @@ class MaterialRequestDetailController extends GetxController {
     fetchDetail();
   }
 
-  Future<void> fetchDetail() async {
-    isLoading.value = true;
+  Future<void> fetchDetail({bool silent = false}) async {
+    if (!silent) isLoading.value = true;
     errorMessage.value = '';
     try {
       mr.value =
@@ -44,26 +45,44 @@ class MaterialRequestDetailController extends GetxController {
   }
 
   Future<ActionResult> submitRequest() async {
-    final res = await _materialRequests.manageMaterialRequest(
-      token: _token,
-      name: mrName,
-      action: 'submit',
-    );
-    if (res.isSuccess) await fetchDetail();
-    if (!res.isAuthHandled && !res.isSuccess) {
-      errorMessage.value = res.error ?? '';
+    isBusy.value = true;
+    try {
+      final res = await _materialRequests.manageMaterialRequest(
+        token: _token,
+        name: mrName,
+        action: 'submit',
+      );
+      if (res.isSuccess) {
+        final current = mr.value;
+        if (current != null) {
+          mr.value = current.copyWith(docstatus: 1, status: 'Pending');
+        }
+        await fetchDetail(silent: true);
+      }
+      if (!res.isAuthHandled && !res.isSuccess) {
+        errorMessage.value = res.error ?? '';
+      }
+      return res;
+    } finally {
+      isBusy.value = false;
     }
-    return res;
   }
 
-  Future<ActionResult> createTransfer() async {
-    final res = await _materialRequests.createStockEntryFromMR(
-      token: _token,
-      name: mrName,
-    );
-    if (!res.isAuthHandled && !res.isSuccess) {
-      errorMessage.value = res.error ?? '';
+  Future<ActionResult> createStockEntry() async {
+    isBusy.value = true;
+    try {
+      final purpose = mr.value?.materialRequestType;
+      final res = await _materialRequests.createStockEntryFromMR(
+        token: _token,
+        name: mrName,
+        purpose: purpose,
+      );
+      if (!res.isAuthHandled && !res.isSuccess) {
+        errorMessage.value = res.error ?? '';
+      }
+      return res;
+    } finally {
+      isBusy.value = false;
     }
-    return res;
   }
 }

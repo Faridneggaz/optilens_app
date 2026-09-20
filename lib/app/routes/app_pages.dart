@@ -14,6 +14,8 @@ import '../../widgets/zoom_drawer_page.dart';
 import '../../views/user/material_request_detail_page.dart';
 import '../../views/user/material_request_page.dart';
 import '../../views/user/stock_entry.dart';
+import '../../views/user/task_detail_page.dart';
+import '../../views/user/tasks_page.dart';
 import '../bindings/app_binding.dart';
 import '../bindings/feature_bindings.dart';
 import '../bindings/login_binding.dart';
@@ -88,6 +90,16 @@ class AppPages {
       name: AppRoutes.materialRequestDetail,
       page: () => const MaterialRequestDetailPage(),
       binding: MaterialRequestDetailBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.tasks,
+      page: () => const TasksPage(),
+      binding: TaskBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.taskDetail,
+      page: () => const TaskDetailPage(),
+      binding: TaskDetailBinding(),
     ),
   ];
 }

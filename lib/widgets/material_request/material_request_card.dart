@@ -89,9 +89,7 @@ class MaterialRequestCard extends StatelessWidget {
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
-                      request.fromWarehouse.isNotEmpty
-                          ? '${request.fromWarehouse} → ${request.warehouse}'
-                          : request.warehouse,
+                      _warehouseLabel(request),
                       style: const TextStyle(color: Colors.grey, fontSize: 13),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -268,6 +266,7 @@ class MaterialRequestCard extends StatelessWidget {
     if (Get.isRegistered<UserDashboardController>()) {
       Get.find<UserDashboardController>().onRefresh();
     }
+    await controller.onRefresh();
     Get.snackbar('success'.tr, '${'stock_entry_created'.tr}$stockEntryId',
         backgroundColor: Colors.green.shade100, colorText: Colors.green);
     if (stockEntryId.isNotEmpty) {
@@ -275,5 +274,26 @@ class MaterialRequestCard extends StatelessWidget {
         'name': stockEntryId,
       });
     }
+  }
+
+  static String _warehouseLabel(MaterialRequest request) {
+    final purpose = normalizeMRPurpose(request.materialRequestType);
+    if (purpose == 'Material Transfer') {
+      if (request.fromWarehouse.isNotEmpty && request.warehouse.isNotEmpty) {
+        return '${request.fromWarehouse} → ${request.warehouse}';
+      }
+    } else if (purpose == 'Material Issue') {
+      return request.fromWarehouse.isNotEmpty
+          ? request.fromWarehouse
+          : request.warehouse;
+    } else if (purpose == 'Material Receipt') {
+      return request.warehouse;
+    }
+    if (request.fromWarehouse.isNotEmpty && request.warehouse.isNotEmpty) {
+      return '${request.fromWarehouse} → ${request.warehouse}';
+    }
+    return request.fromWarehouse.isNotEmpty
+        ? request.fromWarehouse
+        : request.warehouse;
   }
 }

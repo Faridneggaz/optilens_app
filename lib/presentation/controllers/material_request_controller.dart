@@ -103,11 +103,24 @@ class MaterialRequestController extends GetxController {
         status:     selectedStatus.value != 'All' ? selectedStatus.value : null,
       );
       searchResults.value = result.materialRequests;
+      _sortByModified(searchResults);
     } catch (e) {
       ErrorFeedback.snackbar(e, fallbackKey: 'error_load_material_requests');
     } finally {
       isSearching.value = false;
     }
+  }
+
+  void _sortByModified(RxList<MaterialRequest> list) {
+    list.sort((a, b) {
+      final da = a.modifiedAt;
+      final db = b.modifiedAt;
+      if (da == null && db == null) return b.name.compareTo(a.name);
+      if (da == null) return 1;
+      if (db == null) return -1;
+      return db.compareTo(da);
+    });
+    list.refresh();
   }
 
   Future<void> fetchMaterialRequests({bool isLoadMore = false}) async {
@@ -116,29 +129,32 @@ class MaterialRequestController extends GetxController {
         isLoadingMore.value = true;
       } else {
         isLoading.value = true;
-        _offset         = 0;
+        _offset = 0;
+        hasMore.value = true;
       }
       final response = await _materialRequests.fetchMaterialRequests(
-        token:  _token,
-        limit:  _limit,
+        token: _token,
+        limit: _limit,
         offset: _offset,
         status: selectedStatus.value != 'All' ? selectedStatus.value : null,
       );
       if (isLoadMore) {
-        materialRequests.addAll(response.materialRequests);
+        final existing = materialRequests.map((e) => e.name).toSet();
+        materialRequests.addAll(
+          response.materialRequests.where((e) => !existing.contains(e.name)),
+        );
       } else {
         materialRequests.value = response.materialRequests;
       }
-      if (response.materialRequests.length < _limit) {
-        hasMore.value = false;
-      } else {
-        _offset      += _limit;
-        hasMore.value = true;
+      _sortByModified(materialRequests);
+      hasMore.value = response.hasMore;
+      if (response.materialRequests.isNotEmpty) {
+        _offset += response.materialRequests.length;
       }
     } catch (e) {
       ErrorFeedback.snackbar(e, fallbackKey: 'error_load_material_requests');
     } finally {
-      isLoading.value     = false;
+      isLoading.value = false;
       isLoadingMore.value = false;
     }
   }
@@ -240,7 +256,7 @@ class MaterialRequestController extends GetxController {
     required String company,
     required String purpose,
     required String requiredBy,
-    required String setWarehouse,
+    String? setWarehouse,
     String? setFromWarehouse,
     String? priceList,
     required List<Map<String, dynamic>> items,

@@ -28,7 +28,7 @@ abstract class MaterialRequestRepository {
     required String company,
     required String purpose,
     required String requiredBy,
-    required String setWarehouse,
+    String? setWarehouse,
     String? setFromWarehouse,
     String? priceList,
     required List<Map<String, dynamic>> items,

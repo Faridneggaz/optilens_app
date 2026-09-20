@@ -10,8 +10,23 @@ import '../../widgets/material_request/material_request_card.dart';
 import '../../widgets/material_request/material_request_filter_bar.dart';
 import '../../widgets/stock/document_ui.dart';
 
-class MaterialRequestPage extends StatelessWidget {
+class MaterialRequestPage extends StatefulWidget {
   const MaterialRequestPage({super.key});
+
+  @override
+  State<MaterialRequestPage> createState() => _MaterialRequestPageState();
+}
+
+class _MaterialRequestPageState extends State<MaterialRequestPage> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (Get.isRegistered<MaterialRequestController>()) {
+        Get.find<MaterialRequestController>().onRefresh();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,9 +66,20 @@ class MaterialRequestPage extends StatelessWidget {
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (c.displayList.isEmpty) {
-                  return Center(
-                    child: Text('no_material_requests'.tr,
-                        style: const TextStyle(color: Colors.grey)),
+                  return RefreshIndicator(
+                    onRefresh: c.onRefresh,
+                    color: AppColors.primary,
+                    child: ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: [
+                        SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.3),
+                        Center(
+                          child: Text('no_material_requests'.tr,
+                              style: const TextStyle(color: Colors.grey)),
+                        ),
+                      ],
+                    ),
                   );
                 }
                 return RefreshIndicator(

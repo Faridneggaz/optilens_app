@@ -201,6 +201,10 @@ class StockEntryPage extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Obx(() {
+                  // Depend on validation obs so the button enables after checks.
+                  final _ = c.validatedItemIndices.length;
+                  final __ = c.fromWarehouseValidated.value;
+                  final ___ = c.toWarehouseValidated.value;
                   Widget button;
                   if (c.isSubmitting.value) {
                     button = const SizedBox(
@@ -217,7 +221,7 @@ class StockEntryPage extends StatelessWidget {
                       label: 'btn_approve'.tr,
                       icon: Icons.check,
                       enabled: c.canApprove,
-                      onPressed: () => _handleApprove(c),
+                      onPressed: c.canApprove ? () => _handleApprove(c) : null,
                     );
                   } else {
                     button = const SizedBox(key: ValueKey('none'), height: 8);

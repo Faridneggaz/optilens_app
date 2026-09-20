@@ -77,6 +77,9 @@ class MaterialRequestDetailController extends GetxController {
         name: mrName,
         purpose: purpose,
       );
+      if (res.isSuccess) {
+        await fetchDetail(silent: true);
+      }
       if (!res.isAuthHandled && !res.isSuccess) {
         errorMessage.value = res.error ?? '';
       }

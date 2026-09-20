@@ -3,11 +3,15 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../app/routes/app_routes.dart';
 import '../../core/services/session_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../presentation/controllers/material_request_controller.dart';
+import '../../presentation/controllers/user_dashboard_controller.dart';
 import '../../utils/mr_status_helper.dart';
+import '../stock/document_ui.dart';
 import 'mr_form_widgets.dart';
+import 'pick_mr_items_sheet.dart';
 
 class CreateMaterialRequestSheet extends StatefulWidget {
   final MaterialRequestController c;
@@ -42,6 +46,8 @@ class CreateMaterialRequestSheetState
   final List<Map<String, dynamic>> _selectedItems = [];
   bool _isSaving = false;
   bool _isSubmitting = false;
+  bool _isCreatingSe = false;
+  bool _isSubmitted = false;
   String? _formError;
   String? _savedDocName;
 
@@ -125,18 +131,19 @@ class CreateMaterialRequestSheetState
     return int.tryParse('$q') ?? 1;
   }
 
-  void _addItem(Map<String, String> itemData) {
+  void _addItem(Map<String, String> itemData, [int qty = 1]) {
     final code = itemData['item_code'] ?? '';
     if (code.isEmpty) return;
+    final addQty = qty < 1 ? 1 : qty;
     final idx = _selectedItems.indexWhere((i) => i['item_code'] == code);
     setState(() {
       if (idx >= 0) {
-        _selectedItems[idx]['qty'] = _itemQty(_selectedItems[idx]) + 1;
+        _selectedItems[idx]['qty'] = _itemQty(_selectedItems[idx]) + addQty;
       } else {
         _selectedItems.add({
           'item_code': code,
           'item_name': itemData['item_name'] ?? code,
-          'qty': 1,
+          'qty': addQty,
         });
       }
       _searchResults.clear();
@@ -145,13 +152,59 @@ class CreateMaterialRequestSheetState
     _searchFocus.unfocus();
   }
 
+  void _setItemQty(String code, int qty) {
+    final idx = _selectedItems.indexWhere((i) => i['item_code'] == code);
+    if (idx < 0) return;
+    setState(() {
+      _selectedItems[idx]['qty'] = qty < 1 ? 1 : qty;
+    });
+  }
+
+  void _removeItemByCode(String code) {
+    setState(() {
+      _selectedItems.removeWhere((i) => i['item_code'] == code);
+    });
+  }
+
+  Future<void> _openItemPicker() async {
+    if (_savedDocName != null) return;
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => PickMrItemsSheet(
+        searchItems: widget.c.searchItems,
+        selectedItems: _selectedItems,
+        onAdd: (item, qty) {
+          _addItem(item, qty);
+        },
+        onQtyChanged: _setItemQty,
+        onRemove: _removeItemByCode,
+      ),
+    );
+    if (mounted) setState(() {});
+  }
+
   bool _validateForm() {
     setState(() => _formError = null);
     if (_selectedItems.isEmpty) {
       setState(() => _formError = 'mr_add_item_required'.tr);
       return false;
     }
-    if (_selectedPurpose == 'Material Transfer') {
+    final purpose = normalizeMRPurpose(_selectedPurpose);
+    final needSource = needsSourceWarehouse(purpose);
+    final needTarget = needsTargetWarehouse(purpose);
+
+    if (needSource && _sourceWarehouse == null) {
+      setState(() => _formError = 'mr_select_source_warehouse'.tr);
+      return false;
+    }
+    if (needTarget && _targetWarehouse == null) {
+      setState(() => _formError = 'mr_select_target_warehouse'.tr);
+      return false;
+    }
+    if (purpose == 'Material Transfer') {
       if (_sourceWarehouse == null || _targetWarehouse == null) {
         setState(() => _formError = 'mr_select_both_warehouses'.tr);
         return false;
@@ -160,31 +213,23 @@ class CreateMaterialRequestSheetState
         setState(() => _formError = 'mr_same_warehouse'.tr);
         return false;
       }
-    } else if (needsSourceWarehouse(_selectedPurpose) &&
-        _sourceWarehouse == null) {
-      setState(() => _formError = 'mr_select_source_warehouse'.tr);
-      return false;
-    } else if (needsTargetWarehouse(_selectedPurpose) &&
-        _targetWarehouse == null) {
-      setState(() => _formError = 'mr_select_target_warehouse'.tr);
-      return false;
     }
     return true;
   }
 
   List<Map<String, dynamic>> _itemsPayload() {
+    final purpose = normalizeMRPurpose(_selectedPurpose);
     return _selectedItems.map((e) {
       final row = <String, dynamic>{
         'item_code': e['item_code'],
         'qty': e['qty'],
       };
-      if (_selectedPurpose == 'Material Transfer') {
+      if (purpose == 'Material Transfer') {
         row['warehouse'] = _targetWarehouse;
         row['from_warehouse'] = _sourceWarehouse;
-      } else if (_selectedPurpose == 'Material Issue') {
-        row['warehouse'] = _sourceWarehouse;
+      } else if (purpose == 'Material Issue') {
         row['from_warehouse'] = _sourceWarehouse;
-      } else {
+      } else if (purpose == 'Material Receipt') {
         row['warehouse'] = _targetWarehouse;
       }
       return row;
@@ -199,22 +244,22 @@ class CreateMaterialRequestSheetState
     final requiredByStr =
         '${_requiredBy.year}-${_requiredBy.month.toString().padLeft(2, '0')}-${_requiredBy.day.toString().padLeft(2, '0')}';
 
-    String setWarehouse = '';
+    final purpose = normalizeMRPurpose(_selectedPurpose);
+    String? setWarehouse;
     String? setFromWarehouse;
-    if (_selectedPurpose == 'Material Transfer') {
-      setWarehouse = _targetWarehouse!;
+    if (purpose == 'Material Transfer') {
+      setWarehouse = _targetWarehouse;
       setFromWarehouse = _sourceWarehouse;
-    } else if (_selectedPurpose == 'Material Issue') {
+    } else if (purpose == 'Material Issue') {
       setFromWarehouse = _sourceWarehouse;
-      setWarehouse = _sourceWarehouse!;
-    } else {
-      setWarehouse = _targetWarehouse!;
+    } else if (purpose == 'Material Receipt') {
+      setWarehouse = _targetWarehouse;
     }
 
     try {
       final res = await widget.c.createRequest(
         company: _selectedCompany,
-        purpose: _selectedPurpose,
+        purpose: purpose,
         requiredBy: requiredByStr,
         setWarehouse: setWarehouse,
         setFromWarehouse: setFromWarehouse,
@@ -253,7 +298,6 @@ class CreateMaterialRequestSheetState
       final submitRes = await widget.c.submitRequest(name);
       if (!mounted) return;
       if (submitRes.isAuthHandled) {
-        Get.back();
         widget.c.onRefresh();
         return;
       }
@@ -261,7 +305,7 @@ class CreateMaterialRequestSheetState
         setState(() => _formError = submitRes.error ?? 'error_occurred'.tr);
         return;
       }
-      Get.back();
+      setState(() => _isSubmitted = true);
       widget.c.onRefresh();
       Get.snackbar('success'.tr, 'mr_submitted'.tr,
           backgroundColor: Colors.green.shade100, colorText: Colors.green);
@@ -270,6 +314,53 @@ class CreateMaterialRequestSheetState
       setState(() => _formError = e.toString());
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
+  Future<void> _createStockEntry() async {
+    final name = _savedDocName;
+    if (name == null || !_isSubmitted) return;
+    setState(() {
+      _formError = null;
+      _isCreatingSe = true;
+    });
+    try {
+      final ok = await showAppConfirmDialog(
+        title: 'confirm_create_stock_entry'.tr,
+      );
+      if (!ok) return;
+      final res = await widget.c.createStockEntry(
+        name,
+        purpose: normalizeMRPurpose(_selectedPurpose),
+      );
+      if (!mounted) return;
+      if (res.isAuthHandled) return;
+      if (!res.isSuccess && res.stockEntryId == null) {
+        setState(() => _formError = res.error ?? 'error_occurred'.tr);
+        Get.snackbar('error'.tr, res.error ?? 'error_occurred'.tr,
+            backgroundColor: Colors.red.shade100, colorText: Colors.red);
+        return;
+      }
+      final stockEntryId = res.navigableStockEntryId ?? '';
+      if (Get.isRegistered<UserDashboardController>()) {
+        Get.find<UserDashboardController>().onRefresh();
+      }
+      widget.c.onRefresh();
+      Get.back();
+      Get.snackbar(
+        'success'.tr,
+        '${'stock_entry_created'.tr}$stockEntryId',
+        backgroundColor: Colors.green.shade100,
+        colorText: Colors.green,
+      );
+      if (stockEntryId.isNotEmpty) {
+        Get.toNamed(AppRoutes.stockEntry, arguments: {'name': stockEntryId});
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _formError = e.toString());
+    } finally {
+      if (mounted) setState(() => _isCreatingSe = false);
     }
   }
 
@@ -318,13 +409,25 @@ class CreateMaterialRequestSheetState
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
-                              color: Colors.orange.shade50,
+                              color: _isSubmitted
+                                  ? Colors.green.shade50
+                                  : (_savedDocName != null
+                                      ? Colors.blue.shade50
+                                      : Colors.orange.shade50),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
-                              'not_saved'.tr,
+                              _isSubmitted
+                                  ? 'status_submitted'.tr
+                                  : (_savedDocName != null
+                                      ? 'status_draft'.tr
+                                      : 'not_saved'.tr),
                               style: TextStyle(
-                                color: Colors.orange.shade800,
+                                color: _isSubmitted
+                                    ? Colors.green.shade800
+                                    : (_savedDocName != null
+                                        ? Colors.blue.shade800
+                                        : Colors.orange.shade800),
                                 fontSize: 11,
                                 fontWeight: FontWeight.w800,
                               ),
@@ -585,7 +688,7 @@ class CreateMaterialRequestSheetState
                             ),
                           ),
                         )
-                      else
+                      else if (!_isSubmitted)
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton.icon(
@@ -597,7 +700,35 @@ class CreateMaterialRequestSheetState
                                     child: CircularProgressIndicator(
                                         color: Colors.white, strokeWidth: 2))
                                 : const Icon(Icons.send, color: Colors.white),
-                            label: Text('submit_direct'.tr,
+                            label: Text('submit'.tr,
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12)),
+                            ),
+                          ),
+                        )
+                      else
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed:
+                                _isCreatingSe ? null : _createStockEntry,
+                            icon: _isCreatingSe
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                        color: Colors.white, strokeWidth: 2))
+                                : const Icon(Icons.inventory_2_outlined,
+                                    color: Colors.white),
+                            label: Text('create_stock_entry'.tr,
                                 style: const TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
@@ -624,6 +755,7 @@ class CreateMaterialRequestSheetState
   }
 
   Widget _buildItemsPicker() {
+    final locked = _savedDocName != null;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(0, 8, 0, 8),
@@ -662,56 +794,70 @@ class CreateMaterialRequestSheetState
               ],
             ),
           ),
-          const SizedBox(height: 8),
-          MrItemSearchField(
-            searchController: _searchController,
-            focusNode: _searchFocus,
-            isSearching: _isSearchingItems,
-            onChanged: _onSearchChanged,
-          ),
-          MrItemResultsBox(
-            results: _searchResults,
-            onAdd: _addItem,
-            maxHeight: 180,
-          ),
-          if (!_isSearchingItems &&
-              _searchController.text.trim().isNotEmpty &&
-              _searchResults.isEmpty)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Text(
-                'no_item_found'.tr,
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+          const SizedBox(height: 10),
+          if (!locked)
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: OutlinedButton.icon(
+                onPressed: _openItemPicker,
+                icon: const Icon(Icons.add_circle_outline,
+                    color: AppColors.primary),
+                label: Text(
+                  'add_item_dialog_title'.tr,
+                  style: const TextStyle(
+                    color: AppColors.primaryDark,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: AppColors.primary, width: 1.4),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
             ),
           if (_selectedItems.isEmpty)
             Padding(
-              padding: const EdgeInsets.only(top: 8, bottom: 4),
+              padding: const EdgeInsets.only(top: 12, bottom: 4),
               child: Text(
                 'mr_add_item_required'.tr,
                 style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
               ),
             )
-          else
+          else ...[
+            const SizedBox(height: 10),
             ..._selectedItems.asMap().entries.map((entry) {
               final idx = entry.key;
               final item = entry.value;
               return MrSelectedItemTile(
                 item: item,
-                onDecrement: () => setState(() {
-                  final qty = _itemQty(item);
-                  if (qty > 1) {
-                    item['qty'] = qty - 1;
-                  } else {
-                    _selectedItems.removeAt(idx);
-                  }
-                }),
-                onIncrement: () => setState(() {
-                  item['qty'] = _itemQty(item) + 1;
-                }),
-                onRemove: () => setState(() => _selectedItems.removeAt(idx)),
+                onDecrement: locked
+                    ? () {}
+                    : () => setState(() {
+                          final qty = _itemQty(item);
+                          if (qty > 1) {
+                            item['qty'] = qty - 1;
+                          } else {
+                            _selectedItems.removeAt(idx);
+                          }
+                        }),
+                onIncrement: locked
+                    ? () {}
+                    : () => setState(() {
+                          item['qty'] = _itemQty(item) + 1;
+                        }),
+                onRemove: locked
+                    ? () {}
+                    : () => setState(() => _selectedItems.removeAt(idx)),
+                onQtyChanged: locked
+                    ? null
+                    : (qty) => setState(() => item['qty'] = qty),
               );
             }),
+          ],
         ],
       ),
     );

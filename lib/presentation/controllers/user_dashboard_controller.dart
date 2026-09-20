@@ -6,6 +6,7 @@ import '../../app/routes/app_routes.dart';
 import '../../core/services/session_service.dart';
 import '../../utils/error_feedback.dart';
 import 'stock_summary_controller.dart';
+import 'material_request_controller.dart';
 import 'task_controller.dart';
 
 class UserDashboardController extends GetxController {
@@ -69,6 +70,9 @@ class UserDashboardController extends GetxController {
     selectedPageIndex.value = i;
     if (i == 2) {
       fetchStockEntries();
+    }
+    if (i == 3 && Get.isRegistered<MaterialRequestController>()) {
+      Get.find<MaterialRequestController>().onRefresh();
     }
     if (i == 4 && Get.isRegistered<StockSummaryController>()) {
       Get.find<StockSummaryController>().onRefresh();

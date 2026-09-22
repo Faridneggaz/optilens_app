@@ -19,6 +19,7 @@ import '../../domain/entities/stock_entry_item.dart';
 import '../../domain/entities/stock_entry_response.dart';
 import '../../domain/entities/stock_summary.dart';
 import '../../domain/entities/task.dart';
+import '../../domain/entities/job_profile.dart';
 import '../../domain/entities/user.dart';
 import '../../utils/api_config.dart';
 import '../../utils/html_plain_text.dart';
@@ -707,10 +708,173 @@ class TaskListResponseMapper {
       status: root['status']?.toString() ?? 'Open',
       summary: summary,
       tasks: tasks,
+      canCreate: root['can_create'] == true ||
+          root['can_create'] == 1 ||
+          root['can_create']?.toString() == '1',
+      allocatedTo: root['allocated_to']?.toString() ?? '',
       isSearch: root['is_search'] == true,
       limit: int.tryParse('${root['limit'] ?? 20}') ?? 20,
       offset: int.tryParse('${root['offset'] ?? 0}') ?? 0,
       hasMore: root['has_more'] == true,
+    );
+  }
+}
+
+class TaskDetailResponseMapper {
+  static TaskDetailResponse fromJson(Map<String, dynamic> json) {
+    final root = json['message'] is Map
+        ? Map<String, dynamic>.from(json['message'] as Map)
+        : json;
+    final taskRaw = root['task'];
+    if (taskRaw is! Map) {
+      throw const FormatException('Invalid task detail response');
+    }
+    return TaskDetailResponse(
+      task: TodoTaskMapper.fromJson(Map<String, dynamic>.from(taskRaw)),
+      canWrite: root['can_write'] == true ||
+          root['can_write'] == 1 ||
+          root['can_write']?.toString() == '1',
+    );
+  }
+}
+
+class AssignableUserMapper {
+  static List<AssignableUser> fromList(dynamic raw) {
+    if (raw is! List) return const [];
+    final out = <AssignableUser>[];
+    final seen = <String>{};
+    for (final row in raw) {
+      if (row is! Map) continue;
+      final user = fromJson(Map<String, dynamic>.from(row));
+      if (user == null) continue;
+      final key = user.email.toLowerCase();
+      if (seen.contains(key)) continue;
+      seen.add(key);
+      out.add(user);
+    }
+    return out;
+  }
+
+  static AssignableUser? fromJson(Map<String, dynamic> json) {
+    // Frappe User.name is the email; prefer name for create_todo.allocated_to.
+    final email = (json['name'] ??
+            json['email'] ??
+            json['user'] ??
+            json['user_id'] ??
+            '')
+        .toString()
+        .trim();
+    if (email.isEmpty) return null;
+    final fullName = (json['full_name'] ??
+            json['fullname'] ??
+            json['employee_name'] ??
+            json['user_name'] ??
+            json['fullName'] ??
+            '')
+        .toString()
+        .trim();
+    return AssignableUser(
+      email: email,
+      fullName: fullName.isNotEmpty ? fullName : email,
+    );
+  }
+}
+
+class JobArticleMapper {
+  static JobArticle fromJson(Map<String, dynamic> json) => JobArticle(
+        idx: int.tryParse('${json['idx'] ?? 0}') ?? 0,
+        description: stripHtmlToPlainText(
+          json['description']?.toString() ?? '',
+        ),
+      );
+}
+
+class EmployeeHeaderMapper {
+  static EmployeeHeader fromJson(Map<String, dynamic> json) => EmployeeHeader(
+        name: json['name']?.toString() ?? '',
+        employeeName: json['employee_name']?.toString() ?? '',
+        userId: json['user_id']?.toString() ?? '',
+        designation: json['designation']?.toString() ?? '',
+        department: json['department']?.toString() ?? '',
+        company: json['company']?.toString() ?? '',
+        status: json['status']?.toString() ?? '',
+      );
+}
+
+class JobProfileMapper {
+  static JobProfile fromJson(Map<String, dynamic> json) {
+    List<JobArticle> parseArticles(dynamic raw) {
+      final out = <JobArticle>[];
+      if (raw is! List) return out;
+      for (final row in raw) {
+        if (row is! Map) continue;
+        final article =
+            JobArticleMapper.fromJson(Map<String, dynamic>.from(row));
+        if (article.description.trim().isEmpty) continue;
+        out.add(article);
+      }
+      out.sort((a, b) => a.idx.compareTo(b.idx));
+      return out;
+    }
+
+    final missionText = (json['general_mission_text']?.toString() ?? '').trim();
+    final missionHtml = json['general_mission']?.toString() ?? '';
+
+    return JobProfile(
+      name: json['name']?.toString() ?? '',
+      jobTitle: json['job_title']?.toString() ?? '',
+      hierarchicalReporting:
+          json['hierarchical_reporting']?.toString() ?? '',
+      hierarchicalRelation: json['hierarchical_relation']?.toString() ?? '',
+      functionalReporting: json['functional_reporting']?.toString() ?? '',
+      generalMissionText: missionText.isNotEmpty
+          ? missionText
+          : stripHtmlToPlainText(missionHtml),
+      authorities: parseArticles(json['authorities']),
+      tasks: parseArticles(json['tasks']),
+      workflowState: json['workflow_state']?.toString() ?? '',
+      docstatus: int.tryParse('${json['docstatus'] ?? 0}') ?? 0,
+    );
+  }
+}
+
+class MyJobProfileResponseMapper {
+  static MyJobProfileResponse fromJson(Map<String, dynamic> json) {
+    final root = json['message'] is Map
+        ? Map<String, dynamic>.from(json['message'] as Map)
+        : json;
+
+    final err = root['error']?.toString();
+    if (err != null && err.isNotEmpty && err != 'null') {
+      return MyJobProfileResponse(success: false, error: err);
+    }
+
+    final employeeRaw = root['employee'];
+    final EmployeeHeader? employee = employeeRaw is Map
+        ? EmployeeHeaderMapper.fromJson(
+            Map<String, dynamic>.from(employeeRaw),
+          )
+        : null;
+
+    final profileRaw = root['job_profile'];
+    JobProfile? profile;
+    if (profileRaw is Map) {
+      profile = JobProfileMapper.fromJson(
+        Map<String, dynamic>.from(profileRaw),
+      );
+    }
+
+    final success = root['success'] == true ||
+        root['success'] == 1 ||
+        root['success'] == '1' ||
+        (err == null && (employee != null || profile != null));
+
+    return MyJobProfileResponse(
+      success: success,
+      error: null,
+      message: root['message']?.toString(),
+      employee: employee,
+      jobProfile: profile,
     );
   }
 }

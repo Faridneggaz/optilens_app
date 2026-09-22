@@ -10,6 +10,7 @@ import '../entities/stock_entry_details_response.dart';
 import '../entities/stock_entry_response.dart';
 import '../entities/stock_summary.dart';
 import '../entities/task.dart';
+import '../entities/job_profile.dart';
 import '../repositories/announcement_repository.dart';
 import '../repositories/complaint_repository.dart';
 import '../repositories/customer_repository.dart';
@@ -25,6 +26,7 @@ import '../repositories/payment_repository.dart';
 import '../repositories/stock_entry_details_repository.dart';
 import '../repositories/stock_entry_repository.dart';
 import '../repositories/task_repository.dart';
+import '../repositories/job_profile_repository.dart';
 import '../results/action_result.dart';
 
 class AuthUseCases {
@@ -369,6 +371,7 @@ class TaskUseCases {
     String status = 'Open',
     String? date,
     bool includeOverdue = true,
+    String? allocatedTo,
     String? searchText,
     int limit = 20,
     int offset = 0,
@@ -378,16 +381,38 @@ class TaskUseCases {
         status: status,
         date: date,
         includeOverdue: includeOverdue,
+        allocatedTo: allocatedTo,
         searchText: searchText,
         limit: limit,
         offset: offset,
       );
 
-  Future<TodoTask> fetchTaskDetail({
+  Future<TaskDetailResponse> fetchTaskDetail({
     required String token,
     required String name,
   }) =>
       _repo.fetchTaskDetail(token: token, name: name);
+
+  Future<List<AssignableUser>> getAssignableUsers({
+    required String token,
+    String? searchText,
+  }) =>
+      _repo.getAssignableUsers(token: token, searchText: searchText);
+
+  Future<ActionResult> createTodo({
+    required String token,
+    required String description,
+    required String allocatedTo,
+    required String date,
+    required String priority,
+  }) =>
+      _repo.createTodo(
+        token: token,
+        description: description,
+        allocatedTo: allocatedTo,
+        date: date,
+        priority: priority,
+      );
 
   Future<ActionResult> updateTaskStatus({
     required String token,
@@ -395,4 +420,12 @@ class TaskUseCases {
     required String status,
   }) =>
       _repo.updateTaskStatus(token: token, name: name, status: status);
+}
+
+class JobProfileUseCases {
+  JobProfileUseCases(this._repo);
+  final JobProfileRepository _repo;
+
+  Future<MyJobProfileResponse> fetchMyJobProfile({required String token}) =>
+      _repo.fetchMyJobProfile(token: token);
 }

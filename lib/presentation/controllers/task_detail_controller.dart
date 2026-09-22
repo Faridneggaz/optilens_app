@@ -18,6 +18,7 @@ class TaskDetailController extends GetxController {
   String _name;
 
   final task = Rxn<TodoTask>();
+  final canWrite = false.obs;
   final isLoading = true.obs;
   final isUpdating = false.obs;
 
@@ -42,7 +43,10 @@ class TaskDetailController extends GetxController {
     }
     isLoading.value = true;
     try {
-      task.value = await _tasks.fetchTaskDetail(token: _token, name: _name);
+      final response =
+          await _tasks.fetchTaskDetail(token: _token, name: _name);
+      task.value = response.task;
+      canWrite.value = response.canWrite;
     } catch (e) {
       if (e is! InvalidSessionException && e is! AccessDeniedException) {
         ErrorFeedback.snackbar(e, fallbackKey: 'failed_load_task_detail');
@@ -56,6 +60,9 @@ class TaskDetailController extends GetxController {
     final current = task.value;
     if (current == null) {
       return ActionResult.failure('error_occurred'.tr);
+    }
+    if (!canWrite.value) {
+      return ActionResult.failure('error_access_denied'.tr);
     }
     if (isUpdating.value) {
       return ActionResult.failure('busy');
@@ -88,7 +95,8 @@ class TaskDetailController extends GetxController {
     if (_name.isEmpty) return;
     try {
       final fresh = await _tasks.fetchTaskDetail(token: _token, name: _name);
-      task.value = fresh;
+      task.value = fresh.task;
+      canWrite.value = fresh.canWrite;
     } catch (_) {
       // Keep optimistic local status if silent reload fails.
     }

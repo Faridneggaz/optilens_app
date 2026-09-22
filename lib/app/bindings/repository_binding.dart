@@ -16,6 +16,7 @@ import '../../data/repositories/payment_repository.dart';
 import '../../data/repositories/stock_entry_details_repository.dart';
 import '../../data/repositories/stock_entry_repository.dart';
 import '../../data/repositories/task_repository.dart';
+import '../../data/repositories/job_profile_repository.dart';
 import '../../domain/repositories/announcement_repository.dart';
 import '../../domain/repositories/complaint_repository.dart';
 import '../../domain/repositories/customer_repository.dart';
@@ -31,6 +32,7 @@ import '../../domain/repositories/payment_repository.dart';
 import '../../domain/repositories/stock_entry_details_repository.dart';
 import '../../domain/repositories/stock_entry_repository.dart';
 import '../../domain/repositories/task_repository.dart';
+import '../../domain/repositories/job_profile_repository.dart';
 import '../../domain/usecases/usecases.dart';
 
 /// Registers data implementations and domain use cases.
@@ -69,6 +71,10 @@ class RepositoryBinding {
       permanent: true,
     );
     Get.put<TaskRepository>(TaskRepositoryImpl(api), permanent: true);
+    Get.put<JobProfileRepository>(
+      JobProfileRepositoryImpl(api),
+      permanent: true,
+    );
     Get.put<LeadRepository>(LeadRepositoryImpl(api), permanent: true);
     Get.put<JopticComplaintRepository>(
       JopticComplaintRepositoryImpl(api),
@@ -94,6 +100,7 @@ class RepositoryBinding {
     );
     Get.put(MaterialRequestUseCases(Get.find()), permanent: true);
     Get.put(TaskUseCases(Get.find()), permanent: true);
+    Get.put(JobProfileUseCases(Get.find()), permanent: true);
     Get.put(JopticUseCases(Get.find(), Get.find()), permanent: true);
   }
 }

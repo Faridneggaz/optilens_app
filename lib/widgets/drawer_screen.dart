@@ -54,14 +54,43 @@ class DrawerScreen extends StatelessWidget {
                       },
                     ),
                     if (isUser)
-                      ListTile(
-                        leading: const Icon(Icons.checklist_rtl,
-                            color: AppColors.menuTeal),
-                        title: Text('nav_my_tasks'.tr),
-                        onTap: () {
-                          ZoomDrawer.of(context)?.close();
-                          onSelectPage(5);
-                        },
+                      Theme(
+                        data: Theme.of(context).copyWith(
+                          dividerColor: Colors.transparent,
+                        ),
+                        child: ExpansionTile(
+                          initiallyExpanded: true,
+                          leading: const Icon(Icons.person_outline,
+                              color: AppColors.menuTeal),
+                          title: Text(
+                            'nav_my_space'.tr,
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                          iconColor: AppColors.menuTeal,
+                          collapsedIconColor: AppColors.menuTeal,
+                          childrenPadding: const EdgeInsetsDirectional.only(
+                              start: 12, end: 8),
+                          children: [
+                            ListTile(
+                              leading: const Icon(Icons.checklist_rtl,
+                                  color: AppColors.menuTeal),
+                              title: Text('nav_my_tasks'.tr),
+                              onTap: () {
+                                ZoomDrawer.of(context)?.close();
+                                onSelectPage(5);
+                              },
+                            ),
+                            ListTile(
+                              leading: const Icon(Icons.badge_outlined,
+                                  color: AppColors.menuTeal),
+                              title: Text('nav_job_profile'.tr),
+                              onTap: () {
+                                ZoomDrawer.of(context)?.close();
+                                Get.toNamed(AppRoutes.jobProfile);
+                              },
+                            ),
+                          ],
+                        ),
                       ),
                     if (isUser)
                       Theme(

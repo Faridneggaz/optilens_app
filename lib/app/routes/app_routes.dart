@@ -15,4 +15,5 @@ abstract class AppRoutes {
   static const materialRequestDetail = '/material-request-detail';
   static const tasks = '/tasks';
   static const taskDetail = '/task-detail';
+  static const jobProfile = '/job-profile';
 }

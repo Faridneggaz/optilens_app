@@ -124,11 +124,12 @@ class TaskDetailPage extends StatelessWidget {
                                 ? '—'
                                 : task.assignedBy,
                           ),
-                          if (task.allocatedTo.isNotEmpty)
-                            MrInfoRow(
-                              label: 'task_allocated_to'.tr,
-                              value: task.allocatedTo,
-                            ),
+                          MrInfoRow(
+                            label: 'task_allocated_to'.tr,
+                            value: task.allocatedTo.isEmpty
+                                ? '—'
+                                : task.allocatedTo,
+                          ),
                         ],
                       ),
                       if (task.hasReference)
@@ -184,16 +185,19 @@ class TaskDetailPage extends StatelessWidget {
               ),
               Padding(
                 padding: const EdgeInsets.all(16),
-                child: Obx(() => DocumentPrimaryButton(
-                      label: task.isOpen
-                          ? 'task_mark_done'.tr
-                          : 'task_reopen'.tr,
-                      icon: task.isOpen
-                          ? Icons.check_circle_outline
-                          : Icons.restart_alt,
-                      busy: c.isUpdating.value,
-                      onPressed: () => _handleToggle(context, c),
-                    )),
+                child: Obx(() {
+                  if (!c.canWrite.value) return const SizedBox.shrink();
+                  return DocumentPrimaryButton(
+                    label: task.isOpen
+                        ? 'task_mark_done'.tr
+                        : 'task_reopen'.tr,
+                    icon: task.isOpen
+                        ? Icons.check_circle_outline
+                        : Icons.restart_alt,
+                    busy: c.isUpdating.value,
+                    onPressed: () => _handleToggle(context, c),
+                  );
+                }),
               ),
             ],
           ),

@@ -16,6 +16,7 @@ class TaskRepositoryImpl implements TaskRepository {
     String status = 'Open',
     String? date,
     bool includeOverdue = true,
+    String? allocatedTo,
     String? searchText,
     int limit = 20,
     int offset = 0,
@@ -29,6 +30,9 @@ class TaskRepositoryImpl implements TaskRepository {
     };
     if (date != null && date.isNotEmpty) {
       query['date'] = date;
+    }
+    if (allocatedTo != null && allocatedTo.trim().isNotEmpty) {
+      query['allocated_to'] = allocatedTo.trim();
     }
     if (searchText != null && searchText.trim().isNotEmpty) {
       query['search_text'] = searchText.trim();
@@ -55,7 +59,7 @@ class TaskRepositoryImpl implements TaskRepository {
   }
 
   @override
-  Future<TodoTask> fetchTaskDetail({
+  Future<TaskDetailResponse> fetchTaskDetail({
     required String token,
     required String name,
   }) async {
@@ -76,15 +80,113 @@ class TaskRepositoryImpl implements TaskRepository {
       }
       final taskRaw = map['task'];
       if (taskRaw is Map) {
-        return TodoTaskMapper.fromJson(Map<String, dynamic>.from(taskRaw));
+        return TaskDetailResponse(
+          task: TodoTaskMapper.fromJson(Map<String, dynamic>.from(taskRaw)),
+          canWrite: map['can_write'] == true ||
+              map['can_write'] == 1 ||
+              map['can_write']?.toString() == '1',
+        );
       }
     }
     if (decoded['task'] is Map) {
-      return TodoTaskMapper.fromJson(
-        Map<String, dynamic>.from(decoded['task'] as Map),
+      return TaskDetailResponse(
+        task: TodoTaskMapper.fromJson(
+          Map<String, dynamic>.from(decoded['task'] as Map),
+        ),
+        canWrite: decoded['can_write'] == true ||
+            decoded['can_write'] == 1 ||
+            decoded['can_write']?.toString() == '1',
       );
     }
     throw const RepositoryException('Invalid task detail response');
+  }
+
+  /// GET mobile_app.api.get_assignable_users
+  /// Expected: { success, users: [{ name (email), full_name, email? }] }
+  @override
+  Future<List<AssignableUser>> getAssignableUsers({
+    required String token,
+    String? searchText,
+  }) async {
+    final query = <String, String>{
+      'token': token,
+      'search_text': searchText?.trim() ?? '',
+    };
+
+    final decoded = await _client.getMobile(
+      'get_assignable_users',
+      query: query,
+      attachToken: false,
+    );
+    final msg = _client.unwrap(decoded);
+    if (msg is Map) {
+      final map = Map<String, dynamic>.from(msg);
+      final err = map['error']?.toString();
+      if (err != null && err.isNotEmpty && map['success'] != true) {
+        throw RepositoryException(err);
+      }
+      final list = map['users'] ??
+          map['data'] ??
+          map['message'] ??
+          map['result'];
+      return AssignableUserMapper.fromList(list);
+    }
+    if (msg is List) {
+      return AssignableUserMapper.fromList(msg);
+    }
+    if (decoded['users'] is List) {
+      return AssignableUserMapper.fromList(decoded['users']);
+    }
+    return const [];
+  }
+
+  @override
+  Future<ActionResult> createTodo({
+    required String token,
+    required String description,
+    required String allocatedTo,
+    required String date,
+    required String priority,
+  }) async {
+    try {
+      final decoded = await _client.postMobile(
+        'create_todo',
+        body: {
+          'token': token,
+          'description': description,
+          'allocated_to': allocatedTo,
+          'date': date,
+          'priority': priority,
+        },
+        attachToken: false,
+      );
+      final msg = _client.unwrap(decoded);
+      if (msg is Map) {
+        final map = Map<String, dynamic>.from(msg);
+        final parsed = ActionResult.fromApiMap(map);
+        if (parsed.isSuccess) return parsed;
+        if (map['success'] == true || map['task'] != null || map['name'] != null) {
+          return ActionResult.ok(
+            message: 'Success',
+            detail: map['detail']?.toString(),
+            documentName: map['name']?.toString() ??
+                (map['task'] is Map
+                    ? (map['task'] as Map)['name']?.toString()
+                    : null),
+          );
+        }
+        return parsed;
+      }
+      if (msg is String) {
+        final lower = msg.toLowerCase();
+        if (lower.contains('success') || lower.contains('created')) {
+          return ActionResult.ok(message: msg);
+        }
+      }
+      return ActionResult.fromApiMap(decoded);
+    } catch (e) {
+      return ActionResult.fromException(e);
+    }
   }
 
   @override

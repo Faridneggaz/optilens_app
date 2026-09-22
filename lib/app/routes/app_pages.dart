@@ -16,6 +16,7 @@ import '../../views/user/material_request_page.dart';
 import '../../views/user/stock_entry.dart';
 import '../../views/user/task_detail_page.dart';
 import '../../views/user/tasks_page.dart';
+import '../../views/user/job_profile_page.dart';
 import '../bindings/app_binding.dart';
 import '../bindings/feature_bindings.dart';
 import '../bindings/login_binding.dart';
@@ -100,6 +101,11 @@ class AppPages {
       name: AppRoutes.taskDetail,
       page: () => const TaskDetailPage(),
       binding: TaskDetailBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.jobProfile,
+      page: () => const JobProfilePage(),
+      binding: JobProfileBinding(),
     ),
   ];
 }

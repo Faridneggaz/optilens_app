@@ -6,7 +6,9 @@ import '../../presentation/controllers/language_controller.dart';
 import '../../presentation/controllers/task_controller.dart';
 import '../../widgets/header.dart';
 import '../../widgets/stock/document_ui.dart';
+import '../../widgets/task/create_todo_sheet.dart';
 import '../../widgets/task/task_card.dart';
+import '../../widgets/task/task_employee_filter_bar.dart';
 
 class TasksPage extends StatefulWidget {
   const TasksPage({super.key});
@@ -26,6 +28,16 @@ class _TasksPageState extends State<TasksPage> {
     });
   }
 
+  void _openCreate(TaskController c) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => CreateTodoSheet(controller: c),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = Get.find<TaskController>();
@@ -33,61 +45,88 @@ class _TasksPageState extends State<TasksPage> {
     return GetBuilder<LanguageController>(
       builder: (_) => Scaffold(
         backgroundColor: AppColors.scaffold,
-        body: Column(
-          children: [
-            Obx(() => AppHeader(
-                  title: 'nav_my_tasks'.tr,
-                  customer: null,
-                  customerCode: '',
-                  subtitle: c.displayDate,
-                )),
-            _SearchAndFilters(controller: c),
-            Expanded(
-              child: Obx(() {
-                if (c.isLoading.value && c.items.isEmpty) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                return RefreshIndicator(
-                  onRefresh: c.onRefresh,
-                  color: AppColors.primary,
-                  child: ListView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(0, 4, 0, 24),
-                    children: [
-                      _SummaryStrip(controller: c),
-                      if (c.items.isEmpty)
-                        Padding(
-                          padding: EdgeInsets.only(
-                            top: MediaQuery.of(context).size.height * 0.12,
-                          ),
-                          child: Center(
-                            child: Text(
-                              c.filter.value == TaskListFilter.today
-                                  ? 'no_tasks_today'.tr
-                                  : 'no_tasks'.tr,
-                              style: const TextStyle(color: Colors.grey),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        )
-                      else ...[
-                        ...c.items.map(
-                          (task) => TaskCard(task: task, controller: c),
-                        ),
-                        DocumentLoadMoreFooter(
-                          hasMore: c.hasMore.value,
-                          isLoadingMore: c.isLoadingMore.value,
-                          hasItems: c.items.isNotEmpty,
-                          isSearching: c.searchQuery.value.isNotEmpty,
-                          onLoadMore: c.onLoadMore,
-                        ),
-                      ],
-                    ],
-                  ),
-                );
-              }),
+        resizeToAvoidBottomInset: true,
+        floatingActionButton: Obx(() {
+          if (!c.canCreate.value) return const SizedBox.shrink();
+          return FloatingActionButton.extended(
+            onPressed: () => _openCreate(c),
+            backgroundColor: AppColors.primary,
+            icon: const Icon(Icons.add, color: Colors.white),
+            label: Text(
+              'task_new'.tr,
+              style: const TextStyle(color: Colors.white),
             ),
-          ],
+          );
+        }),
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            final keyboard = MediaQuery.viewInsetsOf(context).bottom;
+            final filtersMaxH = keyboard > 0
+                ? (constraints.maxHeight * 0.48).clamp(140.0, 320.0)
+                : constraints.maxHeight * 0.5;
+            return Column(
+              children: [
+                Obx(() => AppHeader(
+                      title: 'nav_my_tasks'.tr,
+                      customer: null,
+                      customerCode: '',
+                      subtitle: c.displayDate,
+                    )),
+                ConstrainedBox(
+                  constraints: BoxConstraints(maxHeight: filtersMaxH),
+                  child: SingleChildScrollView(
+                    child: _SearchAndFilters(controller: c),
+                  ),
+                ),
+                Expanded(
+                  child: Obx(() {
+                    if (c.isLoading.value && c.items.isEmpty) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    return RefreshIndicator(
+                      onRefresh: c.onRefresh,
+                      color: AppColors.primary,
+                      child: ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(0, 4, 0, 88),
+                        children: [
+                          _SummaryStrip(controller: c),
+                          if (c.items.isEmpty)
+                            Padding(
+                              padding: EdgeInsets.only(
+                                top:
+                                    MediaQuery.of(context).size.height * 0.10,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  c.filter.value == TaskListFilter.today
+                                      ? 'no_tasks_today'.tr
+                                      : 'no_tasks'.tr,
+                                  style: const TextStyle(color: Colors.grey),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            )
+                          else ...[
+                            ...c.items.map(
+                              (task) => TaskCard(task: task, controller: c),
+                            ),
+                            DocumentLoadMoreFooter(
+                              hasMore: c.hasMore.value,
+                              isLoadingMore: c.isLoadingMore.value,
+                              hasItems: c.items.isNotEmpty,
+                              isSearching: c.searchQuery.value.isNotEmpty,
+                              onLoadMore: c.onLoadMore,
+                            ),
+                          ],
+                        ],
+                      ),
+                    );
+                  }),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -143,7 +182,8 @@ class _SearchAndFilters extends StatelessWidget {
                       label: Text(controller.filterLabel(f)),
                       selected: selected,
                       onSelected: (_) => controller.filter.value = f,
-                      selectedColor: AppColors.primary.withValues(alpha: 0.18),
+                      selectedColor:
+                          AppColors.primary.withValues(alpha: 0.18),
                       labelStyle: TextStyle(
                         color: selected
                             ? AppColors.primaryDark
@@ -169,6 +209,7 @@ class _SearchAndFilters extends StatelessWidget {
               ),
             );
           }),
+          TaskEmployeeFilterBar(controller: controller),
         ],
       ),
     );

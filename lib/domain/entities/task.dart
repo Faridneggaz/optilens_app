@@ -70,6 +70,8 @@ class TaskListResponse {
     required this.status,
     required this.summary,
     required this.tasks,
+    this.canCreate = false,
+    this.allocatedTo = '',
     this.isSearch = false,
     this.limit = 20,
     this.offset = 0,
@@ -81,8 +83,43 @@ class TaskListResponse {
   final String status;
   final TaskSummary summary;
   final List<TodoTask> tasks;
+  final bool canCreate;
+  final String allocatedTo;
   final bool isSearch;
   final int limit;
   final int offset;
   final bool hasMore;
+}
+
+class TaskDetailResponse {
+  const TaskDetailResponse({
+    required this.task,
+    required this.canWrite,
+  });
+
+  final TodoTask task;
+  final bool canWrite;
+}
+
+/// ERPNext User selectable for ToDo.allocated_to (email = User.name).
+class AssignableUser {
+  const AssignableUser({
+    required this.email,
+    required this.fullName,
+  });
+
+  /// User.name / email sent as allocated_to.
+  final String email;
+  final String fullName;
+
+  String get displayName =>
+      fullName.trim().isNotEmpty ? fullName.trim() : email;
+
+  String get subtitle {
+    if (fullName.trim().isEmpty ||
+        fullName.trim().toLowerCase() == email.toLowerCase()) {
+      return email;
+    }
+    return email;
+  }
 }

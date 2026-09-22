@@ -8,6 +8,7 @@ import '../../domain/failures/failures.dart';
 import '../../domain/results/action_result.dart';
 import '../../domain/usecases/usecases.dart';
 import '../../utils/error_feedback.dart';
+import 'session_controller.dart';
 
 enum TaskListFilter { today, open, closed, all }
 
@@ -25,19 +26,34 @@ class TaskController extends GetxController {
     overdueCount: 0,
   ).obs;
   final listDate = ''.obs;
+  final listUser = ''.obs;
+  final canCreate = false.obs;
   final isLoading = true.obs;
   final isLoadingMore = false.obs;
   final hasMore = true.obs;
   final searchQuery = ''.obs;
   final filter = TaskListFilter.today.obs;
+  final allocatedToFilter = ''.obs;
+  final knownAssignees = <String>[].obs;
   final updatingNames = <String>{}.obs;
 
   final searchController = TextEditingController();
+  final allocatedToController = TextEditingController();
   Worker? _debounce;
   int _offset = 0;
   static const int _limit = 20;
 
   String get _token => Get.find<SessionService>().authToken;
+
+  String get currentUserEmail {
+    if (listUser.value.trim().isNotEmpty) return listUser.value.trim();
+    return Get.find<SessionService>().userCode.trim();
+  }
+
+  bool get showEmployeeFilter {
+    if (canCreate.value) return true;
+    return knownAssignees.length > 1;
+  }
 
   String get displayDate {
     if (listDate.value.isNotEmpty) return listDate.value;
@@ -45,6 +61,14 @@ class TaskController extends GetxController {
     return '${now.year.toString().padLeft(4, '0')}-'
         '${now.month.toString().padLeft(2, '0')}-'
         '${now.day.toString().padLeft(2, '0')}';
+  }
+
+  bool isAssignedToCurrentUser(TodoTask task) {
+    final me = currentUserEmail.toLowerCase();
+    if (me.isEmpty) return true;
+    final allocated = task.allocatedTo.trim().toLowerCase();
+    if (allocated.isEmpty) return true;
+    return allocated == me;
   }
 
   @override
@@ -63,6 +87,7 @@ class TaskController extends GetxController {
   void onClose() {
     _debounce?.dispose();
     searchController.dispose();
+    allocatedToController.dispose();
     super.onClose();
   }
 
@@ -101,6 +126,9 @@ class TaskController extends GetxController {
         status: params.status,
         date: params.date,
         includeOverdue: params.includeOverdue,
+        allocatedTo: allocatedToFilter.value.trim().isEmpty
+            ? null
+            : allocatedToFilter.value.trim(),
         searchText: searchQuery.value.trim().isEmpty
             ? null
             : searchQuery.value.trim(),
@@ -109,6 +137,10 @@ class TaskController extends GetxController {
       );
 
       summary.value = response.summary;
+      canCreate.value = response.canCreate;
+      if (response.user.isNotEmpty) {
+        listUser.value = response.user;
+      }
       if (response.date.isNotEmpty) {
         listDate.value = response.date;
       }
@@ -118,6 +150,8 @@ class TaskController extends GetxController {
       } else {
         items.value = response.tasks;
       }
+
+      _mergeKnownAssignees(response.tasks);
 
       hasMore.value = response.hasMore;
       if (response.tasks.isNotEmpty) {
@@ -132,6 +166,71 @@ class TaskController extends GetxController {
       isLoading.value = false;
       isLoadingMore.value = false;
     }
+  }
+
+  void _mergeKnownAssignees(List<TodoTask> tasks) {
+    final next = <String>{...knownAssignees};
+    for (final t in tasks) {
+      final email = t.allocatedTo.trim();
+      if (email.isNotEmpty) next.add(email);
+    }
+    final sorted = next.toList()..sort();
+    knownAssignees.value = sorted;
+  }
+
+  void setAllocatedToFilter(String? email) {
+    final value = (email ?? '').trim();
+    if (allocatedToFilter.value == value) return;
+    allocatedToFilter.value = value;
+    allocatedToController.text = value;
+    onRefresh();
+  }
+
+  void clearAllocatedToFilter() => setAllocatedToFilter('');
+
+  Future<List<AssignableUser>> searchAssignableUsers(String query) async {
+    try {
+      return await _tasks.getAssignableUsers(
+        token: _token,
+        searchText: query.trim(),
+      );
+    } catch (e) {
+      if (e is InvalidSessionException || e is AccessDeniedException) {
+        return const [];
+      }
+      ErrorFeedback.snackbar(e, fallbackKey: 'failed_load_assignable_users');
+      return const [];
+    }
+  }
+
+  AssignableUser? get currentAssignableUser {
+    final email = currentUserEmail;
+    if (email.isEmpty) return null;
+    String fullName = email;
+    if (Get.isRegistered<SessionController>()) {
+      final name = Get.find<SessionController>().userName.value.trim();
+      if (name.isNotEmpty) fullName = name;
+    }
+    return AssignableUser(email: email, fullName: fullName);
+  }
+
+  Future<ActionResult> createTodo({
+    required String description,
+    required String allocatedTo,
+    required String date,
+    required String priority,
+  }) async {
+    final result = await _tasks.createTodo(
+      token: _token,
+      description: description,
+      allocatedTo: allocatedTo,
+      date: date,
+      priority: priority,
+    );
+    if (result.isSuccess) {
+      await onRefresh();
+    }
+    return result;
   }
 
   Future<ActionResult> markDone(TodoTask task) =>

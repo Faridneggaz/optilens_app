@@ -11,6 +11,7 @@ import '../../presentation/controllers/order_controller.dart';
 import '../../presentation/controllers/stock_entry_details_controller.dart';
 import '../../presentation/controllers/task_controller.dart';
 import '../../presentation/controllers/task_detail_controller.dart';
+import '../../presentation/controllers/job_profile_controller.dart';
 
 class InvoiceDetailBinding extends Bindings {
   @override
@@ -106,5 +107,12 @@ class TaskDetailBinding extends Bindings {
   @override
   void dependencies() {
     Get.put(TaskDetailController());
+  }
+}
+
+class JobProfileBinding extends Bindings {
+  @override
+  void dependencies() {
+    Get.put(JobProfileController());
   }
 }

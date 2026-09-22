@@ -250,6 +250,39 @@ class TaskCard extends StatelessWidget {
                         ),
                     ],
                   ),
+                  if (!controller.isAssignedToCurrentUser(task) &&
+                      task.allocatedTo.trim().isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.card,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.grey.shade200),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.person_outline,
+                              size: 14, color: AppColors.primaryDark),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              '${'task_assigned_to_chip'.tr}${task.allocatedTo}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: AppColors.primaryDark,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                   if (task.hasReference) ...[
                     const SizedBox(height: 6),
                     Text(

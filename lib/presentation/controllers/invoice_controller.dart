@@ -2,7 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import '../../domain/entities/sales_invoice.dart';
 import '../../domain/usecases/usecases.dart';
-import '../../utils/invoice_utils.dart';
+import '../../widgets/invoice/invoice_list.dart';
 import '../../utils/error_feedback.dart';
 import 'session_controller.dart';
 

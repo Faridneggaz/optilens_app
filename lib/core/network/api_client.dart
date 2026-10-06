@@ -113,6 +113,35 @@ class ApiClient {
     }
   }
 
+  /// GET `frappe.client.get_list` with the employee SID cookie (same session as mobile APIs).
+  Future<List<dynamic>> getList({
+    required String doctype,
+    required String token,
+    List<String> fields = const ['name'],
+    Object? filters,
+    Object? orFilters,
+    int limitPageLength = 50,
+    String? orderBy,
+  }) async {
+    final query = <String, String>{
+      'doctype': doctype,
+      'fields': jsonEncode(fields),
+      'limit_page_length': '$limitPageLength',
+    };
+    if (filters != null) query['filters'] = jsonEncode(filters);
+    if (orFilters != null) query['or_filters'] = jsonEncode(orFilters);
+    if (orderBy != null && orderBy.trim().isNotEmpty) {
+      query['order_by'] = orderBy.trim();
+    }
+    final uri = methodUri('frappe.client.get_list', query: query);
+    final decoded = await getJson(uri, headers: {'Cookie': 'sid=$token'});
+    final msg = unwrap(decoded);
+    if (msg is List) return msg;
+    if (msg is Map && msg['data'] is List) return msg['data'] as List;
+    if (decoded['message'] is List) return decoded['message'] as List;
+    return const [];
+  }
+
   Future<Map<String, dynamic>> _send(
     String verb,
     Uri uri, {

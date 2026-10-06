@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -36,13 +34,6 @@ class CreateMaterialRequestSheetState
   List<String> _priceLists = [];
   List<String> _companies = ['OPTILENS ALGER'];
 
-  final TextEditingController _searchController = TextEditingController();
-  final FocusNode _searchFocus = FocusNode();
-  List<Map<String, String>> _searchResults = [];
-  bool _isSearchingItems = false;
-  Timer? _searchDebounce;
-  int _searchSeq = 0;
-
   final List<Map<String, dynamic>> _selectedItems = [];
   bool _isSaving = false;
   bool _isSubmitting = false;
@@ -52,14 +43,6 @@ class CreateMaterialRequestSheetState
   String? _savedDocName;
 
   final _purposes = materialRequestPurposes;
-
-  @override
-  void dispose() {
-    _searchDebounce?.cancel();
-    _searchFocus.dispose();
-    _searchController.dispose();
-    super.dispose();
-  }
 
   @override
   void initState() {
@@ -99,32 +82,6 @@ class CreateMaterialRequestSheetState
     await widget.c.loadWarehouses(_selectedCompany);
   }
 
-  void _onSearchChanged(String text) {
-    _searchDebounce?.cancel();
-    final q = text.trim();
-    if (q.isEmpty) {
-      setState(() {
-        _searchResults.clear();
-        _isSearchingItems = false;
-      });
-      return;
-    }
-    setState(() => _isSearchingItems = true);
-    _searchDebounce = Timer(const Duration(milliseconds: 280), () {
-      _search(q);
-    });
-  }
-
-  Future<void> _search(String text) async {
-    final seq = ++_searchSeq;
-    final res = await widget.c.searchItems(text);
-    if (!mounted || seq != _searchSeq) return;
-    setState(() {
-      _searchResults = res;
-      _isSearchingItems = false;
-    });
-  }
-
   int _itemQty(Map<String, dynamic> item) {
     final q = item['qty'];
     if (q is num) return q.toInt();
@@ -146,10 +103,7 @@ class CreateMaterialRequestSheetState
           'qty': addQty,
         });
       }
-      _searchResults.clear();
     });
-    _searchController.clear();
-    _searchFocus.unfocus();
   }
 
   void _setItemQty(String code, int qty) {

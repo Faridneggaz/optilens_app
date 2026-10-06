@@ -1,7 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../widgets/header.dart';
-import '../../utils/payment_utils.dart';
+import '../../widgets/payment/payment_list.dart';
 import '../../../presentation/controllers/language_controller.dart';
 import '../../../presentation/controllers/payment_controller.dart';
 import '../../widgets/client_session_gate.dart';

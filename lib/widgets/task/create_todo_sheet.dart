@@ -289,7 +289,8 @@ class _CreateTodoSheetState extends State<CreateTodoSheet> {
                 MrLabeledField(
                   label: 'task_priority'.tr,
                   child: DropdownButtonFormField<String>(
-                    value: _priority,
+                    key: ValueKey('prio-$_priority'),
+                    initialValue: _priority,
                     items: _priorities
                         .map(
                           (p) => DropdownMenuItem(

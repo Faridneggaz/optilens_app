@@ -1,6 +1,4 @@
-import 'dart:async';
-
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../core/theme/app_colors.dart';
@@ -8,6 +6,7 @@ import '../../domain/entities/manque.dart';
 import '../../presentation/controllers/commande_manque_controller.dart';
 import '../../presentation/controllers/language_controller.dart';
 import '../../widgets/header.dart';
+import '../../widgets/manque/manque_pickers.dart';
 import '../../widgets/manque/manque_widgets.dart';
 import '../../widgets/material_request/mr_form_widgets.dart';
 import '../../widgets/material_request/pick_mr_items_sheet.dart';
@@ -217,14 +216,17 @@ class _CommandeManqueFormPageState extends State<CommandeManqueFormPage> {
         snackPosition: SnackPosition.BOTTOM,
         duration: const Duration(seconds: 2),
       );
-      final target = _customerKey.currentContext;
-      if (target != null) {
-        Scrollable.ensureVisible(
-          target,
-          duration: const Duration(milliseconds: 250),
-          alignment: 0.05,
-        );
-      }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final target = _customerKey.currentContext;
+        if (target != null) {
+          Scrollable.ensureVisible(
+            target,
+            duration: const Duration(milliseconds: 250),
+            alignment: 0.05,
+          );
+        }
+      });
       return;
     }
     setState(() => _error = result.error ?? 'error_occurred'.tr);
@@ -233,7 +235,7 @@ class _CommandeManqueFormPageState extends State<CommandeManqueFormPage> {
   Future<void> _pickWarehouse() async {
     final rows = _c.warehouses
         .map(
-          (w) => _PickRow(
+          (w) => ManquePickRow(
             code: w['name'] ?? '',
             title: w['name'] ?? '',
             subtitle: (w['warehouse_name'] ?? '').trim(),
@@ -241,7 +243,8 @@ class _CommandeManqueFormPageState extends State<CommandeManqueFormPage> {
         )
         .where((r) => r.code.isNotEmpty)
         .toList();
-    final picked = await _openPicker(
+    final picked = await showManqueLocalPicker(
+      context: context,
       title: 'warehouse'.tr,
       hint: 'manque_search_warehouse'.tr,
       rows: rows,
@@ -254,14 +257,15 @@ class _CommandeManqueFormPageState extends State<CommandeManqueFormPage> {
   Future<void> _pickBuyer() async {
     final rows = _c.buyers
         .map(
-          (b) => _PickRow(
+          (b) => ManquePickRow(
             code: b.name,
             title: b.displayName,
             subtitle: b.ficheDePoste,
           ),
         )
         .toList();
-    final picked = await _openPicker(
+    final picked = await showManqueLocalPicker(
+      context: context,
       title: 'manque_buyer'.tr,
       hint: 'manque_search_buyer'.tr,
       rows: rows,
@@ -275,42 +279,16 @@ class _CommandeManqueFormPageState extends State<CommandeManqueFormPage> {
     if (_company.isEmpty) return;
     await _c.loadCustomers(_company);
     if (!mounted) return;
-    final picked = await showModalBottomSheet<_PickRow>(
+    final picked = await showManqueCustomerPicker(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (ctx) => _CustomerPickerSheet(company: _company, controller: _c),
+      company: _company,
+      controller: _c,
     );
     if (picked == null || !mounted) return;
     setState(() {
       _customer = picked.code;
       _customerName = picked.subtitle;
     });
-  }
-
-  Future<_PickRow?> _openPicker({
-    required String title,
-    required String hint,
-    required List<_PickRow> rows,
-    required String emptyLabel,
-  }) {
-    return showModalBottomSheet<_PickRow>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (ctx) => _LocalPickerSheet(
-        title: title,
-        hint: hint,
-        rows: rows,
-        emptyLabel: emptyLabel,
-      ),
-    );
   }
 
   @override
@@ -469,7 +447,7 @@ class _CommandeManqueFormPageState extends State<CommandeManqueFormPage> {
                     return DocumentItemLine(
                       code: line.itemCode,
                       name: name,
-                      qty: '× ${_qtyLabel(line.qty)}',
+                      qty: 'Ã— ${_qtyLabel(line.qty)}',
                     );
                   }),
                   if (_error != null) ...[
@@ -497,206 +475,6 @@ class _CommandeManqueFormPageState extends State<CommandeManqueFormPage> {
                 ),
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PickRow {
-  const _PickRow({
-    required this.code,
-    required this.title,
-    this.subtitle = '',
-  });
-
-  final String code;
-  final String title;
-  final String subtitle;
-}
-
-class _LocalPickerSheet extends StatefulWidget {
-  const _LocalPickerSheet({
-    required this.title,
-    required this.hint,
-    required this.rows,
-    required this.emptyLabel,
-  });
-
-  final String title;
-  final String hint;
-  final List<_PickRow> rows;
-  final String emptyLabel;
-
-  @override
-  State<_LocalPickerSheet> createState() => _LocalPickerSheetState();
-}
-
-class _LocalPickerSheetState extends State<_LocalPickerSheet> {
-  String _q = '';
-
-  @override
-  Widget build(BuildContext context) {
-    final q = _q.trim().toLowerCase();
-    final shown = q.isEmpty
-        ? widget.rows
-        : widget.rows
-            .where(
-              (r) =>
-                  r.title.toLowerCase().contains(q) ||
-                  r.subtitle.toLowerCase().contains(q) ||
-                  r.code.toLowerCase().contains(q),
-            )
-            .toList();
-    return _PickerScaffold(
-      title: widget.title,
-      hint: widget.hint,
-      onQuery: (v) => setState(() => _q = v),
-      child: shown.isEmpty
-          ? Center(child: Text(widget.emptyLabel))
-          : ListView.builder(
-              itemCount: shown.length,
-              itemBuilder: (_, i) {
-                final row = shown[i];
-                return ListTile(
-                  title: Text(row.title,
-                      style: const TextStyle(fontWeight: FontWeight.w700)),
-                  subtitle: row.subtitle.trim().isEmpty
-                      ? null
-                      : Text(row.subtitle),
-                  onTap: () => Navigator.pop(context, row),
-                );
-              },
-            ),
-    );
-  }
-}
-
-class _CustomerPickerSheet extends StatefulWidget {
-  const _CustomerPickerSheet({
-    required this.company,
-    required this.controller,
-  });
-
-  final String company;
-  final CommandeManqueController controller;
-
-  @override
-  State<_CustomerPickerSheet> createState() => _CustomerPickerSheetState();
-}
-
-class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
-  Timer? _debounce;
-
-  @override
-  void dispose() {
-    _debounce?.cancel();
-    super.dispose();
-  }
-
-  void _onQuery(String q) {
-    _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 320), () {
-      widget.controller.loadCustomers(widget.company, search: q);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return _PickerScaffold(
-      title: 'manque_customer'.tr,
-      hint: 'manque_search_customer'.tr,
-      onQuery: _onQuery,
-      child: Obx(() {
-        final loading = widget.controller.customersLoading.value;
-        final rows = widget.controller.customers;
-        if (loading && rows.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (rows.isEmpty) {
-          return Center(child: Text('manque_no_customers'.tr));
-        }
-        return ListView.builder(
-          itemCount: rows.length,
-          itemBuilder: (_, i) {
-            final c = rows[i];
-            return ListTile(
-              title: Text(c.name,
-                  style: const TextStyle(fontWeight: FontWeight.w700)),
-              subtitle:
-                  c.customerName.isEmpty ? null : Text(c.customerName),
-              onTap: () => Navigator.pop(
-                context,
-                _PickRow(
-                  code: c.name,
-                  title: c.name,
-                  subtitle: c.customerName,
-                ),
-              ),
-            );
-          },
-        );
-      }),
-    );
-  }
-}
-
-class _PickerScaffold extends StatelessWidget {
-  const _PickerScaffold({
-    required this.title,
-    required this.hint,
-    required this.onQuery,
-    required this.child,
-  });
-
-  final String title;
-  final String hint;
-  final ValueChanged<String> onQuery;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final bottom = MediaQuery.viewInsetsOf(context).bottom;
-    return Padding(
-      padding: EdgeInsets.only(bottom: bottom),
-      child: SizedBox(
-        height: MediaQuery.sizeOf(context).height * 0.72,
-        child: Column(
-          children: [
-            const SizedBox(height: 8),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(4),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-              child: Text(
-                title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 16,
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: TextField(
-                autofocus: true,
-                onChanged: onQuery,
-                decoration: InputDecoration(
-                  hintText: hint,
-                  prefixIcon: const Icon(Icons.search),
-                  isDense: true,
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Expanded(child: child),
           ],
         ),
       ),

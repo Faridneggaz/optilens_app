@@ -51,7 +51,7 @@ class LanguageController extends GetxController {
 
   // ── État réactif ──────────────────────────────────────────────────────────
 
-  /// Langue actuellement sélectionnée — Rx<AppLanguage> observé par Obx.
+  /// Langue actuellement sélectionnée — `Rx` d'`AppLanguage`, observé par Obx.
   late final Rx<AppLanguage> current;
 
   /// Vrai quand l'arabe est actif.

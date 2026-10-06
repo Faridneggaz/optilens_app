@@ -1,11 +1,8 @@
-import 'dart:convert';
-
 import '../../core/network/api_client.dart';
 import '../../domain/entities/manque.dart';
 import '../../domain/failures/failures.dart';
 import '../../domain/repositories/manque_repository.dart';
 import '../../domain/results/action_result.dart';
-import '../../utils/api_config.dart';
 import '../mappers/manque_mappers.dart';
 
 class ManqueRepositoryImpl implements ManqueRepository {
@@ -45,35 +42,25 @@ class ManqueRepositoryImpl implements ManqueRepository {
     String? searchText,
   }) async {
     if (company.trim().isEmpty) return const [];
-    final filters = [
-      ['custom_company', '=', company],
-      ['disabled', '=', 0],
-    ];
-    final query = <String, String>{
-      'doctype': 'Customer',
-      'fields': jsonEncode(['name', 'customer_name', 'custom_company']),
-      'filters': jsonEncode(filters),
-      'limit_page_length': '50',
-      'order_by': 'customer_name asc',
-    };
     final q = searchText?.trim() ?? '';
-    if (q.isNotEmpty) {
-      query['or_filters'] = jsonEncode([
-        ['name', 'like', '%$q%'],
-        ['customer_name', 'like', '%$q%'],
-      ]);
-    }
-    final uri = Uri.parse('${ApiConfig.apiMethodPath}frappe.client.get_list')
-        .replace(queryParameters: query);
-    final decoded = await _client.getJson(
-      uri,
-      headers: {'Cookie': 'sid=$token'},
+    final rows = await _client.getList(
+      doctype: 'Customer',
+      token: token,
+      fields: const ['name', 'customer_name', 'custom_company'],
+      filters: [
+        ['custom_company', '=', company],
+        ['disabled', '=', 0],
+      ],
+      orFilters: q.isEmpty
+          ? null
+          : [
+              ['name', 'like', '%$q%'],
+              ['customer_name', 'like', '%$q%'],
+            ],
+      limitPageLength: 50,
+      orderBy: 'customer_name asc',
     );
-    final msg = _client.unwrap(decoded);
-    final raw = msg is List
-        ? msg
-        : (msg is Map ? msg['data'] : decoded['message']);
-    return CustomerOptionMapper.fromList(raw);
+    return CustomerOptionMapper.fromList(rows);
   }
 
   @override

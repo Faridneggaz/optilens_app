@@ -120,7 +120,9 @@ class FactureAcheteurFormPage extends StatelessWidget {
                             label: 'manque_supplier'.tr,
                             required: true,
                             child: DropdownButtonFormField<String>(
-                              value: c.suppliers
+                              key: ValueKey(
+                                  'sup-${c.suppliers.map((s) => s.name).join()}|${c.supplier.value}'),
+                              initialValue: c.suppliers
                                       .any((s) => s.name == c.supplier.value)
                                   ? c.supplier.value
                                   : null,

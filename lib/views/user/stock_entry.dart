@@ -134,6 +134,7 @@ class StockEntryPage extends StatelessWidget {
                                 key: ValueKey(
                                     '${item.itemCode}_${item.idx}_$idx'),
                                 code: code,
+                                name: item.itemName,
                                 qty: item.quantity.toString(),
                                 qtyWidget: (c.isPending && !isValidated)
                                     ? SizedBox(

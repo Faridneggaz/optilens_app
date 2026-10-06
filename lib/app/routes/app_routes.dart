@@ -16,4 +16,9 @@ abstract class AppRoutes {
   static const tasks = '/tasks';
   static const taskDetail = '/task-detail';
   static const jobProfile = '/job-profile';
+  static const commandesManque = '/commandes-manque';
+  static const commandeManqueForm = '/commande-manque-form';
+  static const commandeManqueDetail = '/commande-manque-detail';
+  static const facturesAcheteur = '/factures-acheteur';
+  static const factureAcheteurForm = '/facture-acheteur-form';
 }

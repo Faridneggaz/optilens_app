@@ -79,7 +79,11 @@ class ApiClient {
     );
   }
 
-  Future<Map<String, dynamic>> getJson(Uri uri) => _send('GET', uri);
+  Future<Map<String, dynamic>> getJson(
+    Uri uri, {
+    Map<String, String>? headers,
+  }) =>
+      _send('GET', uri, extraHeaders: headers);
 
   Future<Map<String, dynamic>> postJson(Uri uri, {Object? body}) =>
       _send('POST', uri, body: body);

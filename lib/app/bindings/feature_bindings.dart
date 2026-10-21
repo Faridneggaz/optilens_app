@@ -110,6 +110,10 @@ class TaskBinding extends Bindings {
 class TaskDetailBinding extends Bindings {
   @override
   void dependencies() {
+    TaskBinding().dependencies();
+    if (Get.isRegistered<TaskDetailController>()) {
+      Get.delete<TaskDetailController>(force: true);
+    }
     Get.put(TaskDetailController());
   }
 }

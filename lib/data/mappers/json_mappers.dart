@@ -18,7 +18,7 @@ import '../../domain/entities/stock_entry_details_response.dart';
 import '../../domain/entities/stock_entry_item.dart';
 import '../../domain/entities/stock_entry_response.dart';
 import '../../domain/entities/stock_summary.dart';
-import '../../domain/entities/task.dart';
+export 'task_mappers.dart';
 import '../../domain/entities/job_profile.dart';
 import '../../domain/entities/user.dart';
 import '../../utils/api_config.dart';
@@ -651,131 +651,6 @@ class StockSummaryResponseMapper {
       limit: int.tryParse('${root['limit'] ?? 20}') ?? 20,
       offset: int.tryParse('${root['offset'] ?? 0}') ?? 0,
       hasMore: root['has_more'] == true,
-    );
-  }
-}
-
-class TodoTaskMapper {
-  static TodoTask fromJson(Map<String, dynamic> json) => TodoTask(
-        name: json['name']?.toString() ?? '',
-        description: stripHtmlToPlainText(json['description']?.toString()),
-        status: json['status']?.toString() ?? 'Open',
-        priority: json['priority']?.toString() ?? 'Medium',
-        date: json['date']?.toString() ?? '',
-        allocatedTo: json['allocated_to']?.toString() ?? '',
-        assignedBy: json['assigned_by']?.toString() ?? '',
-        referenceType: json['reference_type']?.toString() ?? '',
-        referenceName: json['reference_name']?.toString() ?? '',
-        creation: json['creation']?.toString() ?? '',
-        modified: json['modified']?.toString() ?? '',
-      );
-}
-
-class TaskSummaryMapper {
-  static TaskSummary fromJson(Map<String, dynamic> json) => TaskSummary(
-        totalItems: int.tryParse('${json['total_items'] ?? 0}') ?? 0,
-        openCount: int.tryParse('${json['open_count'] ?? 0}') ?? 0,
-        closedCount: int.tryParse('${json['closed_count'] ?? 0}') ?? 0,
-        overdueCount: int.tryParse('${json['overdue_count'] ?? 0}') ?? 0,
-      );
-}
-
-class TaskListResponseMapper {
-  static TaskListResponse fromJson(Map<String, dynamic> json) {
-    final root = json['message'] is Map
-        ? Map<String, dynamic>.from(json['message'] as Map)
-        : json;
-    final summaryRaw = root['summary'];
-    final summary = summaryRaw is Map
-        ? TaskSummaryMapper.fromJson(Map<String, dynamic>.from(summaryRaw))
-        : const TaskSummary(
-            totalItems: 0,
-            openCount: 0,
-            closedCount: 0,
-            overdueCount: 0,
-          );
-    final tasksRaw = root['tasks'];
-    final tasks = <TodoTask>[];
-    if (tasksRaw is List) {
-      for (final row in tasksRaw) {
-        if (row is! Map) continue;
-        tasks.add(TodoTaskMapper.fromJson(Map<String, dynamic>.from(row)));
-      }
-    }
-    return TaskListResponse(
-      user: root['user']?.toString() ?? '',
-      date: root['date']?.toString() ?? '',
-      status: root['status']?.toString() ?? 'Open',
-      summary: summary,
-      tasks: tasks,
-      canCreate: root['can_create'] == true ||
-          root['can_create'] == 1 ||
-          root['can_create']?.toString() == '1',
-      allocatedTo: root['allocated_to']?.toString() ?? '',
-      isSearch: root['is_search'] == true,
-      limit: int.tryParse('${root['limit'] ?? 20}') ?? 20,
-      offset: int.tryParse('${root['offset'] ?? 0}') ?? 0,
-      hasMore: root['has_more'] == true,
-    );
-  }
-}
-
-class TaskDetailResponseMapper {
-  static TaskDetailResponse fromJson(Map<String, dynamic> json) {
-    final root = json['message'] is Map
-        ? Map<String, dynamic>.from(json['message'] as Map)
-        : json;
-    final taskRaw = root['task'];
-    if (taskRaw is! Map) {
-      throw const FormatException('Invalid task detail response');
-    }
-    return TaskDetailResponse(
-      task: TodoTaskMapper.fromJson(Map<String, dynamic>.from(taskRaw)),
-      canWrite: root['can_write'] == true ||
-          root['can_write'] == 1 ||
-          root['can_write']?.toString() == '1',
-    );
-  }
-}
-
-class AssignableUserMapper {
-  static List<AssignableUser> fromList(dynamic raw) {
-    if (raw is! List) return const [];
-    final out = <AssignableUser>[];
-    final seen = <String>{};
-    for (final row in raw) {
-      if (row is! Map) continue;
-      final user = fromJson(Map<String, dynamic>.from(row));
-      if (user == null) continue;
-      final key = user.email.toLowerCase();
-      if (seen.contains(key)) continue;
-      seen.add(key);
-      out.add(user);
-    }
-    return out;
-  }
-
-  static AssignableUser? fromJson(Map<String, dynamic> json) {
-    // Frappe User.name is the email; prefer name for create_todo.allocated_to.
-    final email = (json['name'] ??
-            json['email'] ??
-            json['user'] ??
-            json['user_id'] ??
-            '')
-        .toString()
-        .trim();
-    if (email.isEmpty) return null;
-    final fullName = (json['full_name'] ??
-            json['fullname'] ??
-            json['employee_name'] ??
-            json['user_name'] ??
-            json['fullName'] ??
-            '')
-        .toString()
-        .trim();
-    return AssignableUser(
-      email: email,
-      fullName: fullName.isNotEmpty ? fullName : email,
     );
   }
 }

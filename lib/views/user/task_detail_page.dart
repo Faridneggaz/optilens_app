@@ -1,246 +1,238 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import '../../core/theme/app_colors.dart';
-import '../../presentation/controllers/language_controller.dart';
+import '../../presentation/controllers/task_controller.dart';
 import '../../presentation/controllers/task_detail_controller.dart';
 import '../../widgets/header.dart';
-import '../../widgets/material_request/mr_form_widgets.dart';
-import '../../widgets/stock/document_ui.dart';
 import '../../widgets/task/task_card.dart';
+import '../../widgets/task/task_form_sheet.dart';
 
 class TaskDetailPage extends StatelessWidget {
   const TaskDetailPage({super.key});
-
   @override
   Widget build(BuildContext context) {
     final c = Get.find<TaskDetailController>();
-
-    return GetBuilder<LanguageController>(
-      builder: (_) => Obx(() {
-        if (c.isLoading.value) {
-          return const Scaffold(
-            backgroundColor: AppColors.scaffoldTint,
-            body: Center(child: CircularProgressIndicator(color: Colors.teal)),
-          );
-        }
-
-        final task = c.task.value;
-        if (task == null) {
-          return Scaffold(
-            backgroundColor: AppColors.scaffoldTint,
-            body: Center(child: Text('failed_load_task_detail'.tr)),
-          );
-        }
-
-        return Scaffold(
-          backgroundColor: AppColors.scaffoldTint,
-          body: Column(
-            children: [
-              AppHeader(
-                title: task.name,
-                customer: null,
-                customerCode: '',
-              ),
-              Expanded(
-                child: RefreshIndicator(
-                  onRefresh: c.fetchDetail,
-                  color: AppColors.primary,
-                  child: ListView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.all(16),
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              'nav_my_tasks'.tr,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.ink,
-                              ),
-                            ),
-                          ),
-                          MrStatusChip(status: task.status),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      MrSectionCard(
-                        title: 'task_description'.tr,
-                        children: [
-                          Text(
-                            task.description.isNotEmpty
-                                ? task.description
-                                : '—',
-                            style: const TextStyle(
-                              color: AppColors.body,
-                              fontSize: 15,
-                              height: 1.4,
-                            ),
-                          ),
-                        ],
-                      ),
-                      MrSectionCard(
-                        title: 'mr_details_section'.tr,
-                        children: [
-                          MrInfoRow(
-                            label: 'task_priority'.tr,
-                            value: task.priority,
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              TaskPriorityChip(priority: task.priority),
-                              if (task.isOverdue) ...[
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.dangerSoft,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    'task_overdue'.tr,
-                                    style: const TextStyle(
-                                      color: AppColors.danger,
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          MrInfoRow(
-                            label: 'task_date'.tr,
-                            value: task.date,
-                          ),
-                          MrInfoRow(
-                            label: 'task_assigned_by'.tr,
-                            value: task.assignedBy.isEmpty
-                                ? '—'
-                                : task.assignedBy,
-                          ),
-                          MrInfoRow(
-                            label: 'task_allocated_to'.tr,
-                            value: task.allocatedTo.isEmpty
-                                ? '—'
-                                : task.allocatedTo,
-                          ),
-                        ],
-                      ),
-                      if (task.hasReference)
-                        MrSectionCard(
-                          title: 'task_reference'.tr,
-                          children: [
-                            InkWell(
-                              onTap: c.canOpenReference
-                                  ? c.openReference
-                                  : null,
-                              borderRadius: BorderRadius.circular(8),
-                              child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 4),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.link,
-                                      size: 18,
-                                      color: c.canOpenReference
-                                          ? AppColors.primary
-                                          : AppColors.muted,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        '${task.referenceType} / ${task.referenceName}',
-                                        style: TextStyle(
-                                          color: c.canOpenReference
-                                              ? AppColors.primaryDark
-                                              : AppColors.body,
-                                          fontWeight: FontWeight.w600,
-                                          decoration: c.canOpenReference
-                                              ? TextDecoration.underline
-                                              : null,
-                                        ),
-                                      ),
-                                    ),
-                                    if (c.canOpenReference)
-                                      const Icon(
-                                        Icons.chevron_right,
-                                        color: AppColors.primary,
-                                      ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
+    return Scaffold(
+      backgroundColor: AppColors.scaffold,
+      body: Column(
+        children: [
+          AppHeader(title: 'nav_my_tasks'.tr, customer: null, customerCode: ''),
+          Expanded(
+            child: Obx(() {
+              if (c.isLoading.value) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              final task = c.task.value;
+              if (task == null) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(c.errorMessage.value, textAlign: TextAlign.center),
+                        TextButton(
+                          onPressed: c.fetchDetail,
+                          child: const Icon(Icons.refresh),
                         ),
-                    ],
+                      ],
+                    ),
                   ),
+                );
+              }
+              return RefreshIndicator(
+                onRefresh: c.fetchDetail,
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            task.subject,
+                            style: const TextStyle(
+                              fontSize: 21,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        if (task.canWrite)
+                          IconButton(
+                            tooltip: 'erp_task_edit'.tr,
+                            icon: const Icon(Icons.edit_outlined),
+                            onPressed: () async {
+                              final saved = await showTaskForm(
+                                context: context,
+                                controller: Get.find<TaskController>(),
+                                task: task,
+                              );
+                              if (saved != null) c.task.value = saved;
+                            },
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 8,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Text(task.name),
+                        TaskStatusChip(status: task.status),
+                        TaskPriorityChip(priority: task.priority),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    if (task.descriptionText.isNotEmpty)
+                      _section(
+                        'task_description'.tr,
+                        Text(task.descriptionText),
+                      ),
+                    _section(
+                      'erp_task_progress'.tr,
+                      Column(
+                        children: [
+                          LinearProgressIndicator(
+                            value: (task.progress / 100).clamp(0, 1),
+                          ),
+                          const SizedBox(height: 6),
+                          Text('${task.progress.round()}%'),
+                        ],
+                      ),
+                    ),
+                    _section(
+                      'erp_task_details'.tr,
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (task.company.isNotEmpty)
+                            Text('${'erp_task_company'.tr}: ${task.company}'),
+                          if (task.project.isNotEmpty)
+                            Text('${'erp_task_project'.tr}: ${task.project}'),
+                          if (task.startDate.isNotEmpty)
+                            Text('${'erp_task_start'.tr}: ${task.startDate}'),
+                          if (task.endDate.isNotEmpty)
+                            Text('${'erp_task_end'.tr}: ${task.endDate}'),
+                          if (task.owner.isNotEmpty)
+                            Text('${'erp_task_created_by'.tr}: ${task.owner}'),
+                        ],
+                      ),
+                    ),
+                    _section(
+                      'erp_task_assignees'.tr,
+                      Text(
+                        task.assignees.isEmpty
+                            ? 'erp_task_unassigned'.tr
+                            : task.assignees
+                                  .map((u) => '${u.displayName} — ${u.email}')
+                                  .join('\n'),
+                      ),
+                    ),
+                    if (task.previousAssignees.isNotEmpty)
+                      _section(
+                        'erp_task_previous_assignees'.tr,
+                        Text(
+                          task.previousAssignees
+                              .map((u) => '${u.displayName} — ${u.email}')
+                              .join('\n'),
+                        ),
+                      ),
+                  ],
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Obx(() {
-                  if (!c.canWrite.value) return const SizedBox.shrink();
-                  return DocumentPrimaryButton(
-                    label: task.isOpen
-                        ? 'task_mark_done'.tr
-                        : 'task_reopen'.tr,
-                    icon: task.isOpen
-                        ? Icons.check_circle_outline
-                        : Icons.restart_alt,
-                    busy: c.isUpdating.value,
-                    onPressed: () => _handleToggle(context, c),
-                  );
-                }),
-              ),
-            ],
+              );
+            }),
+          ),
+        ],
+      ),
+      bottomNavigationBar: Obx(() {
+        final task = c.task.value;
+        if (task == null || !task.canWrite || task.allowedStatuses.isEmpty) {
+          return const SizedBox.shrink();
+        }
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: FilledButton.icon(
+              onPressed: c.isUpdating.value
+                  ? null
+                  : () => _pickStatus(context, c),
+              icon: c.isUpdating.value
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.sync_alt),
+              label: Text('erp_task_change_status'.tr),
+            ),
           ),
         );
       }),
     );
   }
 
-  Future<void> _handleToggle(
-    BuildContext context,
-    TaskDetailController c,
-  ) async {
-    if (c.isUpdating.value) return;
-    final current = c.task.value;
-    if (current == null) return;
-    final closing = current.isOpen;
+  Widget _section(String title, Widget child) => Card(
+    color: Colors.white,
+    margin: const EdgeInsets.only(bottom: 12),
+    child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
+          const SizedBox(height: 10),
+          child,
+        ],
+      ),
+    ),
+  );
 
-    if (closing) {
-      final ok = await showAppConfirmDialog(
+  Future<void> _pickStatus(BuildContext context, TaskDetailController c) async {
+    final task = c.task.value;
+    if (task == null) return;
+    final next = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: AppColors.scaffold,
+      builder: (_) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            for (final status in task.allowedStatuses.where(
+              (s) => s != task.status,
+            ))
+              ListTile(
+                title: Text(taskStatusLabel(status)),
+                onTap: () => Navigator.pop(context, status),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (next == null || !context.mounted) return;
+    if (next == 'Completed' || next == 'Cancelled') {
+      final confirmed = await showDialog<bool>(
         context: context,
-        title: 'confirm_close_task'.tr,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(taskStatusLabel(next)),
+          content: Text('erp_task_status_confirmation'.tr),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text('cancel'.tr),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: Text('confirm'.tr),
+            ),
+          ],
+        ),
       );
-      if (!ok) return;
+      if (confirmed != true) return;
     }
-    final result = await c.toggleStatus();
-    if (result.isAuthHandled) return;
-    if (result.error == 'busy') return;
-    if (result.isSuccess) {
-      Get.snackbar(
-        'success'.tr,
-        closing ? 'task_closed_success'.tr : 'task_reopened_success'.tr,
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.BOTTOM,
-      );
-    } else {
-      Get.snackbar(
-        'error'.tr,
-        result.error ?? 'error_occurred'.tr,
-        backgroundColor: Colors.red.shade100,
-        colorText: Colors.red.shade900,
-        snackPosition: SnackPosition.BOTTOM,
-      );
+    final result = await c.changeStatus(next);
+    if (!result.isSuccess && !result.isAuthHandled) {
+      Get.snackbar('error'.tr, result.error ?? 'error_occurred'.tr);
     }
   }
 }

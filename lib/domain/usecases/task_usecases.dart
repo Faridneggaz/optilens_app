@@ -1,63 +1,63 @@
 import '../entities/task.dart';
 import '../repositories/task_repository.dart';
-import '../results/action_result.dart';
 
 class TaskUseCases {
   TaskUseCases(this._repo);
   final TaskRepository _repo;
 
-  Future<TaskListResponse> fetchMyTasks({
+  Future<TaskListResponse> fetchTasks({
     required String token,
-    String status = 'Open',
+    String scope = 'mine',
+    String status = 'Active',
     String? date,
     bool includeOverdue = true,
     String? allocatedTo,
     String? searchText,
     int limit = 20,
     int offset = 0,
-  }) =>
-      _repo.fetchMyTasks(
-        token: token,
-        status: status,
-        date: date,
-        includeOverdue: includeOverdue,
-        allocatedTo: allocatedTo,
-        searchText: searchText,
-        limit: limit,
-        offset: offset,
-      );
-
+  }) => _repo.fetchTasks(
+    token: token,
+    scope: scope,
+    status: status,
+    date: date,
+    includeOverdue: includeOverdue,
+    allocatedTo: allocatedTo,
+    searchText: searchText,
+    limit: limit,
+    offset: offset,
+  );
   Future<TaskDetailResponse> fetchTaskDetail({
     required String token,
     required String name,
-  }) =>
-      _repo.fetchTaskDetail(token: token, name: name);
-
-  Future<List<AssignableUser>> getAssignableUsers({
+  }) => _repo.fetchTaskDetail(token: token, name: name);
+  Future<TaskOptions> getOptions({
     required String token,
+    String kind = 'all',
     String? searchText,
-  }) =>
-      _repo.getAssignableUsers(token: token, searchText: searchText);
-
-  Future<ActionResult> createTodo({
+    String? company,
+  }) => _repo.getOptions(
+    token: token,
+    kind: kind,
+    searchText: searchText,
+    company: company,
+  );
+  Future<ErpTask> createTask({
     required String token,
-    required String description,
-    required String allocatedTo,
-    required String date,
-    required String priority,
-  }) =>
-      _repo.createTodo(
-        token: token,
-        description: description,
-        allocatedTo: allocatedTo,
-        date: date,
-        priority: priority,
-      );
-
-  Future<ActionResult> updateTaskStatus({
+    required TaskInput input,
+  }) => _repo.createTask(token: token, input: input);
+  Future<ErpTask> updateTask({
     required String token,
     required String name,
-    required String status,
-  }) =>
-      _repo.updateTaskStatus(token: token, name: name, status: status);
+    required String modified,
+    TaskInput? input,
+    String? status,
+    double? progress,
+  }) => _repo.updateTask(
+    token: token,
+    name: name,
+    modified: modified,
+    input: input,
+    status: status,
+    progress: progress,
+  );
 }

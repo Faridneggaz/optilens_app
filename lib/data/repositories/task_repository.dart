@@ -1,19 +1,29 @@
+import 'dart:convert';
+
 import '../../core/network/api_client.dart';
 import '../../domain/entities/task.dart';
 import '../../domain/failures/failures.dart';
 import '../../domain/repositories/task_repository.dart';
-import '../../domain/results/action_result.dart';
-import '../mappers/json_mappers.dart';
+import '../mappers/task_mappers.dart';
 
 class TaskRepositoryImpl implements TaskRepository {
   TaskRepositoryImpl(this._client);
-
   final ApiClient _client;
 
+  Map<String, dynamic> _message(Map<String, dynamic> decoded) {
+    final value = _client.unwrap(decoded);
+    if (value is! Map) throw const RepositoryException('Invalid Task response');
+    final map = Map<String, dynamic>.from(value);
+    final error = map['error']?.toString() ?? '';
+    if (error.isNotEmpty) throw RepositoryException(error);
+    return map;
+  }
+
   @override
-  Future<TaskListResponse> fetchMyTasks({
+  Future<TaskListResponse> fetchTasks({
     required String token,
-    String status = 'Open',
+    String scope = 'mine',
+    String status = 'Active',
     String? date,
     bool includeOverdue = true,
     String? allocatedTo,
@@ -21,221 +31,112 @@ class TaskRepositoryImpl implements TaskRepository {
     int limit = 20,
     int offset = 0,
   }) async {
-    final query = <String, String>{
-      'token': token,
-      'status': status,
-      'include_overdue': includeOverdue ? '1' : '0',
-      'limit': '$limit',
-      'offset': '$offset',
-    };
-    if (date != null && date.isNotEmpty) {
-      query['date'] = date;
-    }
-    if (allocatedTo != null && allocatedTo.trim().isNotEmpty) {
-      query['allocated_to'] = allocatedTo.trim();
-    }
-    if (searchText != null && searchText.trim().isNotEmpty) {
-      query['search_text'] = searchText.trim();
-    }
-
     final decoded = await _client.getMobile(
-      'get_my_tasks',
-      query: query,
+      'get_tasks',
       attachToken: false,
+      query: {
+        'token': token,
+        'scope': scope,
+        'status': status,
+        'include_overdue': includeOverdue ? '1' : '0',
+        'limit': '$limit',
+        'offset': '$offset',
+        if (date != null && date.isNotEmpty) 'date': date,
+        if (allocatedTo != null && allocatedTo.isNotEmpty)
+          'allocated_to': allocatedTo,
+        if (searchText != null && searchText.isNotEmpty)
+          'search_text': searchText,
+      },
     );
-    final msg = _client.unwrap(decoded);
-    if (msg is Map) {
-      final map = Map<String, dynamic>.from(msg);
-      final err = map['error']?.toString();
-      if (err != null && err.isNotEmpty && map['success'] != true) {
-        throw RepositoryException(err);
-      }
-      return TaskListResponseMapper.fromJson(map);
-    }
-    if (decoded['message'] is Map || decoded.containsKey('tasks')) {
-      return TaskListResponseMapper.fromJson(decoded);
-    }
-    throw const RepositoryException('Invalid tasks response');
+    return TaskListResponseMapper.fromJson(_message(decoded));
   }
 
   @override
   Future<TaskDetailResponse> fetchTaskDetail({
     required String token,
     required String name,
-  }) async {
-    final decoded = await _client.getMobile(
-      'get_task_detail',
-      query: {
-        'token': token,
-        'name': name,
-      },
-      attachToken: false,
-    );
-    final msg = _client.unwrap(decoded);
-    if (msg is Map) {
-      final map = Map<String, dynamic>.from(msg);
-      final err = map['error']?.toString();
-      if (err != null && err.isNotEmpty && map['success'] != true) {
-        throw RepositoryException(err);
-      }
-      final taskRaw = map['task'];
-      if (taskRaw is Map) {
-        return TaskDetailResponse(
-          task: TodoTaskMapper.fromJson(Map<String, dynamic>.from(taskRaw)),
-          canWrite: map['can_write'] == true ||
-              map['can_write'] == 1 ||
-              map['can_write']?.toString() == '1',
-        );
-      }
-    }
-    if (decoded['task'] is Map) {
-      return TaskDetailResponse(
-        task: TodoTaskMapper.fromJson(
-          Map<String, dynamic>.from(decoded['task'] as Map),
-        ),
-        canWrite: decoded['can_write'] == true ||
-            decoded['can_write'] == 1 ||
-            decoded['can_write']?.toString() == '1',
-      );
-    }
-    throw const RepositoryException('Invalid task detail response');
-  }
-
-  /// GET mobile_app.api.get_assignable_users
-  /// Expected: { success, users: [{ name (email), full_name, email? }] }
-  @override
-  Future<List<AssignableUser>> getAssignableUsers({
-    required String token,
-    String? searchText,
-  }) async {
-    final query = <String, String>{
-      'token': token,
-      'search_text': searchText?.trim() ?? '',
-    };
-
-    final decoded = await _client.getMobile(
-      'get_assignable_users',
-      query: query,
-      attachToken: false,
-    );
-    final msg = _client.unwrap(decoded);
-    if (msg is Map) {
-      final map = Map<String, dynamic>.from(msg);
-      final err = map['error']?.toString();
-      if (err != null && err.isNotEmpty && map['success'] != true) {
-        throw RepositoryException(err);
-      }
-      final list = map['users'] ??
-          map['data'] ??
-          map['message'] ??
-          map['result'];
-      return AssignableUserMapper.fromList(list);
-    }
-    if (msg is List) {
-      return AssignableUserMapper.fromList(msg);
-    }
-    if (decoded['users'] is List) {
-      return AssignableUserMapper.fromList(decoded['users']);
-    }
-    return const [];
-  }
-
-  @override
-  Future<ActionResult> createTodo({
-    required String token,
-    required String description,
-    required String allocatedTo,
-    required String date,
-    required String priority,
-  }) async {
-    try {
-      final decoded = await _client.postMobile(
-        'create_todo',
-        body: {
-          'token': token,
-          'description': description,
-          'allocated_to': allocatedTo,
-          'date': date,
-          'priority': priority,
-        },
+  }) async => TaskDetailResponseMapper.fromJson(
+    _message(
+      await _client.getMobile(
+        'get_task',
         attachToken: false,
-      );
-      final msg = _client.unwrap(decoded);
-      if (msg is Map) {
-        final map = Map<String, dynamic>.from(msg);
-        final parsed = ActionResult.fromApiMap(map);
-        if (parsed.isSuccess) return parsed;
-        if (map['success'] == true || map['task'] != null || map['name'] != null) {
-          return ActionResult.ok(
-            message: 'Success',
-            detail: map['detail']?.toString(),
-            documentName: map['name']?.toString() ??
-                (map['task'] is Map
-                    ? (map['task'] as Map)['name']?.toString()
-                    : null),
-          );
-        }
-        return parsed;
-      }
-      if (msg is String) {
-        final lower = msg.toLowerCase();
-        if (lower.contains('success') || lower.contains('created')) {
-          return ActionResult.ok(message: msg);
-        }
-      }
-      return ActionResult.fromApiMap(decoded);
-    } catch (e) {
-      return ActionResult.fromException(e);
-    }
-  }
+        query: {'token': token, 'name': name},
+      ),
+    ),
+  );
 
   @override
-  Future<ActionResult> updateTaskStatus({
+  Future<TaskOptions> getOptions({
+    required String token,
+    String kind = 'all',
+    String? searchText,
+    String? company,
+  }) async => TaskOptionsMapper.fromJson(
+    _message(
+      await _client.getMobile(
+        'get_task_options',
+        attachToken: false,
+        query: {
+          'token': token,
+          'kind': kind,
+          if (searchText != null) 'search_text': searchText,
+          if (company != null && company.isNotEmpty) 'company': company,
+        },
+      ),
+    ),
+  );
+
+  Map<String, dynamic> _input(TaskInput input) => {
+    'subject': input.subject.trim(),
+    if (input.description != null)
+      'description': const HtmlEscape()
+          .convert(input.description!)
+          .replaceAll('\n', '<br>'),
+    'company': input.company,
+    'project': input.project,
+    'exp_start_date': input.startDate,
+    'exp_end_date': input.endDate,
+    'priority': input.priority,
+    'progress': input.progress,
+    if (input.updateAssignments) 'assignees': input.assignees,
+  };
+
+  @override
+  Future<ErpTask> createTask({
+    required String token,
+    required TaskInput input,
+  }) async => TaskDetailResponseMapper.fromJson(
+    _message(
+      await _client.postMobile(
+        'create_task',
+        attachToken: false,
+        body: {'token': token, ..._input(input)},
+      ),
+    ),
+  ).task;
+
+  @override
+  Future<ErpTask> updateTask({
     required String token,
     required String name,
-    required String status,
-  }) async {
-    try {
-      final decoded = await _client.postMobile(
-        'update_my_task_status',
+    required String modified,
+    TaskInput? input,
+    String? status,
+    double? progress,
+  }) async => TaskDetailResponseMapper.fromJson(
+    _message(
+      await _client.postMobile(
+        'update_task',
+        attachToken: false,
         body: {
           'token': token,
           'name': name,
-          'status': status,
+          'modified': modified,
+          if (input != null) ..._input(input),
+          if (status != null) 'status': status,
+          if (progress != null) 'progress': progress,
         },
-        attachToken: false,
-      );
-      final msg = _client.unwrap(decoded);
-      if (msg is Map) {
-        final map = Map<String, dynamic>.from(msg);
-        final parsed = ActionResult.fromApiMap(map);
-        if (parsed.isSuccess) return parsed;
-        // Some Frappe handlers return the updated task without a "Success" string.
-        final updated = map['task'] ?? map['status'] ?? map['name'];
-        if (map['success'] == true ||
-            updated != null ||
-            map['message']?.toString().toLowerCase().contains('success') ==
-                true) {
-          return ActionResult.ok(
-            message: 'Success',
-            detail: map['detail']?.toString(),
-            documentName: name,
-          );
-        }
-        return parsed;
-      }
-      if (msg is String) {
-        final lower = msg.toLowerCase();
-        if (lower.contains('success') ||
-            lower.contains('closed') ||
-            lower.contains('open') ||
-            lower.contains('updated')) {
-          return ActionResult.ok(message: msg, documentName: name);
-        }
-      }
-      return ActionResult.fromApiMap(decoded);
-    } catch (e) {
-      return ActionResult.fromException(e);
-    }
-  }
+      ),
+    ),
+  ).task;
 }

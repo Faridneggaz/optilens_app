@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import '../../core/theme/app_colors.dart';
+import '../../domain/entities/task.dart';
 import '../../presentation/controllers/language_controller.dart';
 import '../../presentation/controllers/task_controller.dart';
 import '../../widgets/header.dart';
 import '../../widgets/stock/document_ui.dart';
-import '../../widgets/task/create_todo_sheet.dart';
 import '../../widgets/task/task_card.dart';
 import '../../widgets/task/task_employee_filter_bar.dart';
+import '../../widgets/task/task_form_sheet.dart';
 
 class TasksPage extends StatefulWidget {
   const TasksPage({super.key});
-
   @override
   State<TasksPage> createState() => _TasksPageState();
 }
@@ -22,278 +21,375 @@ class _TasksPageState extends State<TasksPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (Get.isRegistered<TaskController>()) {
-        Get.find<TaskController>().onRefresh();
-      }
+      if (mounted) Get.find<TaskController>().onRefresh();
     });
-  }
-
-  void _openCreate(TaskController c) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => CreateTodoSheet(controller: c),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     final c = Get.find<TaskController>();
-
     return GetBuilder<LanguageController>(
       builder: (_) => Scaffold(
         backgroundColor: AppColors.scaffold,
-        resizeToAvoidBottomInset: true,
-        floatingActionButton: Obx(() {
-          if (!c.canCreate.value) return const SizedBox.shrink();
-          return FloatingActionButton.extended(
-            onPressed: () => _openCreate(c),
-            backgroundColor: AppColors.primary,
-            icon: const Icon(Icons.add, color: Colors.white),
-            label: Text(
-              'task_new'.tr,
-              style: const TextStyle(color: Colors.white),
+        floatingActionButton: Obx(
+          () => c.canCreate.value
+              ? FloatingActionButton.extended(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  onPressed: () =>
+                      showTaskForm(context: context, controller: c),
+                  icon: const Icon(Icons.add),
+                  label: Text('task_new'.tr),
+                )
+              : const SizedBox.shrink(),
+        ),
+        body: Column(
+          children: [
+            AppHeader(
+              title: 'nav_my_tasks'.tr,
+              customer: null,
+              customerCode: '',
             ),
-          );
-        }),
-        body: LayoutBuilder(
-          builder: (context, constraints) {
-            final keyboard = MediaQuery.viewInsetsOf(context).bottom;
-            final filtersMaxH = keyboard > 0
-                ? (constraints.maxHeight * 0.48).clamp(140.0, 320.0)
-                : constraints.maxHeight * 0.5;
-            return Column(
-              children: [
-                Obx(() => AppHeader(
-                      title: 'nav_my_tasks'.tr,
-                      customer: null,
-                      customerCode: '',
-                      subtitle: c.displayDate,
-                    )),
-                ConstrainedBox(
-                  constraints: BoxConstraints(maxHeight: filtersMaxH),
-                  child: SingleChildScrollView(
-                    child: _SearchAndFilters(controller: c),
-                  ),
-                ),
-                Expanded(
-                  child: Obx(() {
-                    if (c.isLoading.value && c.items.isEmpty) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    return RefreshIndicator(
-                      onRefresh: c.onRefresh,
-                      color: AppColors.primary,
-                      child: ListView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.fromLTRB(0, 4, 0, 88),
-                        children: [
-                          _SummaryStrip(controller: c),
-                          if (c.items.isEmpty)
-                            Padding(
-                              padding: EdgeInsets.only(
-                                top:
-                                    MediaQuery.of(context).size.height * 0.10,
-                              ),
-                              child: Center(
+            Expanded(
+              child: RefreshIndicator(
+                color: AppColors.primary,
+                onRefresh: c.onRefresh,
+                child: Obx(
+                  () => ListView(
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.only(top: 18, bottom: 100),
+                    children: [
+                      TaskListControls(controller: c),
+                      if (c.isLoading.value)
+                        const Padding(
+                          padding: EdgeInsets.all(56),
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                      if (!c.isLoading.value &&
+                          c.items.isEmpty &&
+                          c.errorMessage.value.isNotEmpty)
+                        _TaskMessage(
+                          error: true,
+                          reason: c.errorMessage.value,
+                          onRetry: c.onRefresh,
+                        ),
+                      if (!c.isLoading.value &&
+                          (c.errorMessage.value.isEmpty ||
+                              c.items.isNotEmpty)) ...[
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+                          child: Row(
+                            children: [
+                              Expanded(
                                 child: Text(
-                                  c.filter.value == TaskListFilter.today
-                                      ? 'no_tasks_today'.tr
-                                      : 'no_tasks'.tr,
-                                  style: const TextStyle(color: Colors.grey),
-                                  textAlign: TextAlign.center,
+                                  '${'erp_task_results'.tr} (${c.summary.value.totalItems})',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.ink,
+                                  ),
                                 ),
                               ),
-                            )
-                          else ...[
-                            ...c.items.map(
-                              (task) => TaskCard(task: task, controller: c),
-                            ),
-                            DocumentLoadMoreFooter(
-                              hasMore: c.hasMore.value,
-                              isLoadingMore: c.isLoadingMore.value,
-                              hasItems: c.items.isNotEmpty,
-                              isSearching: c.searchQuery.value.isNotEmpty,
-                              onLoadMore: c.onLoadMore,
-                            ),
-                          ],
-                        ],
+                              if (c.summary.value.overdueCount > 0)
+                                Text(
+                                  '${c.summary.value.overdueCount} ${'task_overdue'.tr.toLowerCase()}',
+                                  style: const TextStyle(
+                                    color: AppColors.danger,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        if (c.items.isEmpty) const _TaskMessage(),
+                        ...c.items.map(
+                          (task) => TaskCard(task: task, controller: c),
+                        ),
+                      ],
+                      if (c.items.isNotEmpty && c.errorMessage.value.isNotEmpty)
+                        _TaskMessage(
+                          error: true,
+                          reason: c.errorMessage.value,
+                          onRetry: () => c.onLoadMore(),
+                        ),
+                      DocumentLoadMoreFooter(
+                        hasMore: c.hasMore.value,
+                        isLoadingMore: c.isLoadingMore.value,
+                        hasItems: c.items.isNotEmpty,
+                        isSearching: c.searchQuery.value.isNotEmpty,
+                        onLoadMore: c.onLoadMore,
                       ),
-                    );
-                  }),
+                    ],
+                  ),
                 ),
-              ],
-            );
-          },
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _SearchAndFilters extends StatelessWidget {
-  const _SearchAndFilters({required this.controller});
-
+/// Compact controls; all status choices remain available in the menu.
+class TaskListControls extends StatelessWidget {
+  const TaskListControls({super.key, required this.controller});
   final TaskController controller;
 
   @override
   Widget build(BuildContext context) {
+    final c = controller;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade300),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.search, color: Colors.grey, size: 20),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: controller.searchController,
-                    onChanged: (v) => controller.searchQuery.value = v,
-                    decoration: InputDecoration(
-                      hintText: 'search_tasks_hint'.tr,
-                      border: InputBorder.none,
-                      isDense: true,
+          Obx(
+            () => Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: AppColors.dividerMint,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Row(
+                children: [
+                  for (final scope in ['mine', 'accessible'])
+                    Expanded(
+                      child: Material(
+                        color: c.scope.value == scope
+                            ? Colors.white
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(10),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(10),
+                          onTap: () => c.scope.value = scope,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 13,
+                            ),
+                            child: Text(
+                              (scope == 'mine'
+                                      ? 'erp_task_mine'
+                                      : 'erp_task_accessible')
+                                  .tr,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: c.scope.value == scope
+                                    ? AppColors.primaryDark
+                                    : AppColors.muted,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-              ],
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: c.searchController,
+            onChanged: (value) => c.searchQuery.value = value,
+            textInputAction: TextInputAction.search,
+            style: const TextStyle(fontSize: 14),
+            decoration: InputDecoration(
+              hintText: 'erp_task_search'.tr,
+              hintStyle: const TextStyle(color: AppColors.muted, fontSize: 14),
+              prefixIcon: const Icon(
+                Icons.search,
+                color: AppColors.muted,
+                size: 22,
+              ),
+              suffixIcon: Obx(
+                () => c.searchQuery.value.isEmpty
+                    ? const SizedBox.shrink()
+                    : IconButton(
+                        tooltip: 'erp_task_clear_search'.tr,
+                        icon: const Icon(Icons.close, size: 19),
+                        onPressed: () {
+                          c.searchController.clear();
+                          c.searchQuery.value = '';
+                        },
+                      ),
+              ),
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 15,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.dividerMint),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.dividerMint),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.primary),
+              ),
             ),
           ),
           const SizedBox(height: 10),
-          Obx(() {
-            return SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: TaskListFilter.values.map((f) {
-                  final selected = controller.filter.value == f;
-                  return Padding(
-                    padding: const EdgeInsetsDirectional.only(end: 8),
-                    child: ChoiceChip(
-                      label: Text(controller.filterLabel(f)),
-                      selected: selected,
-                      onSelected: (_) => controller.filter.value = f,
-                      selectedColor:
-                          AppColors.primary.withValues(alpha: 0.18),
-                      labelStyle: TextStyle(
-                        color: selected
-                            ? AppColors.primaryDark
-                            : AppColors.body,
-                        fontWeight:
-                            selected ? FontWeight.w700 : FontWeight.w500,
-                        fontSize: 13,
+          Row(
+            children: [
+              Expanded(
+                child: Obx(
+                  () => PopupMenuButton<TaskListFilter>(
+                    tooltip: 'erp_task_filter_status'.tr,
+                    initialValue: c.filter.value,
+                    onSelected: (value) => c.filter.value = value,
+                    itemBuilder: (_) => TaskListFilter.values
+                        .map(
+                          (value) => CheckedPopupMenuItem(
+                            value: value,
+                            checked: c.filter.value == value,
+                            child: Row(
+                              children: [
+                                Expanded(child: Text(c.filterLabel(value))),
+                                if (!c.isLoading.value &&
+                                    c.errorMessage.value.isEmpty &&
+                                    _count(value, c.summary.value) != null)
+                                  Padding(
+                                    padding: const EdgeInsetsDirectional.only(
+                                      start: 16,
+                                    ),
+                                    child: Text(
+                                      '${_count(value, c.summary.value)}',
+                                      style: const TextStyle(
+                                        color: AppColors.muted,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        )
+                        .toList(),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 12,
                       ),
-                      backgroundColor: Colors.white,
-                      side: BorderSide(
-                        color: selected
-                            ? AppColors.primary
-                            : Colors.grey.shade300,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(color: AppColors.dividerMint),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.tune,
+                            size: 18,
+                            color: AppColors.primaryDark,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              c.filterLabel(c.filter.value),
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: AppColors.ink,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          const Icon(
+                            Icons.expand_more,
+                            size: 18,
+                            color: AppColors.muted,
+                          ),
+                        ],
                       ),
-                      materialTapTargetSize: MaterialTapTargetSize.padded,
-                      visualDensity: VisualDensity.compact,
                     ),
-                  );
-                }).toList(),
+                  ),
+                ),
               ),
-            );
-          }),
-          TaskEmployeeFilterBar(controller: controller),
+              Obx(
+                () => c.showEmployeeFilter
+                    ? const SizedBox(width: 10)
+                    : const SizedBox.shrink(),
+              ),
+              TaskEmployeeFilterBar(controller: c),
+            ],
+          ),
         ],
       ),
     );
   }
+
+  static int? _count(TaskListFilter filter, TaskSummary summary) =>
+      switch (filter) {
+        TaskListFilter.all => summary.totalItems,
+        TaskListFilter.open => summary.openCount,
+        TaskListFilter.working => summary.workingCount,
+        TaskListFilter.review => summary.pendingReviewCount,
+        TaskListFilter.completed => summary.completedCount,
+        TaskListFilter.overdue => summary.overdueCount,
+        _ => null,
+      };
 }
 
-class _SummaryStrip extends StatelessWidget {
-  const _SummaryStrip({required this.controller});
-
-  final TaskController controller;
-
+class _TaskMessage extends StatelessWidget {
+  const _TaskMessage({this.error = false, this.reason, this.onRetry});
+  final bool error;
+  final String? reason;
+  final VoidCallback? onRetry;
   @override
-  Widget build(BuildContext context) {
-    return Obx(() {
-      final s = controller.summary.value;
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-        child: Row(
-          children: [
-            _SummaryCell(label: 'tasks_open'.tr, value: '${s.openCount}'),
-            const SizedBox(width: 8),
-            _SummaryCell(
-              label: 'tasks_overdue'.tr,
-              value: '${s.overdueCount}',
-              emphasize: s.overdueCount > 0,
-            ),
-            const SizedBox(width: 8),
-            _SummaryCell(label: 'tasks_closed'.tr, value: '${s.closedCount}'),
-          ],
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(28, 48, 28, 24),
+    child: Column(
+      children: [
+        Icon(
+          error ? Icons.cloud_off_outlined : Icons.task_alt_outlined,
+          size: 44,
+          color: error ? AppColors.muted : AppColors.primary,
         ),
-      );
-    });
-  }
-}
-
-class _SummaryCell extends StatelessWidget {
-  const _SummaryCell({
-    required this.label,
-    required this.value,
-    this.emphasize = false,
-  });
-
-  final String label;
-  final String value;
-  final bool emphasize;
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-        decoration: BoxDecoration(
-          color: emphasize ? AppColors.dangerSoft : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: emphasize
-                ? AppColors.danger.withValues(alpha: 0.25)
-                : Colors.grey.shade200,
+        const SizedBox(height: 16),
+        Text(
+          (error ? 'failed_load_tasks' : 'no_tasks').tr,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: AppColors.ink,
+            fontWeight: FontWeight.w600,
+            fontSize: 16,
           ),
         ),
-        child: Column(
-          children: [
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: emphasize ? AppColors.danger : AppColors.ink,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: emphasize ? AppColors.danger : AppColors.muted,
-              ),
-            ),
-          ],
+        const SizedBox(height: 8),
+        Text(
+          error
+              ? (reason ?? 'erp_task_load_help'.tr)
+              : 'erp_task_empty_help'.tr,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: AppColors.muted,
+            fontSize: 13,
+            height: 1.5,
+          ),
         ),
-      ),
-    );
-  }
+        if (error) ...[
+          const SizedBox(height: 18),
+          OutlinedButton.icon(
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh, size: 18),
+            label: Text('erp_task_retry'.tr),
+          ),
+        ],
+      ],
+    ),
+  );
 }

@@ -45,7 +45,8 @@ class _AssignableUserPickerSheet extends StatefulWidget {
       _AssignableUserPickerSheetState();
 }
 
-class _AssignableUserPickerSheetState extends State<_AssignableUserPickerSheet> {
+class _AssignableUserPickerSheetState
+    extends State<_AssignableUserPickerSheet> {
   final _search = TextEditingController();
   final _focus = FocusNode();
   Timer? _debounce;
@@ -93,7 +94,11 @@ class _AssignableUserPickerSheetState extends State<_AssignableUserPickerSheet> 
   @override
   Widget build(BuildContext context) {
     final bottom = MediaQuery.viewInsetsOf(context).bottom;
-    final height = MediaQuery.sizeOf(context).height * 0.72;
+    final height =
+        (MediaQuery.sizeOf(context).height -
+            bottom -
+            MediaQuery.paddingOf(context).vertical) *
+        0.85;
 
     return Padding(
       padding: EdgeInsets.only(bottom: bottom),
@@ -168,14 +173,14 @@ class _AssignableUserPickerSheetState extends State<_AssignableUserPickerSheet> 
                           ),
                         )
                       : (_search.text.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.clear, size: 18),
-                              onPressed: () {
-                                _search.clear();
-                                _load('');
-                              },
-                            )
-                          : null),
+                            ? IconButton(
+                                icon: const Icon(Icons.clear, size: 18),
+                                onPressed: () {
+                                  _search.clear();
+                                  _load('');
+                                },
+                              )
+                            : null),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
                     borderSide: BorderSide(color: Colors.grey.shade300),
@@ -186,8 +191,10 @@ class _AssignableUserPickerSheetState extends State<_AssignableUserPickerSheet> 
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide:
-                        const BorderSide(color: AppColors.primary, width: 1.4),
+                    borderSide: const BorderSide(
+                      color: AppColors.primary,
+                      width: 1.4,
+                    ),
                   ),
                 ),
               ),
@@ -195,66 +202,71 @@ class _AssignableUserPickerSheetState extends State<_AssignableUserPickerSheet> 
             Expanded(
               child: _loading && _results.isEmpty
                   ? const Center(
-                      child: CircularProgressIndicator(color: AppColors.primary),
+                      child: CircularProgressIndicator(
+                        color: AppColors.primary,
+                      ),
                     )
                   : _results.isEmpty
-                      ? Center(
-                          child: Text(
-                            taskNoUsersFound,
-                            style: const TextStyle(color: AppColors.muted),
+                  ? Center(
+                      child: Text(
+                        taskNoUsersFound,
+                        style: const TextStyle(color: AppColors.muted),
+                      ),
+                    )
+                  : ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(8, 0, 8, 16),
+                      itemCount: _results.length,
+                      separatorBuilder: (_, __) =>
+                          Divider(height: 1, color: Colors.grey.shade200),
+                      itemBuilder: (context, i) {
+                        final user = _results[i];
+                        final selected =
+                            widget.initiallySelected?.email.toLowerCase() ==
+                            user.email.toLowerCase();
+                        return ListTile(
+                          selected: selected,
+                          selectedTileColor: AppColors.primary.withValues(
+                            alpha: 0.08,
                           ),
-                        )
-                      : ListView.separated(
-                          padding: const EdgeInsets.fromLTRB(8, 0, 8, 16),
-                          itemCount: _results.length,
-                          separatorBuilder: (_, __) =>
-                              Divider(height: 1, color: Colors.grey.shade200),
-                          itemBuilder: (context, i) {
-                            final user = _results[i];
-                            final selected =
-                                widget.initiallySelected?.email.toLowerCase() ==
-                                    user.email.toLowerCase();
-                            return ListTile(
-                              selected: selected,
-                              selectedTileColor:
-                                  AppColors.primary.withValues(alpha: 0.08),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          leading: CircleAvatar(
+                            backgroundColor: AppColors.card,
+                            child: Text(
+                              user.displayName.isNotEmpty
+                                  ? user.displayName[0].toUpperCase()
+                                  : '?',
+                              style: const TextStyle(
+                                color: AppColors.primaryDark,
+                                fontWeight: FontWeight.w800,
                               ),
-                              leading: CircleAvatar(
-                                backgroundColor: AppColors.card,
-                                child: Text(
-                                  user.displayName.isNotEmpty
-                                      ? user.displayName[0].toUpperCase()
-                                      : '?',
-                                  style: const TextStyle(
-                                    color: AppColors.primaryDark,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                              ),
-                              title: Text(
-                                user.displayName,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.ink,
-                                ),
-                              ),
-                              subtitle: Text(
-                                user.email,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.muted,
-                                ),
-                              ),
-                              trailing: selected
-                                  ? const Icon(Icons.check_circle,
-                                      color: AppColors.primary)
-                                  : null,
-                              onTap: () => Navigator.pop(context, user),
-                            );
-                          },
-                        ),
+                            ),
+                          ),
+                          title: Text(
+                            user.displayName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.ink,
+                            ),
+                          ),
+                          subtitle: Text(
+                            user.email,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.muted,
+                            ),
+                          ),
+                          trailing: selected
+                              ? const Icon(
+                                  Icons.check_circle,
+                                  color: AppColors.primary,
+                                )
+                              : null,
+                          onTap: () => Navigator.pop(context, user),
+                        );
+                      },
+                    ),
             ),
           ],
         ),

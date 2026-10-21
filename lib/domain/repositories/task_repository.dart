@@ -1,10 +1,10 @@
 import '../entities/task.dart';
-import '../results/action_result.dart';
 
 abstract class TaskRepository {
-  Future<TaskListResponse> fetchMyTasks({
+  Future<TaskListResponse> fetchTasks({
     required String token,
-    String status = 'Open',
+    String scope = 'mine',
+    String status = 'Active',
     String? date,
     bool includeOverdue = true,
     String? allocatedTo,
@@ -12,28 +12,23 @@ abstract class TaskRepository {
     int limit = 20,
     int offset = 0,
   });
-
   Future<TaskDetailResponse> fetchTaskDetail({
     required String token,
     required String name,
   });
-
-  Future<List<AssignableUser>> getAssignableUsers({
+  Future<TaskOptions> getOptions({
     required String token,
+    String kind = 'all',
     String? searchText,
+    String? company,
   });
-
-  Future<ActionResult> createTodo({
-    required String token,
-    required String description,
-    required String allocatedTo,
-    required String date,
-    required String priority,
-  });
-
-  Future<ActionResult> updateTaskStatus({
+  Future<ErpTask> createTask({required String token, required TaskInput input});
+  Future<ErpTask> updateTask({
     required String token,
     required String name,
-    required String status,
+    required String modified,
+    TaskInput? input,
+    String? status,
+    double? progress,
   });
 }

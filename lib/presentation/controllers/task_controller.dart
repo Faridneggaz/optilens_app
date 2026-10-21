@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -5,177 +7,155 @@ import '../../app/routes/app_routes.dart';
 import '../../core/services/session_service.dart';
 import '../../domain/entities/task.dart';
 import '../../domain/failures/failures.dart';
-import '../../domain/results/action_result.dart';
-import '../../domain/usecases/usecases.dart';
+import '../../domain/usecases/task_usecases.dart';
 import '../../utils/error_feedback.dart';
 import 'session_controller.dart';
 
-enum TaskListFilter { today, open, closed, all }
+enum TaskListFilter {
+  active,
+  today,
+  open,
+  working,
+  review,
+  completed,
+  overdue,
+  all,
+}
 
 class TaskController extends GetxController {
-  TaskController({TaskUseCases? tasks})
-      : _tasks = tasks ?? Get.find<TaskUseCases>();
-
+  TaskController({TaskUseCases? tasks, String Function()? tokenProvider})
+    : _tasks = tasks ?? Get.find<TaskUseCases>(),
+      _tokenProvider = tokenProvider;
   final TaskUseCases _tasks;
-
-  final items = <TodoTask>[].obs;
-  final summary = const TaskSummary(
-    totalItems: 0,
-    openCount: 0,
-    closedCount: 0,
-    overdueCount: 0,
-  ).obs;
+  final String Function()? _tokenProvider;
+  final items = <ErpTask>[].obs;
+  final summary = const TaskSummary().obs;
   final listDate = ''.obs;
   final listUser = ''.obs;
   final canCreate = false.obs;
   final isLoading = true.obs;
   final isLoadingMore = false.obs;
-  final hasMore = true.obs;
+  final hasMore = false.obs;
+  final errorMessage = ''.obs;
   final searchQuery = ''.obs;
-  final filter = TaskListFilter.today.obs;
+  final scope = 'mine'.obs;
+  final filter = TaskListFilter.active.obs;
   final allocatedToFilter = ''.obs;
-  final knownAssignees = <String>[].obs;
-  final updatingNames = <String>{}.obs;
-
   final searchController = TextEditingController();
   final allocatedToController = TextEditingController();
-  Worker? _debounce;
+  final List<Worker> _workers = [];
   int _offset = 0;
-  static const int _limit = 20;
+  int _generation = 0;
+  String get _token =>
+      _tokenProvider?.call() ?? Get.find<SessionService>().authToken;
+  String get currentUserEmail => listUser.value.isNotEmpty
+      ? listUser.value
+      : Get.find<SessionService>().userCode.trim();
+  bool get showEmployeeFilter => scope.value == 'accessible';
+  String get displayDate => listDate.value;
 
-  String get _token => Get.find<SessionService>().authToken;
-
-  String get currentUserEmail {
-    if (listUser.value.trim().isNotEmpty) return listUser.value.trim();
-    return Get.find<SessionService>().userCode.trim();
-  }
-
-  bool get showEmployeeFilter {
-    if (canCreate.value) return true;
-    return knownAssignees.length > 1;
-  }
-
-  String get displayDate {
-    if (listDate.value.isNotEmpty) return listDate.value;
-    final now = DateTime.now();
-    return '${now.year.toString().padLeft(4, '0')}-'
-        '${now.month.toString().padLeft(2, '0')}-'
-        '${now.day.toString().padLeft(2, '0')}';
-  }
-
-  bool isAssignedToCurrentUser(TodoTask task) {
-    final me = currentUserEmail.toLowerCase();
-    if (me.isEmpty) return true;
-    final allocated = task.allocatedTo.trim().toLowerCase();
-    if (allocated.isEmpty) return true;
-    return allocated == me;
+  AssignableUser? get currentAssignableUser {
+    final email = currentUserEmail;
+    if (email.isEmpty) return null;
+    final name = Get.isRegistered<SessionController>()
+        ? Get.find<SessionController>().userName.value
+        : email;
+    return AssignableUser(email: email, fullName: name);
   }
 
   @override
   void onInit() {
     super.onInit();
-    _debounce = debounce(
-      searchQuery,
-      (_) => onRefresh(),
-      time: const Duration(milliseconds: 400),
+    _workers.add(
+      debounce(
+        searchQuery,
+        (_) => onRefresh(),
+        time: const Duration(milliseconds: 350),
+      ),
     );
-    ever(filter, (_) => onRefresh());
-    onRefresh();
+    _workers.add(ever(filter, (_) => onRefresh()));
+    _workers.add(
+      ever(scope, (value) {
+        if (value == 'mine') {
+          allocatedToFilter.value = '';
+          allocatedToController.clear();
+        }
+        onRefresh();
+      }),
+    );
   }
 
   @override
   void onClose() {
-    _debounce?.dispose();
+    for (final worker in _workers) {
+      worker.dispose();
+    }
     searchController.dispose();
     allocatedToController.dispose();
     super.onClose();
   }
 
   Future<void> onRefresh() async {
-    isLoading.value = true;
-    hasMore.value = true;
+    final generation = ++_generation;
     _offset = 0;
+    hasMore.value = false;
     items.clear();
-    await fetchTasks();
+    summary.value = const TaskSummary();
+    errorMessage.value = '';
+    isLoading.value = true;
+    isLoadingMore.value = false;
+    await _fetch(generation);
   }
 
-  /// List refresh that does not hold the status-update lock.
-  Future<void> softRefresh() async {
-    hasMore.value = true;
-    _offset = 0;
-    await fetchTasks();
-  }
+  Future<void> softRefresh() => onRefresh();
 
   Future<void> onLoadMore() async {
-    if (!isLoadingMore.value && hasMore.value) {
-      await fetchTasks(isLoadMore: true);
-    }
+    if (isLoading.value || isLoadingMore.value || !hasMore.value) return;
+    errorMessage.value = '';
+    isLoadingMore.value = true;
+    await _fetch(_generation, more: true);
   }
 
-  Future<void> fetchTasks({bool isLoadMore = false}) async {
+  Future<void> _fetch(int generation, {bool more = false}) async {
     try {
-      if (isLoadMore) {
-        isLoadingMore.value = true;
-      } else if (items.isEmpty) {
-        isLoading.value = true;
-      }
-
-      final params = _queryForFilter(filter.value);
-      final response = await _tasks.fetchMyTasks(
+      final response = await _tasks.fetchTasks(
         token: _token,
-        status: params.status,
-        date: params.date,
-        includeOverdue: params.includeOverdue,
-        allocatedTo: allocatedToFilter.value.trim().isEmpty
+        scope: scope.value,
+        status: _status(filter.value),
+        date: filter.value == TaskListFilter.today ? 'today' : null,
+        allocatedTo: allocatedToFilter.value.isEmpty
             ? null
-            : allocatedToFilter.value.trim(),
-        searchText: searchQuery.value.trim().isEmpty
-            ? null
-            : searchQuery.value.trim(),
-        limit: _limit,
+            : allocatedToFilter.value,
+        searchText: searchQuery.value.trim(),
         offset: _offset,
       );
-
+      if (generation != _generation || isClosed) return;
       summary.value = response.summary;
+      listUser.value = response.user;
+      listDate.value = response.date;
       canCreate.value = response.canCreate;
-      if (response.user.isNotEmpty) {
-        listUser.value = response.user;
-      }
-      if (response.date.isNotEmpty) {
-        listDate.value = response.date;
-      }
-
-      if (isLoadMore) {
-        items.addAll(response.tasks);
+      if (more) {
+        final known = items.map((t) => t.name).toSet();
+        items.addAll(response.tasks.where((t) => !known.contains(t.name)));
       } else {
-        items.value = response.tasks;
+        items.assignAll(response.tasks);
       }
-
-      _mergeKnownAssignees(response.tasks);
-
+      _offset += response.tasks.length;
       hasMore.value = response.hasMore;
-      if (response.tasks.isNotEmpty) {
-        _offset += response.tasks.length;
+    } catch (error) {
+      if (generation != _generation || isClosed) return;
+      errorMessage.value = error is AccessDeniedException
+          ? 'error_access_denied'.tr
+          : ErrorFeedback.message(error, fallbackKey: 'failed_load_tasks');
+      if (error is AccessDeniedException || error is InvalidSessionException) {
+        canCreate.value = false;
       }
-    } catch (e) {
-      if (e is InvalidSessionException || e is AccessDeniedException) {
-        return;
-      }
-      ErrorFeedback.snackbar(e, fallbackKey: 'failed_load_tasks');
     } finally {
-      isLoading.value = false;
-      isLoadingMore.value = false;
+      if (generation == _generation && !isClosed) {
+        isLoading.value = false;
+        isLoadingMore.value = false;
+      }
     }
-  }
-
-  void _mergeKnownAssignees(List<TodoTask> tasks) {
-    final next = <String>{...knownAssignees};
-    for (final t in tasks) {
-      final email = t.allocatedTo.trim();
-      if (email.isNotEmpty) next.add(email);
-    }
-    final sorted = next.toList()..sort();
-    knownAssignees.value = sorted;
   }
 
   void setAllocatedToFilter(String? email) {
@@ -190,119 +170,68 @@ class TaskController extends GetxController {
 
   Future<List<AssignableUser>> searchAssignableUsers(String query) async {
     try {
-      return await _tasks.getAssignableUsers(
+      return (await _tasks.getOptions(
         token: _token,
-        searchText: query.trim(),
-      );
-    } catch (e) {
-      if (e is InvalidSessionException || e is AccessDeniedException) {
-        return const [];
+        kind: 'users',
+        searchText: query,
+      )).users;
+    } catch (error) {
+      if (error is! AccessDeniedException &&
+          error is! InvalidSessionException) {
+        ErrorFeedback.snackbar(
+          error,
+          fallbackKey: 'failed_load_assignable_users',
+        );
       }
-      ErrorFeedback.snackbar(e, fallbackKey: 'failed_load_assignable_users');
       return const [];
     }
   }
 
-  AssignableUser? get currentAssignableUser {
-    final email = currentUserEmail;
-    if (email.isEmpty) return null;
-    String fullName = email;
-    if (Get.isRegistered<SessionController>()) {
-      final name = Get.find<SessionController>().userName.value.trim();
-      if (name.isNotEmpty) fullName = name;
-    }
-    return AssignableUser(email: email, fullName: fullName);
+  Future<TaskOptions> loadOptions({
+    String kind = 'all',
+    String? search,
+    String? company,
+  }) => _tasks.getOptions(
+    token: _token,
+    kind: kind,
+    searchText: search,
+    company: company,
+  );
+
+  Future<ErpTask> saveTask(TaskInput input, {ErpTask? task}) async {
+    final saved = task == null
+        ? await _tasks.createTask(token: _token, input: input)
+        : await _tasks.updateTask(
+            token: _token,
+            name: task.name,
+            modified: task.modified,
+            input: input,
+          );
+    unawaited(onRefresh());
+    return saved;
   }
 
-  Future<ActionResult> createTodo({
-    required String description,
-    required String allocatedTo,
-    required String date,
-    required String priority,
-  }) async {
-    final result = await _tasks.createTodo(
-      token: _token,
-      description: description,
-      allocatedTo: allocatedTo,
-      date: date,
-      priority: priority,
-    );
-    if (result.isSuccess) {
-      await onRefresh();
-    }
-    return result;
-  }
+  void openDetail(ErpTask task) =>
+      Get.toNamed(AppRoutes.taskDetail, arguments: {'name': task.name});
 
-  Future<ActionResult> markDone(TodoTask task) =>
-      _setStatus(task, 'Closed');
+  static String _status(TaskListFilter filter) => switch (filter) {
+    TaskListFilter.active || TaskListFilter.today => 'Active',
+    TaskListFilter.open => 'Open',
+    TaskListFilter.working => 'Working',
+    TaskListFilter.review => 'Pending Review',
+    TaskListFilter.completed => 'Completed',
+    TaskListFilter.overdue => 'Overdue',
+    TaskListFilter.all => 'All',
+  };
 
-  Future<ActionResult> reopen(TodoTask task) =>
-      _setStatus(task, 'Open');
-
-  Future<ActionResult> _setStatus(TodoTask task, String status) async {
-    if (updatingNames.contains(task.name)) {
-      return ActionResult.failure('busy');
-    }
-    updatingNames.add(task.name);
-    updatingNames.refresh();
-    try {
-      final result = await _tasks.updateTaskStatus(
-        token: _token,
-        name: task.name,
-        status: status,
-      );
-      if (result.isSuccess) {
-        task.status = status;
-        // Drop from current filtered list when it no longer matches.
-        if (status == 'Closed' &&
-            filter.value != TaskListFilter.closed &&
-            filter.value != TaskListFilter.all) {
-          items.removeWhere((t) => t.name == task.name);
-        } else if (status == 'Open' &&
-            filter.value == TaskListFilter.closed) {
-          items.removeWhere((t) => t.name == task.name);
-        } else {
-          items.refresh();
-        }
-      }
-      return result;
-    } finally {
-      updatingNames.remove(task.name);
-      updatingNames.refresh();
-      // Refresh counts after unlock so a slow list call cannot freeze the CTA.
-      softRefresh();
-    }
-  }
-
-  void openDetail(TodoTask task) {
-    Get.toNamed(AppRoutes.taskDetail, arguments: {'name': task.name});
-  }
-
-  static ({String status, String? date, bool includeOverdue}) _queryForFilter(
-    TaskListFilter filter,
-  ) {
-    switch (filter) {
-      case TaskListFilter.today:
-        return (status: 'Open', date: 'today', includeOverdue: true);
-      case TaskListFilter.open:
-        return (status: 'Open', date: null, includeOverdue: false);
-      case TaskListFilter.closed:
-        return (status: 'Closed', date: null, includeOverdue: false);
-      case TaskListFilter.all:
-        return (status: 'All', date: null, includeOverdue: true);
-    }
-  }
-
-  String filterLabel(TaskListFilter value) {
-    switch (value) {
-      case TaskListFilter.today:
-        return 'tasks_filter_today'.tr;
-      case TaskListFilter.open:
-        return 'tasks_filter_open'.tr;
-      case TaskListFilter.closed:
-        return 'tasks_filter_closed'.tr;
-      case TaskListFilter.all:
-        return 'tasks_filter_all'.tr;
-    }
-  }
+  String filterLabel(TaskListFilter value) => switch (value) {
+    TaskListFilter.active => 'erp_task_active'.tr,
+    TaskListFilter.today => 'tasks_filter_today'.tr,
+    TaskListFilter.open => 'erp_task_open'.tr,
+    TaskListFilter.working => 'erp_task_working'.tr,
+    TaskListFilter.review => 'erp_task_review'.tr,
+    TaskListFilter.completed => 'erp_task_completed'.tr,
+    TaskListFilter.overdue => 'task_overdue'.tr,
+    TaskListFilter.all => 'tasks_filter_all'.tr,
+  };
 }

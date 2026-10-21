@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../widgets/header.dart';
-import '../../utils/announcement_utils.dart';
+import '../../widgets/announcement/announcement_card.dart';
 import '../../../presentation/controllers/dashboard_controller.dart';
 import '../../../presentation/controllers/language_controller.dart';
 import '../../../app/routes/app_routes.dart';

@@ -1,7 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../widgets/header.dart';
-import '../../utils/invoice_utils.dart';
+import '../../widgets/invoice/invoice_list.dart';
 import '../../../presentation/controllers/invoice_controller.dart';
 import '../../../presentation/controllers/language_controller.dart';
 import '../../../app/routes/app_routes.dart';

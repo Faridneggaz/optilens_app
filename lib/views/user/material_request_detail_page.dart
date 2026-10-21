@@ -111,6 +111,7 @@ class MaterialRequestDetailPage extends StatelessWidget {
                                 code: item.itemCode.isNotEmpty
                                     ? item.itemCode
                                     : item.itemName,
+                                name: item.itemName,
                                 qty: item.qty.toString(),
                               );
                             }),

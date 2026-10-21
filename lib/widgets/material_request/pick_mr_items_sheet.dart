@@ -130,20 +130,21 @@ class _PickMrItemsSheetState extends State<PickMrItemsSheet> {
   @override
   Widget build(BuildContext context) {
     final media = MediaQuery.of(context);
-    final bottomInset = media.viewInsets.bottom;
+    final keyboard = media.viewInsets.bottom;
+    final bottomSafe = keyboard > 0 ? 0.0 : media.padding.bottom;
+    final sheetHeight =
+        media.size.height - keyboard - media.padding.top - bottomSafe;
     final selected = widget.selectedItems;
 
     return Padding(
-      padding: EdgeInsets.only(bottom: bottomInset),
+      padding: EdgeInsets.only(bottom: keyboard),
       child: Material(
         color: const Color(0xFFF3FAF8),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         clipBehavior: Clip.antiAlias,
-        child: SafeArea(
-          top: false,
-          child: SizedBox(
-            height: media.size.height * 0.92,
-            child: Column(
+        child: SizedBox(
+          height: sheetHeight,
+          child: Column(
               children: [
                 const SizedBox(height: 10),
                 Container(
@@ -251,8 +252,19 @@ class _PickMrItemsSheetState extends State<PickMrItemsSheet> {
                     onChanged: _onSearchChanged,
                   ),
                 ),
-                if (_pending != null) _buildQtyBar(),
-                if (selected.isNotEmpty) _buildSelectedStrip(selected),
+                if (_pending != null || selected.isNotEmpty)
+                  Flexible(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (_pending != null) _buildQtyBar(),
+                          if (selected.isNotEmpty)
+                            _buildSelectedStrip(selected),
+                        ],
+                      ),
+                    ),
+                  ),
                 Expanded(child: _buildResults()),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
@@ -284,7 +296,6 @@ class _PickMrItemsSheetState extends State<PickMrItemsSheet> {
             ),
           ),
         ),
-      ),
     );
   }
 
@@ -322,16 +333,16 @@ class _PickMrItemsSheetState extends State<PickMrItemsSheet> {
                         fontWeight: FontWeight.w800,
                         fontSize: 15,
                         color: AppColors.ink,
+                        height: 1.3,
                       ),
                     ),
                     if (name.isNotEmpty && name != code)
                       Text(
                         name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           color: AppColors.muted,
                           fontSize: 12,
+                          height: 1.3,
                         ),
                       ),
                   ],
@@ -433,45 +444,38 @@ class _PickMrItemsSheetState extends State<PickMrItemsSheet> {
             ),
           ),
           const SizedBox(height: 8),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 168),
-            child: ListView(
-              shrinkWrap: true,
-              padding: EdgeInsets.zero,
-              children: selected.map((item) {
-                final code = '${item['item_code'] ?? ''}';
-                final name = '${item['item_name'] ?? ''}'.trim();
-                final qty = _qtyOf(code);
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              code.isNotEmpty ? code : name,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w800,
-                                fontSize: 13,
-                              ),
-                            ),
-                            if (name.isNotEmpty && name != code)
-                              Text(
-                                name,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: AppColors.muted,
-                                ),
-                              ),
-                          ],
-                        ),
+          ...selected.map((item) {
+            final code = '${item['item_code'] ?? ''}';
+            final name = '${item['item_name'] ?? ''}'.trim();
+            final label = code.isNotEmpty ? code : name;
+            final qty = _qtyOf(code);
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
+                      height: 1.3,
+                    ),
+                  ),
+                  if (name.isNotEmpty && name != label) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      name,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        height: 1.3,
+                        color: AppColors.muted,
                       ),
+                    ),
+                  ],
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
                       _QtyField(
                         value: qty,
                         onChanged: (v) {
@@ -490,10 +494,10 @@ class _PickMrItemsSheetState extends State<PickMrItemsSheet> {
                       ),
                     ],
                   ),
-                );
-              }).toList(),
-            ),
-          ),
+                ],
+              ),
+            );
+          }),
         ],
       ),
     );
@@ -589,6 +593,7 @@ class _PickMrItemsSheetState extends State<PickMrItemsSheet> {
                           style: const TextStyle(
                             fontWeight: FontWeight.w800,
                             fontSize: 15,
+                            height: 1.3,
                             color: AppColors.ink,
                           ),
                         ),
@@ -596,10 +601,9 @@ class _PickMrItemsSheetState extends State<PickMrItemsSheet> {
                           const SizedBox(height: 2),
                           Text(
                             name,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               fontSize: 13,
+                              height: 1.3,
                               color: AppColors.muted,
                             ),
                           ),

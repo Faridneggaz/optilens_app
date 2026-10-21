@@ -54,14 +54,43 @@ class DrawerScreen extends StatelessWidget {
                       },
                     ),
                     if (isUser)
-                      ListTile(
-                        leading: const Icon(Icons.checklist_rtl,
-                            color: AppColors.menuTeal),
-                        title: Text('nav_my_tasks'.tr),
-                        onTap: () {
-                          ZoomDrawer.of(context)?.close();
-                          onSelectPage(5);
-                        },
+                      Theme(
+                        data: Theme.of(context).copyWith(
+                          dividerColor: Colors.transparent,
+                        ),
+                        child: ExpansionTile(
+                          initiallyExpanded: true,
+                          leading: const Icon(Icons.person_outline,
+                              color: AppColors.menuTeal),
+                          title: Text(
+                            'nav_my_space'.tr,
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                          iconColor: AppColors.menuTeal,
+                          collapsedIconColor: AppColors.menuTeal,
+                          childrenPadding: const EdgeInsetsDirectional.only(
+                              start: 12, end: 8),
+                          children: [
+                            ListTile(
+                              leading: const Icon(Icons.checklist_rtl,
+                                  color: AppColors.menuTeal),
+                              title: Text('nav_my_tasks'.tr),
+                              onTap: () {
+                                ZoomDrawer.of(context)?.close();
+                                onSelectPage(5);
+                              },
+                            ),
+                            ListTile(
+                              leading: const Icon(Icons.badge_outlined,
+                                  color: AppColors.menuTeal),
+                              title: Text('nav_job_profile'.tr),
+                              onTap: () {
+                                ZoomDrawer.of(context)?.close();
+                                Get.toNamed(AppRoutes.jobProfile);
+                              },
+                            ),
+                          ],
+                        ),
                       ),
                     if (isUser)
                       Theme(
@@ -106,6 +135,57 @@ class DrawerScreen extends StatelessWidget {
                               onTap: () {
                                 ZoomDrawer.of(context)?.close();
                                 onSelectPage(3);
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    if (isUser)
+                      Theme(
+                        data: Theme.of(context).copyWith(
+                          dividerColor: Colors.transparent,
+                        ),
+                        child: ExpansionTile(
+                          initiallyExpanded: true,
+                          leading: const Icon(Icons.shopping_bag_outlined,
+                              color: AppColors.menuTeal),
+                          title: Text(
+                            'nav_manque'.tr,
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                          iconColor: AppColors.menuTeal,
+                          collapsedIconColor: AppColors.menuTeal,
+                          childrenPadding: const EdgeInsetsDirectional.only(
+                              start: 12, end: 8),
+                          children: [
+                            ListTile(
+                              leading: const Icon(Icons.playlist_add_check,
+                                  color: AppColors.menuTeal),
+                              title: Text('manque_commandes_title'.tr),
+                              onTap: () {
+                                ZoomDrawer.of(context)?.close();
+                                Get.toNamed(AppRoutes.commandesManque);
+                              },
+                            ),
+                            ListTile(
+                              leading: const Icon(Icons.receipt_long_outlined,
+                                  color: AppColors.menuTeal),
+                              title: Text('manque_factures_title'.tr),
+                              onTap: () {
+                                ZoomDrawer.of(context)?.close();
+                                Get.toNamed(AppRoutes.facturesAcheteur);
+                              },
+                            ),
+                            ListTile(
+                              leading: const Icon(Icons.payments_outlined,
+                                  color: AppColors.menuTeal),
+                              title: Text('manque_factures_rembourser'.tr),
+                              onTap: () {
+                                ZoomDrawer.of(context)?.close();
+                                Get.toNamed(
+                                  AppRoutes.facturesAcheteur,
+                                  arguments: {'rembourser': true},
+                                );
                               },
                             ),
                           ],

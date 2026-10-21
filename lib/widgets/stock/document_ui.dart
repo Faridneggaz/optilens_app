@@ -264,53 +264,68 @@ class DocumentItemLine extends StatelessWidget {
     super.key,
     required this.code,
     required this.qty,
+    this.name = '',
     this.qtyWidget,
     this.trailing,
   });
 
   final String code;
   final String qty;
+  final String name;
   final Widget? qtyWidget;
   final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
+    final extra = name.trim();
+    final showName = extra.isNotEmpty && extra != code.trim();
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.fromLTRB(12, 10, 8, 8),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey.shade200),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Text(
-              code,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontWeight: FontWeight.w700,
-                color: AppColors.ink,
-                fontSize: 14,
-              ),
+          Text(
+            code,
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              color: AppColors.ink,
+              fontSize: 14,
+              height: 1.3,
             ),
           ),
-          const SizedBox(width: 12),
-          qtyWidget ??
-              Text(
-                qty,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.primary,
-                  fontSize: 15,
-                ),
+          if (showName) ...[
+            const SizedBox(height: 2),
+            Text(
+              extra,
+              style: const TextStyle(
+                color: AppColors.muted,
+                fontSize: 12,
+                height: 1.3,
               ),
-          if (trailing != null) ...[
-            const SizedBox(width: 4),
-            trailing!,
+            ),
           ],
+          const SizedBox(height: 6),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              qtyWidget ??
+                  Text(
+                    qty,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.primary,
+                      fontSize: 15,
+                    ),
+                  ),
+              if (trailing != null) trailing!,
+            ],
+          ),
         ],
       ),
     );

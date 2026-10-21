@@ -11,6 +11,11 @@ import '../../presentation/controllers/order_controller.dart';
 import '../../presentation/controllers/stock_entry_details_controller.dart';
 import '../../presentation/controllers/task_controller.dart';
 import '../../presentation/controllers/task_detail_controller.dart';
+import '../../presentation/controllers/job_profile_controller.dart';
+import '../../presentation/controllers/commande_manque_controller.dart';
+import '../../presentation/controllers/commande_manque_detail_controller.dart';
+import '../../presentation/controllers/facture_acheteur_controller.dart';
+import '../../presentation/controllers/facture_acheteur_form_controller.dart';
 
 class InvoiceDetailBinding extends Bindings {
   @override
@@ -105,6 +110,56 @@ class TaskBinding extends Bindings {
 class TaskDetailBinding extends Bindings {
   @override
   void dependencies() {
+    TaskBinding().dependencies();
+    if (Get.isRegistered<TaskDetailController>()) {
+      Get.delete<TaskDetailController>(force: true);
+    }
     Get.put(TaskDetailController());
+  }
+}
+
+class JobProfileBinding extends Bindings {
+  @override
+  void dependencies() {
+    Get.put(JobProfileController());
+  }
+}
+
+class CommandeManqueBinding extends Bindings {
+  @override
+  void dependencies() {
+    if (!Get.isRegistered<CommandeManqueController>()) {
+      Get.lazyPut(() => CommandeManqueController());
+    }
+  }
+}
+
+class CommandeManqueDetailBinding extends Bindings {
+  @override
+  void dependencies() {
+    if (Get.isRegistered<CommandeManqueDetailController>()) {
+      Get.delete<CommandeManqueDetailController>(force: true);
+    }
+    Get.put(CommandeManqueDetailController());
+  }
+}
+
+class FactureAcheteurBinding extends Bindings {
+  @override
+  void dependencies() {
+    if (Get.isRegistered<FactureAcheteurController>()) {
+      Get.delete<FactureAcheteurController>(force: true);
+    }
+    Get.put(FactureAcheteurController());
+  }
+}
+
+class FactureAcheteurFormBinding extends Bindings {
+  @override
+  void dependencies() {
+    if (Get.isRegistered<FactureAcheteurFormController>()) {
+      Get.delete<FactureAcheteurFormController>(force: true);
+    }
+    Get.put(FactureAcheteurFormController());
   }
 }

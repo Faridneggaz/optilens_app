@@ -1,88 +1,147 @@
 class TaskSummary {
   const TaskSummary({
-    required this.totalItems,
-    required this.openCount,
-    required this.closedCount,
-    required this.overdueCount,
+    this.totalItems = 0,
+    this.openCount = 0,
+    this.workingCount = 0,
+    this.pendingReviewCount = 0,
+    this.completedCount = 0,
+    this.cancelledCount = 0,
+    this.overdueCount = 0,
   });
-
   final int totalItems;
   final int openCount;
-  final int closedCount;
+  final int workingCount;
+  final int pendingReviewCount;
+  final int completedCount;
+  final int cancelledCount;
   final int overdueCount;
 }
 
-class TodoTask {
-  TodoTask({
+class AssignableUser {
+  const AssignableUser({required this.email, required this.fullName});
+  final String email;
+  final String fullName;
+  String get displayName => fullName.trim().isEmpty ? email : fullName;
+  String get subtitle => email;
+}
+
+class ErpTask {
+  const ErpTask({
     required this.name,
-    required this.description,
-    required this.status,
-    required this.priority,
-    required this.date,
-    required this.allocatedTo,
-    required this.assignedBy,
-    required this.referenceType,
-    required this.referenceName,
-    required this.creation,
-    required this.modified,
+    required this.subject,
+    this.description = '',
+    this.descriptionText = '',
+    this.status = 'Open',
+    this.priority = 'Medium',
+    this.progress = 0,
+    this.startDate = '',
+    this.endDate = '',
+    this.company = '',
+    this.project = '',
+    this.department = '',
+    this.owner = '',
+    this.modified = '',
+    this.isOverdue = false,
+    this.canWrite = false,
+    this.assignees = const [],
+    this.previousAssignees = const [],
+    this.allowedStatuses = const [],
   });
-
   final String name;
-  String description;
-  String status;
-  String priority;
-  String date;
-  String allocatedTo;
-  String assignedBy;
-  String referenceType;
-  String referenceName;
-  String creation;
-  String modified;
+  final String subject;
+  final String description;
+  final String descriptionText;
+  final String status;
+  final String priority;
+  final double progress;
+  final String startDate;
+  final String endDate;
+  final String company;
+  final String project;
+  final String department;
+  final String owner;
+  final String modified;
+  final bool isOverdue;
+  final bool canWrite;
+  final List<AssignableUser> assignees;
+  final List<AssignableUser> previousAssignees;
+  final List<String> allowedStatuses;
+  bool get isFinished => status == 'Completed' || status == 'Cancelled';
+}
 
-  bool get isOpen {
-    final s = status.toLowerCase().trim();
-    return s == 'open' || s == 'opened' || s.isEmpty;
-  }
+/// Null description preserves an existing rich-text description when editing.
+class TaskInput {
+  const TaskInput({
+    required this.subject,
+    this.description,
+    this.company = '',
+    this.project = '',
+    this.startDate = '',
+    this.endDate = '',
+    this.priority = 'Medium',
+    this.progress = 0,
+    this.assignees = const [],
+    this.updateAssignments = true,
+  });
+  final String subject;
+  final String? description;
+  final String company;
+  final String project;
+  final String startDate;
+  final String endDate;
+  final String priority;
+  final double progress;
+  final List<String> assignees;
+  final bool updateAssignments;
+}
 
-  bool get isClosed {
-    final s = status.toLowerCase().trim();
-    return s == 'closed' || s == 'cancelled' || s == 'canceled';
-  }
+class TaskProject {
+  const TaskProject({
+    required this.name,
+    required this.title,
+    this.company = '',
+  });
+  final String name;
+  final String title;
+  final String company;
+}
 
-  bool get isOverdue {
-    if (!isOpen || date.isEmpty) return false;
-    final due = DateTime.tryParse(date);
-    if (due == null) return false;
-    final today = DateTime.now();
-    final todayDate = DateTime(today.year, today.month, today.day);
-    final dueDate = DateTime(due.year, due.month, due.day);
-    return dueDate.isBefore(todayDate);
-  }
-
-  bool get hasReference =>
-      referenceType.trim().isNotEmpty && referenceName.trim().isNotEmpty;
+class TaskOptions {
+  const TaskOptions({
+    this.canCreate = false,
+    this.statuses = const [],
+    this.priorities = const [],
+    this.companies = const [],
+    this.users = const [],
+    this.projects = const [],
+  });
+  final bool canCreate;
+  final List<String> statuses;
+  final List<String> priorities;
+  final List<String> companies;
+  final List<AssignableUser> users;
+  final List<TaskProject> projects;
 }
 
 class TaskListResponse {
   const TaskListResponse({
     required this.user,
     required this.date,
-    required this.status,
     required this.summary,
     required this.tasks,
-    this.isSearch = false,
-    this.limit = 20,
-    this.offset = 0,
+    this.canCreate = false,
     this.hasMore = false,
   });
-
   final String user;
   final String date;
-  final String status;
   final TaskSummary summary;
-  final List<TodoTask> tasks;
-  final bool isSearch;
-  final int limit;
-  final int offset;
+  final List<ErpTask> tasks;
+  final bool canCreate;
   final bool hasMore;
+}
+
+class TaskDetailResponse {
+  const TaskDetailResponse({required this.task});
+  final ErpTask task;
+  bool get canWrite => task.canWrite;
 }

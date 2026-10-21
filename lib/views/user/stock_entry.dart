@@ -134,6 +134,7 @@ class StockEntryPage extends StatelessWidget {
                                 key: ValueKey(
                                     '${item.itemCode}_${item.idx}_$idx'),
                                 code: code,
+                                name: item.itemName,
                                 qty: item.quantity.toString(),
                                 qtyWidget: (c.isPending && !isValidated)
                                     ? SizedBox(
@@ -202,9 +203,9 @@ class StockEntryPage extends StatelessWidget {
                 padding: const EdgeInsets.all(16),
                 child: Obx(() {
                   // Depend on validation obs so the button enables after checks.
-                  final _ = c.validatedItemIndices.length;
-                  final __ = c.fromWarehouseValidated.value;
-                  final ___ = c.toWarehouseValidated.value;
+                  c.validatedItemIndices.length;
+                  c.fromWarehouseValidated.value;
+                  c.toWarehouseValidated.value;
                   Widget button;
                   if (c.isSubmitting.value) {
                     button = const SizedBox(

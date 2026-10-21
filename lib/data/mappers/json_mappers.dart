@@ -18,7 +18,8 @@ import '../../domain/entities/stock_entry_details_response.dart';
 import '../../domain/entities/stock_entry_item.dart';
 import '../../domain/entities/stock_entry_response.dart';
 import '../../domain/entities/stock_summary.dart';
-import '../../domain/entities/task.dart';
+export 'task_mappers.dart';
+import '../../domain/entities/job_profile.dart';
 import '../../domain/entities/user.dart';
 import '../../utils/api_config.dart';
 import '../../utils/html_plain_text.dart';
@@ -654,63 +655,101 @@ class StockSummaryResponseMapper {
   }
 }
 
-class TodoTaskMapper {
-  static TodoTask fromJson(Map<String, dynamic> json) => TodoTask(
+class JobArticleMapper {
+  static JobArticle fromJson(Map<String, dynamic> json) => JobArticle(
+        idx: int.tryParse('${json['idx'] ?? 0}') ?? 0,
+        description: stripHtmlToPlainText(
+          json['description']?.toString() ?? '',
+        ),
+      );
+}
+
+class EmployeeHeaderMapper {
+  static EmployeeHeader fromJson(Map<String, dynamic> json) => EmployeeHeader(
         name: json['name']?.toString() ?? '',
-        description: stripHtmlToPlainText(json['description']?.toString()),
-        status: json['status']?.toString() ?? 'Open',
-        priority: json['priority']?.toString() ?? 'Medium',
-        date: json['date']?.toString() ?? '',
-        allocatedTo: json['allocated_to']?.toString() ?? '',
-        assignedBy: json['assigned_by']?.toString() ?? '',
-        referenceType: json['reference_type']?.toString() ?? '',
-        referenceName: json['reference_name']?.toString() ?? '',
-        creation: json['creation']?.toString() ?? '',
-        modified: json['modified']?.toString() ?? '',
+        employeeName: json['employee_name']?.toString() ?? '',
+        userId: json['user_id']?.toString() ?? '',
+        designation: json['designation']?.toString() ?? '',
+        department: json['department']?.toString() ?? '',
+        company: json['company']?.toString() ?? '',
+        status: json['status']?.toString() ?? '',
       );
 }
 
-class TaskSummaryMapper {
-  static TaskSummary fromJson(Map<String, dynamic> json) => TaskSummary(
-        totalItems: int.tryParse('${json['total_items'] ?? 0}') ?? 0,
-        openCount: int.tryParse('${json['open_count'] ?? 0}') ?? 0,
-        closedCount: int.tryParse('${json['closed_count'] ?? 0}') ?? 0,
-        overdueCount: int.tryParse('${json['overdue_count'] ?? 0}') ?? 0,
-      );
+class JobProfileMapper {
+  static JobProfile fromJson(Map<String, dynamic> json) {
+    List<JobArticle> parseArticles(dynamic raw) {
+      final out = <JobArticle>[];
+      if (raw is! List) return out;
+      for (final row in raw) {
+        if (row is! Map) continue;
+        final article =
+            JobArticleMapper.fromJson(Map<String, dynamic>.from(row));
+        if (article.description.trim().isEmpty) continue;
+        out.add(article);
+      }
+      out.sort((a, b) => a.idx.compareTo(b.idx));
+      return out;
+    }
+
+    final missionText = (json['general_mission_text']?.toString() ?? '').trim();
+    final missionHtml = json['general_mission']?.toString() ?? '';
+
+    return JobProfile(
+      name: json['name']?.toString() ?? '',
+      jobTitle: json['job_title']?.toString() ?? '',
+      hierarchicalReporting:
+          json['hierarchical_reporting']?.toString() ?? '',
+      hierarchicalRelation: json['hierarchical_relation']?.toString() ?? '',
+      functionalReporting: json['functional_reporting']?.toString() ?? '',
+      generalMissionText: missionText.isNotEmpty
+          ? missionText
+          : stripHtmlToPlainText(missionHtml),
+      authorities: parseArticles(json['authorities']),
+      tasks: parseArticles(json['tasks']),
+      workflowState: json['workflow_state']?.toString() ?? '',
+      docstatus: int.tryParse('${json['docstatus'] ?? 0}') ?? 0,
+    );
+  }
 }
 
-class TaskListResponseMapper {
-  static TaskListResponse fromJson(Map<String, dynamic> json) {
+class MyJobProfileResponseMapper {
+  static MyJobProfileResponse fromJson(Map<String, dynamic> json) {
     final root = json['message'] is Map
         ? Map<String, dynamic>.from(json['message'] as Map)
         : json;
-    final summaryRaw = root['summary'];
-    final summary = summaryRaw is Map
-        ? TaskSummaryMapper.fromJson(Map<String, dynamic>.from(summaryRaw))
-        : const TaskSummary(
-            totalItems: 0,
-            openCount: 0,
-            closedCount: 0,
-            overdueCount: 0,
-          );
-    final tasksRaw = root['tasks'];
-    final tasks = <TodoTask>[];
-    if (tasksRaw is List) {
-      for (final row in tasksRaw) {
-        if (row is! Map) continue;
-        tasks.add(TodoTaskMapper.fromJson(Map<String, dynamic>.from(row)));
-      }
+
+    final err = root['error']?.toString();
+    if (err != null && err.isNotEmpty && err != 'null') {
+      return MyJobProfileResponse(success: false, error: err);
     }
-    return TaskListResponse(
-      user: root['user']?.toString() ?? '',
-      date: root['date']?.toString() ?? '',
-      status: root['status']?.toString() ?? 'Open',
-      summary: summary,
-      tasks: tasks,
-      isSearch: root['is_search'] == true,
-      limit: int.tryParse('${root['limit'] ?? 20}') ?? 20,
-      offset: int.tryParse('${root['offset'] ?? 0}') ?? 0,
-      hasMore: root['has_more'] == true,
+
+    final employeeRaw = root['employee'];
+    final EmployeeHeader? employee = employeeRaw is Map
+        ? EmployeeHeaderMapper.fromJson(
+            Map<String, dynamic>.from(employeeRaw),
+          )
+        : null;
+
+    final profileRaw = root['job_profile'];
+    JobProfile? profile;
+    if (profileRaw is Map) {
+      profile = JobProfileMapper.fromJson(
+        Map<String, dynamic>.from(profileRaw),
+      );
+    }
+
+    final success = root['success'] == true ||
+        root['success'] == 1 ||
+        root['success'] == '1' ||
+        (err == null && (employee != null || profile != null));
+
+    return MyJobProfileResponse(
+      success: success,
+      error: null,
+      message: root['message']?.toString(),
+      employee: employee,
+      jobProfile: profile,
     );
   }
 }

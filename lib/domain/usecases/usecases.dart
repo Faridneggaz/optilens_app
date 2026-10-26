@@ -5,7 +5,6 @@ export 'complaint_usecases.dart';
 export 'invoice_usecases.dart';
 export 'job_profile_usecases.dart';
 export 'joptic_usecases.dart';
-export 'manque_usecases.dart';
 export 'material_request_usecases.dart';
 export 'notification_usecases.dart';
 export 'order_usecases.dart';

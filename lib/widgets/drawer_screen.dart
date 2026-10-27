@@ -27,8 +27,10 @@ class DrawerScreen extends StatelessWidget {
           child: Column(
             children: [
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 32, horizontal: 15),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 32,
+                  horizontal: 15,
+                ),
                 child: Image.asset('assets/images/optilensss.png', height: 100),
               ),
               Expanded(
@@ -36,8 +38,10 @@ class DrawerScreen extends StatelessWidget {
                   padding: EdgeInsets.zero,
                   children: [
                     ListTile(
-                      leading:
-                          const Icon(Icons.home, color: AppColors.menuTeal),
+                      leading: const Icon(
+                        Icons.home,
+                        color: AppColors.menuTeal,
+                      ),
                       title: Text('nav_home'.tr),
                       onTap: () {
                         ZoomDrawer.of(context)?.close();
@@ -45,8 +49,10 @@ class DrawerScreen extends StatelessWidget {
                       },
                     ),
                     ListTile(
-                      leading: const Icon(Icons.notifications,
-                          color: AppColors.menuTeal),
+                      leading: const Icon(
+                        Icons.notifications,
+                        color: AppColors.menuTeal,
+                      ),
                       title: Text('nav_notifications'.tr),
                       onTap: () {
                         ZoomDrawer.of(context)?.close();
@@ -55,13 +61,15 @@ class DrawerScreen extends StatelessWidget {
                     ),
                     if (isUser)
                       Theme(
-                        data: Theme.of(context).copyWith(
-                          dividerColor: Colors.transparent,
-                        ),
+                        data: Theme.of(
+                          context,
+                        ).copyWith(dividerColor: Colors.transparent),
                         child: ExpansionTile(
                           initiallyExpanded: true,
-                          leading: const Icon(Icons.person_outline,
-                              color: AppColors.menuTeal),
+                          leading: const Icon(
+                            Icons.person_outline,
+                            color: AppColors.menuTeal,
+                          ),
                           title: Text(
                             'nav_my_space'.tr,
                             style: const TextStyle(fontWeight: FontWeight.w700),
@@ -69,11 +77,15 @@ class DrawerScreen extends StatelessWidget {
                           iconColor: AppColors.menuTeal,
                           collapsedIconColor: AppColors.menuTeal,
                           childrenPadding: const EdgeInsetsDirectional.only(
-                              start: 12, end: 8),
+                            start: 12,
+                            end: 8,
+                          ),
                           children: [
                             ListTile(
-                              leading: const Icon(Icons.checklist_rtl,
-                                  color: AppColors.menuTeal),
+                              leading: const Icon(
+                                Icons.checklist_rtl,
+                                color: AppColors.menuTeal,
+                              ),
                               title: Text('nav_my_tasks'.tr),
                               onTap: () {
                                 ZoomDrawer.of(context)?.close();
@@ -81,8 +93,10 @@ class DrawerScreen extends StatelessWidget {
                               },
                             ),
                             ListTile(
-                              leading: const Icon(Icons.badge_outlined,
-                                  color: AppColors.menuTeal),
+                              leading: const Icon(
+                                Icons.badge_outlined,
+                                color: AppColors.menuTeal,
+                              ),
                               title: Text('nav_job_profile'.tr),
                               onTap: () {
                                 ZoomDrawer.of(context)?.close();
@@ -94,13 +108,15 @@ class DrawerScreen extends StatelessWidget {
                       ),
                     if (isUser)
                       Theme(
-                        data: Theme.of(context).copyWith(
-                          dividerColor: Colors.transparent,
-                        ),
+                        data: Theme.of(
+                          context,
+                        ).copyWith(dividerColor: Colors.transparent),
                         child: ExpansionTile(
                           initiallyExpanded: true,
-                          leading: const Icon(Icons.inventory_2,
-                              color: AppColors.menuTeal),
+                          leading: const Icon(
+                            Icons.inventory_2,
+                            color: AppColors.menuTeal,
+                          ),
                           title: Text(
                             'nav_stock'.tr,
                             style: const TextStyle(fontWeight: FontWeight.w700),
@@ -108,11 +124,15 @@ class DrawerScreen extends StatelessWidget {
                           iconColor: AppColors.menuTeal,
                           collapsedIconColor: AppColors.menuTeal,
                           childrenPadding: const EdgeInsetsDirectional.only(
-                              start: 12, end: 8),
+                            start: 12,
+                            end: 8,
+                          ),
                           children: [
                             ListTile(
-                              leading: const Icon(Icons.swap_horiz,
-                                  color: AppColors.menuTeal),
+                              leading: const Icon(
+                                Icons.swap_horiz,
+                                color: AppColors.menuTeal,
+                              ),
                               title: Text('nav_stock_entries'.tr),
                               onTap: () {
                                 ZoomDrawer.of(context)?.close();
@@ -120,8 +140,10 @@ class DrawerScreen extends StatelessWidget {
                               },
                             ),
                             ListTile(
-                              leading: const Icon(Icons.analytics_outlined,
-                                  color: AppColors.menuTeal),
+                              leading: const Icon(
+                                Icons.analytics_outlined,
+                                color: AppColors.menuTeal,
+                              ),
                               title: Text('nav_stock_summary'.tr),
                               onTap: () {
                                 ZoomDrawer.of(context)?.close();
@@ -129,63 +151,14 @@ class DrawerScreen extends StatelessWidget {
                               },
                             ),
                             ListTile(
-                              leading: const Icon(Icons.assignment_outlined,
-                                  color: AppColors.menuTeal),
+                              leading: const Icon(
+                                Icons.assignment_outlined,
+                                color: AppColors.menuTeal,
+                              ),
                               title: Text('material_requests'.tr),
                               onTap: () {
                                 ZoomDrawer.of(context)?.close();
                                 onSelectPage(3);
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                    if (isUser)
-                      Theme(
-                        data: Theme.of(context).copyWith(
-                          dividerColor: Colors.transparent,
-                        ),
-                        child: ExpansionTile(
-                          initiallyExpanded: true,
-                          leading: const Icon(Icons.shopping_bag_outlined,
-                              color: AppColors.menuTeal),
-                          title: Text(
-                            'nav_manque'.tr,
-                            style: const TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                          iconColor: AppColors.menuTeal,
-                          collapsedIconColor: AppColors.menuTeal,
-                          childrenPadding: const EdgeInsetsDirectional.only(
-                              start: 12, end: 8),
-                          children: [
-                            ListTile(
-                              leading: const Icon(Icons.playlist_add_check,
-                                  color: AppColors.menuTeal),
-                              title: Text('manque_commandes_title'.tr),
-                              onTap: () {
-                                ZoomDrawer.of(context)?.close();
-                                Get.toNamed(AppRoutes.commandesManque);
-                              },
-                            ),
-                            ListTile(
-                              leading: const Icon(Icons.receipt_long_outlined,
-                                  color: AppColors.menuTeal),
-                              title: Text('manque_factures_title'.tr),
-                              onTap: () {
-                                ZoomDrawer.of(context)?.close();
-                                Get.toNamed(AppRoutes.facturesAcheteur);
-                              },
-                            ),
-                            ListTile(
-                              leading: const Icon(Icons.payments_outlined,
-                                  color: AppColors.menuTeal),
-                              title: Text('manque_factures_rembourser'.tr),
-                              onTap: () {
-                                ZoomDrawer.of(context)?.close();
-                                Get.toNamed(
-                                  AppRoutes.facturesAcheteur,
-                                  arguments: {'rembourser': true},
-                                );
                               },
                             ),
                           ],
@@ -214,16 +187,20 @@ class DrawerScreen extends StatelessWidget {
                       const SizedBox(height: 5),
                       ListTile(
                         contentPadding: EdgeInsets.zero,
-                        leading: const Icon(Icons.language,
-                            color: AppColors.menuTeal),
+                        leading: const Icon(
+                          Icons.language,
+                          color: AppColors.menuTeal,
+                        ),
                         title: Text('website'.tr),
                         onTap: () =>
                             launchUrl(Uri.parse('https://jethings.com')),
                       ),
                       ListTile(
                         contentPadding: EdgeInsets.zero,
-                        leading: const Icon(Icons.info_outline,
-                            color: AppColors.menuTeal),
+                        leading: const Icon(
+                          Icons.info_outline,
+                          color: AppColors.menuTeal,
+                        ),
                         title: Text('app_joptic'.tr),
                         onTap: () {
                           ZoomDrawer.of(context)?.close();

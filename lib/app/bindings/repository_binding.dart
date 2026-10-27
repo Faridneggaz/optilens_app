@@ -17,7 +17,6 @@ import '../../data/repositories/stock_entry_details_repository.dart';
 import '../../data/repositories/stock_entry_repository.dart';
 import '../../data/repositories/task_repository.dart';
 import '../../data/repositories/job_profile_repository.dart';
-import '../../data/repositories/manque_repository.dart';
 import '../../domain/repositories/announcement_repository.dart';
 import '../../domain/repositories/complaint_repository.dart';
 import '../../domain/repositories/customer_repository.dart';
@@ -34,7 +33,6 @@ import '../../domain/repositories/stock_entry_details_repository.dart';
 import '../../domain/repositories/stock_entry_repository.dart';
 import '../../domain/repositories/task_repository.dart';
 import '../../domain/repositories/job_profile_repository.dart';
-import '../../domain/repositories/manque_repository.dart';
 import '../../domain/usecases/usecases.dart';
 
 /// Registers data implementations and domain use cases.
@@ -77,34 +75,23 @@ class RepositoryBinding {
       JobProfileRepositoryImpl(api),
       permanent: true,
     );
-    Get.put<ManqueRepository>(ManqueRepositoryImpl(api), permanent: true);
     Get.put<LeadRepository>(LeadRepositoryImpl(api), permanent: true);
     Get.put<JopticComplaintRepository>(
       JopticComplaintRepositoryImpl(api),
       permanent: true,
     );
 
-    Get.put(
-      AuthUseCases(Get.find(), Get.find()),
-      permanent: true,
-    );
-    Get.put(
-      InvoiceUseCases(Get.find(), Get.find()),
-      permanent: true,
-    );
+    Get.put(AuthUseCases(Get.find(), Get.find()), permanent: true);
+    Get.put(InvoiceUseCases(Get.find(), Get.find()), permanent: true);
     Get.put(PaymentUseCases(Get.find()), permanent: true);
     Get.put(AnnouncementUseCases(Get.find()), permanent: true);
     Get.put(NotificationUseCases(Get.find()), permanent: true);
     Get.put(ComplaintUseCases(Get.find()), permanent: true);
     Get.put(OrderUseCases(Get.find()), permanent: true);
-    Get.put(
-      StockEntryUseCases(Get.find(), Get.find()),
-      permanent: true,
-    );
+    Get.put(StockEntryUseCases(Get.find(), Get.find()), permanent: true);
     Get.put(MaterialRequestUseCases(Get.find()), permanent: true);
     Get.put(TaskUseCases(Get.find()), permanent: true);
     Get.put(JobProfileUseCases(Get.find()), permanent: true);
-    Get.put(ManqueUseCases(Get.find()), permanent: true);
     Get.put(JopticUseCases(Get.find(), Get.find()), permanent: true);
   }
 }

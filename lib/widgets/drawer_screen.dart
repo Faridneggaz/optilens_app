@@ -103,6 +103,17 @@ class DrawerScreen extends StatelessWidget {
                                 Get.toNamed(AppRoutes.jobProfile);
                               },
                             ),
+                            ListTile(
+                              leading: const Icon(
+                                Icons.description_outlined,
+                                color: AppColors.menuTeal,
+                              ),
+                              title: Text('ar_nav'.tr),
+                              onTap: () {
+                                ZoomDrawer.of(context)?.close();
+                                Get.toNamed(AppRoutes.activityReports);
+                              },
+                            ),
                           ],
                         ),
                       ),

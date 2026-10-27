@@ -1,3 +1,6 @@
+import '../../presentation/controllers/activity_report_list_controller.dart';
+import '../../presentation/controllers/activity_report_detail_controller.dart';
+import '../../presentation/controllers/activity_report_form_controller.dart';
 import 'package:get/get.dart';
 
 import '../../presentation/controllers/about_controller.dart';
@@ -118,5 +121,34 @@ class JobProfileBinding extends Bindings {
   @override
   void dependencies() {
     Get.put(JobProfileController());
+  }
+}
+
+class ActivityReportListBinding extends Bindings {
+  @override
+  void dependencies() {
+    if (!Get.isRegistered<ActivityReportListController>()) {
+      Get.lazyPut(() => ActivityReportListController());
+    }
+  }
+}
+
+class ActivityReportDetailBinding extends Bindings {
+  @override
+  void dependencies() {
+    if (Get.isRegistered<ActivityReportDetailController>()) {
+      Get.delete<ActivityReportDetailController>(force: true);
+    }
+    Get.put(ActivityReportDetailController());
+  }
+}
+
+class ActivityReportFormBinding extends Bindings {
+  @override
+  void dependencies() {
+    if (Get.isRegistered<ActivityReportFormController>()) {
+      Get.delete<ActivityReportFormController>(force: true);
+    }
+    Get.put(ActivityReportFormController());
   }
 }

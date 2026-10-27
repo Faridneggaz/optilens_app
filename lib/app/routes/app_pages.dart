@@ -1,3 +1,6 @@
+import '../../views/activity_report/activity_report_list_page.dart';
+import '../../views/activity_report/activity_report_detail_page.dart';
+import '../../views/activity_report/activity_report_form_page.dart';
 import 'package:get/get.dart';
 
 import '../../views/client/about_j_optic_screen.dart';
@@ -103,6 +106,21 @@ class AppPages {
       name: AppRoutes.jobProfile,
       page: () => const JobProfilePage(),
       binding: JobProfileBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.activityReports,
+      page: () => const ActivityReportListPage(),
+      binding: ActivityReportListBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.activityReportDetail,
+      page: () => const ActivityReportDetailPage(),
+      binding: ActivityReportDetailBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.activityReportForm,
+      page: () => const ActivityReportFormPage(),
+      binding: ActivityReportFormBinding(),
     ),
   ];
 }

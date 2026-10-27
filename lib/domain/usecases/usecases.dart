@@ -11,3 +11,4 @@ export 'order_usecases.dart';
 export 'payment_usecases.dart';
 export 'stock_entry_usecases.dart';
 export 'task_usecases.dart';
+export 'activity_report_usecases.dart';

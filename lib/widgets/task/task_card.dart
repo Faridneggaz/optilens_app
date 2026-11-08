@@ -31,7 +31,9 @@ class TaskStatusChip extends StatelessWidget {
       'Completed' => Colors.green,
       'Cancelled' || 'Overdue' => AppColors.danger,
       'Working' => AppColors.primary,
-      'Pending Review' => Colors.orange.shade800,
+      'Pending Review' || 'On Hold' => Colors.orange.shade800,
+      'Replied' => AppColors.primary,
+      'Resolved' || 'Closed' => Colors.green,
       _ => AppColors.muted,
     };
     return Container(

@@ -103,6 +103,7 @@ class DrawerScreen extends StatelessWidget {
                                 Get.toNamed(AppRoutes.jobProfile);
                               },
                             ),
+                            ListTile(leading: const Icon(Icons.support_agent, color: AppColors.menuTeal), title: const Text('Issues'), onTap: () { ZoomDrawer.of(context)?.close(); Get.toNamed(AppRoutes.issues); }),
                             ListTile(
                               leading: const Icon(
                                 Icons.description_outlined,
@@ -281,3 +282,5 @@ class DrawerScreen extends StatelessWidget {
     );
   }
 }
+
+

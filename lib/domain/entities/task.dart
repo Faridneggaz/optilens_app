@@ -82,6 +82,8 @@ class TaskInput {
     this.progress = 0,
     this.assignees = const [],
     this.updateAssignments = true,
+    this.issue = '',
+    this.type = '',
   });
   final String subject;
   final String? description;
@@ -93,6 +95,8 @@ class TaskInput {
   final double progress;
   final List<String> assignees;
   final bool updateAssignments;
+  final String issue;
+  final String type;
 }
 
 class TaskProject {

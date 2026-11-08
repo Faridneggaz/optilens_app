@@ -19,4 +19,7 @@ abstract class AppRoutes {
   static const activityReports = '/activity-reports';
   static const activityReportDetail = '/activity-report-detail';
   static const activityReportForm = '/activity-report-form';
+  static const issues = '/issues';
+  static const issueCreate = '/issue-create';
+  static const taskCreateFromIssue = '/task-create-from-issue';
 }

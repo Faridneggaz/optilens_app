@@ -6,7 +6,7 @@
 class ApiConfig {
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://optilens.jethings.com',
+    defaultValue: 'http://192.168.100.20:8000',
   );
 
   static const String erpBaseUrl = String.fromEnvironment(

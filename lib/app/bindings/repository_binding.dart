@@ -1,3 +1,5 @@
+import '../../data/repositories/activity_report_repository.dart';
+import '../../domain/repositories/activity_report_repository.dart';
 import 'package:get/get.dart';
 
 import '../../core/network/api_client.dart';
@@ -71,6 +73,10 @@ class RepositoryBinding {
       permanent: true,
     );
     Get.put<TaskRepository>(TaskRepositoryImpl(api), permanent: true);
+    Get.put<ActivityReportRepository>(
+      ActivityReportRepositoryImpl(api),
+      permanent: true,
+    );
     Get.put<JobProfileRepository>(
       JobProfileRepositoryImpl(api),
       permanent: true,
@@ -91,6 +97,7 @@ class RepositoryBinding {
     Get.put(StockEntryUseCases(Get.find(), Get.find()), permanent: true);
     Get.put(MaterialRequestUseCases(Get.find()), permanent: true);
     Get.put(TaskUseCases(Get.find()), permanent: true);
+    Get.put(ActivityReportUseCases(Get.find()), permanent: true);
     Get.put(JobProfileUseCases(Get.find()), permanent: true);
     Get.put(JopticUseCases(Get.find(), Get.find()), permanent: true);
   }

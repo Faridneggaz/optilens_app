@@ -24,9 +24,19 @@ Future<ErpTask?> showTaskForm({
 }
 
 class TaskFormSheet extends StatefulWidget {
-  const TaskFormSheet({super.key, required this.controller, this.task});
+  const TaskFormSheet({
+    super.key,
+    required this.controller,
+    this.task,
+    this.initialSubject = '',
+    this.initialDescription = '',
+    this.issue = '',
+  });
   final TaskController controller;
   final ErpTask? task;
+  final String initialSubject;
+  final String initialDescription;
+  final String issue;
   @override
   State<TaskFormSheet> createState() => _TaskFormSheetState();
 }
@@ -52,8 +62,12 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
   void initState() {
     super.initState();
     final task = widget.task;
-    _subject = TextEditingController(text: task?.subject ?? '');
-    _description = TextEditingController(text: task?.descriptionText ?? '');
+    _subject = TextEditingController(
+      text: task?.subject ?? widget.initialSubject,
+    );
+    _description = TextEditingController(
+      text: task?.descriptionText ?? widget.initialDescription,
+    );
     _progress = TextEditingController(text: '${task?.progress ?? 0}');
     _company = task?.company ?? '';
     _priority = task?.priority ?? 'Medium';
@@ -174,6 +188,7 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
         progress: double.parse(_progress.text.replaceAll(',', '.')),
         assignees: _assignees.map((user) => user.email).toList(),
         updateAssignments: _assignmentsEditable,
+        issue: widget.issue,
       );
       final saved = await widget.controller.saveTask(input, task: current);
       if (!mounted) return;

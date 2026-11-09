@@ -98,6 +98,8 @@ class TaskRepositoryImpl implements TaskRepository {
     'exp_end_date': input.endDate,
     'priority': input.priority,
     'progress': input.progress,
+    if (input.issue.isNotEmpty) 'issue': input.issue,
+    if (input.type.isNotEmpty) 'type': input.type,
     if (input.updateAssignments) 'assignees': input.assignees,
   };
 

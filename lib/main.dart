@@ -1,3 +1,4 @@
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'app/routes/app_routes.dart';
@@ -61,6 +62,12 @@ class MyApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light(),
         translations: AppTranslations(),
+        localizationsDelegates: GlobalMaterialLocalizations.delegates,
+        supportedLocales: const [
+          Locale('fr', 'FR'),
+          Locale('en', 'US'),
+          Locale('ar', 'DZ'),
+        ],
         locale: locale,
         fallbackLocale: const Locale('fr', 'FR'),
         builder: (ctx, child) => Directionality(

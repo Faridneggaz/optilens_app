@@ -1,3 +1,9 @@
+import '../../views/activity_report/activity_report_list_page.dart';
+import '../../views/activity_report/activity_report_detail_page.dart';
+import '../../views/activity_report/activity_report_form_page.dart';
+import '../../views/user/issues_page.dart';
+import '../../views/user/issue_create_page.dart';
+import '../../views/user/task_create_from_issue_page.dart';
 import 'package:get/get.dart';
 
 import '../../views/client/about_j_optic_screen.dart';
@@ -24,6 +30,17 @@ import 'app_routes.dart';
 
 class AppPages {
   static final pages = <GetPage>[
+    GetPage(name: AppRoutes.issues, page: () => const IssuesPage()),
+    GetPage(
+      name: AppRoutes.issueCreate,
+      page: () => const IssueCreatePage(),
+      binding: TaskBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.taskCreateFromIssue,
+      page: () => const TaskCreateFromIssuePage(),
+      binding: TaskBinding(),
+    ),
     GetPage(
       name: AppRoutes.login,
       page: () => const LoginPage(),
@@ -103,6 +120,21 @@ class AppPages {
       name: AppRoutes.jobProfile,
       page: () => const JobProfilePage(),
       binding: JobProfileBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.activityReports,
+      page: () => const ActivityReportListPage(),
+      binding: ActivityReportListBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.activityReportDetail,
+      page: () => const ActivityReportDetailPage(),
+      binding: ActivityReportDetailBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.activityReportForm,
+      page: () => const ActivityReportFormPage(),
+      binding: ActivityReportFormBinding(),
     ),
   ];
 }

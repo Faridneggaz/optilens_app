@@ -16,4 +16,10 @@ abstract class AppRoutes {
   static const tasks = '/tasks';
   static const taskDetail = '/task-detail';
   static const jobProfile = '/job-profile';
+  static const activityReports = '/activity-reports';
+  static const activityReportDetail = '/activity-report-detail';
+  static const activityReportForm = '/activity-report-form';
+  static const issues = '/issues';
+  static const issueCreate = '/issue-create';
+  static const taskCreateFromIssue = '/task-create-from-issue';
 }

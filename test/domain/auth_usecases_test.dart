@@ -9,6 +9,8 @@ import 'package:optilens/domain/results/action_result.dart';
 import 'package:optilens/domain/usecases/usecases.dart';
 
 class _FakeLoginRepository implements LoginRepository {
+  @override
+  Future<String> fetchUserDisplayName(String token) async => '';
   _FakeLoginRepository(this._response);
   final LoginResponse _response;
 
@@ -16,8 +18,7 @@ class _FakeLoginRepository implements LoginRepository {
   Future<LoginResponse> login({
     required String email,
     required String password,
-  }) async =>
-      _response;
+  }) async => _response;
 }
 
 class _FakeCustomerRepository implements CustomerRepository {
@@ -30,8 +31,7 @@ class _FakeCustomerRepository implements CustomerRepository {
   Future<Map<String, dynamic>> changePassword({
     required String oldPassword,
     required String newPassword,
-  }) async =>
-      {'success': true};
+  }) async => {'success': true};
 }
 
 void main() {
@@ -61,7 +61,9 @@ void main() {
     });
 
     test('fromException marks session errors as auth-handled', () {
-      final result = ActionResult.fromException(const InvalidSessionException());
+      final result = ActionResult.fromException(
+        const InvalidSessionException(),
+      );
       expect(result.isAuthHandled, isTrue);
       expect(result.isSuccess, isFalse);
     });
@@ -93,7 +95,9 @@ void main() {
     test('returns the login payload when SID is present', () async {
       final useCases = AuthUseCases(
         _FakeLoginRepository(
-          LoginResponse(user: User(sid: 'sid-1', email: 'a@b.c')),
+          LoginResponse(
+            user: User(sid: 'sid-1', email: 'a@b.c'),
+          ),
         ),
         _FakeCustomerRepository(),
       );

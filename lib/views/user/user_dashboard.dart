@@ -42,45 +42,66 @@ class UserDashboardPage extends StatelessWidget {
     final userName = session.userName.value;
     return Scaffold(
       backgroundColor: AppColors.scaffoldTint,
-      body: Column(children: [
-        AppHeader(
+      body: Column(
+        children: [
+          AppHeader(
             title: 'nav_home'.tr,
             customer: null,
             customerCode: '',
-            onMenuTap: () =>
-                Get.find<SessionController>().openDrawer()),
-        Expanded(
-          child: Center(
-            child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-              const Icon(Icons.person_pin,
-                  size: 100, color: AppColors.menuTeal),
-              const SizedBox(height: 20),
-              Text('${'welcome_user'.tr}$userName',
-                  style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.ink)),
-              Text('select_service'.tr,
-                  style: const TextStyle(color: Colors.grey)),
-            ]),
+            onMenuTap: () => Get.find<SessionController>().openDrawer(),
           ),
-        ),
-      ]),
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.person_pin,
+                    size: 100,
+                    color: AppColors.menuTeal,
+                  ),
+                  const SizedBox(height: 20),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Text(
+                      userName.isEmpty
+                          ? 'welcome_home'.tr
+                          : '${'welcome_user'.tr}$userName',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.ink,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    'select_service'.tr,
+                    style: const TextStyle(color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildNotifications() {
     return Scaffold(
       backgroundColor: AppColors.scaffoldTint,
-      body: Column(children: [
-        AppHeader(
+      body: Column(
+        children: [
+          AppHeader(
             title: 'notifications_title'.tr,
             customer: null,
             customerCode: '',
-            onMenuTap: () =>
-                Get.find<SessionController>().openDrawer()),
-        Expanded(child: Center(child: Text('no_notifications'.tr))),
-      ]),
+            onMenuTap: () => Get.find<SessionController>().openDrawer(),
+          ),
+          Expanded(child: Center(child: Text('no_notifications'.tr))),
+        ],
+      ),
     );
   }
 }

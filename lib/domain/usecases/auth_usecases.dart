@@ -20,6 +20,9 @@ class AuthUseCases {
     return result;
   }
 
+  Future<String> fetchUserDisplayName(String token) =>
+      _login.fetchUserDisplayName(token);
+
   Future<CustomerResponse> fetchCustomer(String code) =>
       _customers.fetchCustomer(code);
 

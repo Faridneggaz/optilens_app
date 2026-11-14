@@ -3,7 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Choose a photo to attach to an OptiLens task.</string>
+	<string>Choose a photo to attach to a task or issue in OptiLens.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Take a photo to attach to a task or issue in OptiLens.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -30,6 +32,37 @@ class _AttachmentPhotoFieldState extends State<AttachmentPhotoField> {
   String? _error;
 
   Future<void> _pick() async {
+    if (_picking || widget.disabled) return;
+    final canTakePhoto =
+        !kIsWeb &&
+        (defaultTargetPlatform == TargetPlatform.android ||
+            defaultTargetPlatform == TargetPlatform.iOS);
+    final source = canTakePhoto
+        ? await showModalBottomSheet<ImageSource>(
+            context: context,
+            builder: (sheetContext) => SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.photo_camera_outlined),
+                    title: Text('attachment_take_photo'.tr),
+                    onTap: () =>
+                        Navigator.pop(sheetContext, ImageSource.camera),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.photo_library_outlined),
+                    title: Text('attachment_choose_gallery'.tr),
+                    onTap: () =>
+                        Navigator.pop(sheetContext, ImageSource.gallery),
+                  ),
+                ],
+              ),
+            ),
+          )
+        : ImageSource.gallery;
+    if (!mounted || source == null || _picking || widget.disabled) return;
+
     setState(() {
       _picking = true;
       _error = null;
@@ -37,7 +70,7 @@ class _AttachmentPhotoFieldState extends State<AttachmentPhotoField> {
     widget.onPickingChanged?.call(true);
     try {
       final image = await ImagePicker().pickImage(
-        source: ImageSource.gallery,
+        source: source,
         maxWidth: 2560,
         maxHeight: 2560,
         imageQuality: 90,
@@ -55,11 +88,19 @@ class _AttachmentPhotoFieldState extends State<AttachmentPhotoField> {
       final bytes = await image.readAsBytes();
       if (!mounted) return;
       widget.onChanged(SelectedPhoto(name: image.name, bytes: bytes));
-    } catch (_) {
+    } on PlatformException catch (error) {
       if (!mounted) return;
       setState(() {
-        _error = 'erp_task_photo_pick_error'.tr;
+        _error = switch (error.code) {
+          'camera_access_denied' ||
+          'camera_access_restricted' => 'attachment_camera_denied'.tr,
+          'no_available_camera' => 'attachment_camera_unavailable'.tr,
+          _ => 'erp_task_photo_pick_error'.tr,
+        };
       });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _error = 'erp_task_photo_pick_error'.tr);
     } finally {
       if (mounted) {
         setState(() => _picking = false);

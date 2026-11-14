@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../domain/usecases/usecases.dart';
-import 'session_controller.dart';
 import '../../core/services/session_service.dart';
 import '../../core/theme/app_colors.dart';
 
@@ -53,7 +52,6 @@ class ChangePasswordController extends GetxController {
           role:  service.userRole,
           token: service.authToken,
         );
-        Get.find<SessionController>().userName.value = newPassword.value.trim();
 
         isSuccess.value = true;
         Get.snackbar(

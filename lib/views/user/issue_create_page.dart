@@ -1,9 +1,13 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../app/routes/app_routes.dart';
 import '../../core/network/api_client.dart';
 import '../../core/theme/app_colors.dart';
+import '../../domain/entities/attachment_photo.dart';
 import '../../domain/entities/task.dart';
+import '../../utils/error_feedback.dart';
+import '../../widgets/attachment_photo_field.dart';
 import '../../presentation/controllers/session_controller.dart';
 import '../../presentation/controllers/task_controller.dart';
 import '../../widgets/header.dart';
@@ -26,6 +30,8 @@ class _IssueCreatePageState extends State<IssueCreatePage> {
   String _error = '';
   bool _loading = true;
   bool _saving = false;
+  bool _pickingPhoto = false;
+  SelectedPhoto? _photo;
   ApiClient get _api => Get.find<ApiClient>();
   String get _token => Get.find<SessionController>().token.value;
 
@@ -73,11 +79,12 @@ class _IssueCreatePageState extends State<IssueCreatePage> {
         _loading = false;
       });
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _loading = false;
-          _error = error.toString();
+          _error = ErrorFeedback.message(error, fallbackKey: 'error_occurred');
         });
+      }
     }
   }
 
@@ -89,12 +96,14 @@ class _IssueCreatePageState extends State<IssueCreatePage> {
     if (!mounted ||
         user == null ||
         user.email.isEmpty ||
-        _assignees.any((u) => u.email == user.email))
+        _assignees.any((u) => u.email == user.email)) {
       return;
+    }
     setState(() => _assignees.add(user));
   }
 
   Future<void> _save() async {
+    if (_saving || _pickingPhoto) return;
     if (_subject.text.trim().isEmpty) {
       setState(() => _error = 'Le sujet est obligatoire');
       return;
@@ -104,35 +113,54 @@ class _IssueCreatePageState extends State<IssueCreatePage> {
       _error = '';
     });
     try {
+      final body = <String, dynamic>{
+        'token': _token,
+        'subject': _subject.text.trim(),
+        'description': _description.text,
+        'issue_type': _type ?? '',
+        'priority': _priority ?? '',
+        'status': _status ?? 'Open',
+        'assignees': _assignees.map((u) => u.email).toList(),
+      };
+      final photo = _photo;
       final result = _unwrap(
-        await _api.postMobile(
-          'create_issue',
-          attachToken: false,
-          body: {
-            'token': _token,
-            'subject': _subject.text.trim(),
-            'description': _description.text,
-            'issue_type': _type ?? '',
-            'priority': _priority ?? '',
-            'status': _status ?? 'Open',
-            'assignees': _assignees.map((u) => u.email).toList(),
-          },
-        ),
+        photo == null
+            ? await _api.postMobile(
+                'create_issue',
+                attachToken: false,
+                body: body,
+              )
+            : await _api.postMobileFile(
+                'create_issue',
+                fields: body.map(
+                  (key, value) => MapEntry(
+                    key,
+                    value is String ? value : jsonEncode(value),
+                  ),
+                ),
+                fieldName: 'photo',
+                filename: photo.name,
+                bytes: photo.bytes,
+              ),
       );
       if (result['error'] != null) throw Exception(result['error']);
-      if (mounted)
+      if (mounted) {
         Get.back(result: Map<String, dynamic>.from(result['issue'] as Map));
+      }
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _saving = false;
-          _error = error.toString();
+          _error = ErrorFeedback.message(error, fallbackKey: 'error_occurred');
         });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final photoMaxBytes =
+        int.tryParse(_options['photo_max_bytes']?.toString() ?? '') ?? 0;
     final statuses = (_options['statuses'] as List? ?? <String>[])
         .cast<String>();
     final types = (_options['issue_types'] as List? ?? <String>[])
@@ -192,7 +220,7 @@ class _IssueCreatePageState extends State<IssueCreatePage> {
                         Column(
                           children: [
                             _dropdown(
-                              'Type d’Issue',
+                              'Type de ticket',
                               _type,
                               types,
                               (v) => setState(() => _type = v),
@@ -239,6 +267,19 @@ class _IssueCreatePageState extends State<IssueCreatePage> {
                           ],
                         ),
                       ),
+                      if (photoMaxBytes > 0)
+                        _fieldCard(
+                          'erp_task_attachment_photos'.tr,
+                          AttachmentPhotoField(
+                            maxBytes: photoMaxBytes,
+                            photo: _photo,
+                            disabled: _saving,
+                            onChanged: (photo) =>
+                                setState(() => _photo = photo),
+                            onPickingChanged: (picking) =>
+                                setState(() => _pickingPhoto = picking),
+                          ),
+                        ),
                     ],
                   ),
           ),
@@ -249,7 +290,9 @@ class _IssueCreatePageState extends State<IssueCreatePage> {
               child: SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
-                  onPressed: _saving || _loading ? null : _save,
+                  onPressed: _saving || _loading || _pickingPhoto
+                      ? null
+                      : _save,
                   icon: _saving
                       ? const SizedBox(
                           width: 18,
@@ -296,7 +339,7 @@ class _IssueCreatePageState extends State<IssueCreatePage> {
   ) => Padding(
     padding: const EdgeInsets.only(bottom: 10),
     child: DropdownButtonFormField<String>(
-      value: value,
+      initialValue: value,
       isExpanded: true,
       decoration: InputDecoration(labelText: label),
       items: values

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import '../entities/task.dart';
 
 abstract class TaskRepository {
@@ -15,6 +17,12 @@ abstract class TaskRepository {
   Future<TaskDetailResponse> fetchTaskDetail({
     required String token,
     required String name,
+  });
+  Future<Uint8List> fetchPhoto({
+    required String token,
+    required String taskName,
+    required String fileId,
+    required bool thumbnail,
   });
   Future<TaskOptions> getOptions({
     required String token,

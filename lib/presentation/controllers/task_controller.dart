@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -196,6 +198,17 @@ class TaskController extends GetxController {
     kind: kind,
     searchText: search,
     company: company,
+  );
+
+  Future<Uint8List> fetchPhoto(
+    String taskName,
+    String fileId, {
+    required bool thumbnail,
+  }) => _tasks.fetchPhoto(
+    token: _token,
+    taskName: taskName,
+    fileId: fileId,
+    thumbnail: thumbnail,
   );
 
   Future<ErpTask> saveTask(TaskInput input, {ErpTask? task}) async {

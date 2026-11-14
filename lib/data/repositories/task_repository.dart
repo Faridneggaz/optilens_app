@@ -1,6 +1,9 @@
+import 'dart:typed_data';
+
 import 'dart:convert';
 
 import '../../core/network/api_client.dart';
+import '../../domain/entities/attachment_photo.dart';
 import '../../domain/entities/task.dart';
 import '../../domain/failures/failures.dart';
 import '../../domain/repositories/task_repository.dart';
@@ -66,6 +69,22 @@ class TaskRepositoryImpl implements TaskRepository {
   );
 
   @override
+  Future<Uint8List> fetchPhoto({
+    required String token,
+    required String taskName,
+    required String fileId,
+    required bool thumbnail,
+  }) => _client.postMobileImage(
+    'get_task_photo',
+    body: {
+      'token': token,
+      'name': taskName,
+      'file_id': fileId,
+      'thumbnail': thumbnail,
+    },
+  );
+
+  @override
   Future<TaskOptions> getOptions({
     required String token,
     String kind = 'all',
@@ -103,19 +122,34 @@ class TaskRepositoryImpl implements TaskRepository {
     if (input.updateAssignments) 'assignees': input.assignees,
   };
 
+  Future<ErpTask> _saveTask(
+    String method,
+    Map<String, dynamic> body, {
+    SelectedPhoto? photo,
+  }) async {
+    final response = photo == null
+        ? await _client.postMobile(method, attachToken: false, body: body)
+        : await _client.postMobileFile(
+            method,
+            fields: body.map(
+              (key, value) =>
+                  MapEntry(key, value is String ? value : jsonEncode(value)),
+            ),
+            fieldName: 'photo',
+            filename: photo.name,
+            bytes: photo.bytes,
+          );
+    return TaskDetailResponseMapper.fromJson(_message(response)).task;
+  }
+
   @override
   Future<ErpTask> createTask({
     required String token,
     required TaskInput input,
-  }) async => TaskDetailResponseMapper.fromJson(
-    _message(
-      await _client.postMobile(
-        'create_task',
-        attachToken: false,
-        body: {'token': token, ..._input(input)},
-      ),
-    ),
-  ).task;
+  }) => _saveTask('create_task', {
+    'token': token,
+    ..._input(input),
+  }, photo: input.photo);
 
   @override
   Future<ErpTask> updateTask({
@@ -125,20 +159,12 @@ class TaskRepositoryImpl implements TaskRepository {
     TaskInput? input,
     String? status,
     double? progress,
-  }) async => TaskDetailResponseMapper.fromJson(
-    _message(
-      await _client.postMobile(
-        'update_task',
-        attachToken: false,
-        body: {
-          'token': token,
-          'name': name,
-          'modified': modified,
-          if (input != null) ..._input(input),
-          if (status != null) 'status': status,
-          if (progress != null) 'progress': progress,
-        },
-      ),
-    ),
-  ).task;
+  }) => _saveTask('update_task', {
+    'token': token,
+    'name': name,
+    'modified': modified,
+    if (input != null) ..._input(input),
+    if (status != null) 'status': status,
+    if (progress != null) 'progress': progress,
+  }, photo: input?.photo);
 }

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'dart:async';
 import 'package:get/get.dart';
 
@@ -53,6 +55,17 @@ class TaskDetailController extends GetxController {
       isLoading.value = false;
     }
   }
+
+  Future<Uint8List> fetchPhoto(
+    String taskName,
+    String fileId, {
+    required bool thumbnail,
+  }) => _tasks.fetchPhoto(
+    token: _token,
+    taskName: taskName,
+    fileId: fileId,
+    thumbnail: thumbnail,
+  );
 
   Future<ActionResult> changeStatus(String status) async {
     final current = task.value;

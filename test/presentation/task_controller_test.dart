@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
@@ -8,6 +10,13 @@ import 'package:optilens/presentation/controllers/task_controller.dart';
 import 'package:optilens/presentation/controllers/task_detail_controller.dart';
 
 class FakeTasks implements TaskRepository {
+  @override
+  Future<Uint8List> fetchPhoto({
+    required String token,
+    required String taskName,
+    required String fileId,
+    required bool thumbnail,
+  }) async => Uint8List(0);
   final requests = <Future<TaskListResponse>>[];
   int calls = 0;
   int updates = 0;

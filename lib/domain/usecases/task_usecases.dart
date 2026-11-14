@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import '../entities/task.dart';
 import '../repositories/task_repository.dart';
 
@@ -30,6 +32,17 @@ class TaskUseCases {
     required String token,
     required String name,
   }) => _repo.fetchTaskDetail(token: token, name: name);
+  Future<Uint8List> fetchPhoto({
+    required String token,
+    required String taskName,
+    required String fileId,
+    required bool thumbnail,
+  }) => _repo.fetchPhoto(
+    token: token,
+    taskName: taskName,
+    fileId: fileId,
+    thumbnail: thumbnail,
+  );
   Future<TaskOptions> getOptions({
     required String token,
     String kind = 'all',

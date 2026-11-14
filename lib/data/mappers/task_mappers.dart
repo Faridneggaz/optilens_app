@@ -1,3 +1,4 @@
+import 'attachment_photo_mapper.dart';
 import '../../domain/entities/task.dart';
 import '../../utils/html_plain_text.dart';
 
@@ -48,6 +49,7 @@ class ErpTaskMapper {
     assignees: AssignableUserMapper.fromList(row['assignees']),
     previousAssignees: AssignableUserMapper.fromList(row['previous_assignees']),
     allowedStatuses: _strings(row['allowed_statuses']),
+    photos: mapAttachmentPhotos(row['photos']),
   );
 }
 
@@ -91,6 +93,7 @@ class TaskDetailResponseMapper {
 class TaskOptionsMapper {
   static TaskOptions fromJson(Map<String, dynamic> root) => TaskOptions(
     canCreate: _flag(root['can_create']),
+    photoMaxBytes: int.tryParse(root['photo_max_bytes']?.toString() ?? '') ?? 0,
     statuses: _strings(root['statuses']),
     priorities: _strings(root['priorities']),
     companies: _strings(root['companies']),

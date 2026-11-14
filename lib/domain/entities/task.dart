@@ -1,3 +1,5 @@
+import 'attachment_photo.dart';
+
 class TaskSummary {
   const TaskSummary({
     this.totalItems = 0,
@@ -46,6 +48,7 @@ class ErpTask {
     this.assignees = const [],
     this.previousAssignees = const [],
     this.allowedStatuses = const [],
+    this.photos = const [],
   });
   final String name;
   final String subject;
@@ -66,6 +69,7 @@ class ErpTask {
   final List<AssignableUser> assignees;
   final List<AssignableUser> previousAssignees;
   final List<String> allowedStatuses;
+  final List<AttachmentPhoto> photos;
   bool get isFinished => status == 'Completed' || status == 'Cancelled';
 }
 
@@ -82,6 +86,7 @@ class TaskInput {
     this.progress = 0,
     this.assignees = const [],
     this.updateAssignments = true,
+    this.photo,
     this.issue = '',
     this.type = '',
   });
@@ -95,6 +100,7 @@ class TaskInput {
   final double progress;
   final List<String> assignees;
   final bool updateAssignments;
+  final SelectedPhoto? photo;
   final String issue;
   final String type;
 }
@@ -113,6 +119,7 @@ class TaskProject {
 class TaskOptions {
   const TaskOptions({
     this.canCreate = false,
+    this.photoMaxBytes = 0,
     this.statuses = const [],
     this.priorities = const [],
     this.companies = const [],
@@ -120,6 +127,7 @@ class TaskOptions {
     this.projects = const [],
   });
   final bool canCreate;
+  final int photoMaxBytes;
   final List<String> statuses;
   final List<String> priorities;
   final List<String> companies;

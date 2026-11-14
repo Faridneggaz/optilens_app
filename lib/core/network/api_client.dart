@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'dart:async';
 import 'dart:convert';
 
@@ -40,9 +42,9 @@ class ApiClient {
     if (attachToken) {
       q['token'] = _token;
     }
-    return Uri.parse('${ApiConfig.apiMethodPath}$method').replace(
-      queryParameters: q.isEmpty ? null : q,
-    );
+    return Uri.parse(
+      '${ApiConfig.apiMethodPath}$method',
+    ).replace(queryParameters: q.isEmpty ? null : q);
   }
 
   Uri mobileUri(
@@ -62,9 +64,7 @@ class ApiClient {
     Map<String, String>? query,
     bool attachToken = true,
   }) {
-    return getJson(
-      mobileUri(endpoint, query: query, attachToken: attachToken),
-    );
+    return getJson(mobileUri(endpoint, query: query, attachToken: attachToken));
   }
 
   Future<Map<String, dynamic>> postMobile(
@@ -79,11 +79,68 @@ class ApiClient {
     );
   }
 
+  Future<Map<String, dynamic>> postMobileFile(
+    String endpoint, {
+    required Map<String, String> fields,
+    required String fieldName,
+    required String filename,
+    required List<int> bytes,
+  }) async {
+    try {
+      final request = http.MultipartRequest('POST', mobileUri(endpoint))
+        ..headers['Accept'] = 'application/json'
+        ..fields.addAll(fields)
+        ..files.add(
+          http.MultipartFile.fromBytes(fieldName, bytes, filename: filename),
+        );
+      final response = await _http
+          .send(request)
+          .then(http.Response.fromStream)
+          .timeout(const Duration(seconds: 60));
+      return _decodeResponse(response);
+    } on TimeoutException {
+      throw const RepositoryException('Request timeout');
+    } on RepositoryException {
+      rethrow;
+    } catch (error) {
+      throw RepositoryException('Network error: $error');
+    }
+  }
+
+  Future<Uint8List> postMobileImage(
+    String endpoint, {
+    required Map<String, dynamic> body,
+  }) async {
+    final http.Response response;
+    try {
+      response = await _http
+          .post(
+            mobileUri(endpoint),
+            headers: {
+              ..._jsonHeaders,
+              'Accept': 'image/jpeg, application/json',
+            },
+            body: jsonEncode(body),
+          )
+          .timeout(timeout);
+    } on TimeoutException {
+      throw const RepositoryException('Request timeout');
+    } on http.ClientException catch (error) {
+      throw RepositoryException('Network error: $error');
+    }
+    if (response.statusCode == 200 &&
+        response.headers['content-type']?.split(';').first == 'image/jpeg' &&
+        response.bodyBytes.isNotEmpty) {
+      return response.bodyBytes;
+    }
+    unwrap(_decodeResponse(response));
+    throw const RepositoryException('Invalid image response');
+  }
+
   Future<Map<String, dynamic>> getJson(
     Uri uri, {
     Map<String, String>? headers,
-  }) =>
-      _send('GET', uri, extraHeaders: headers);
+  }) => _send('GET', uri, extraHeaders: headers);
 
   Future<Map<String, dynamic>> postJson(Uri uri, {Object? body}) =>
       _send('POST', uri, body: body);
@@ -101,9 +158,7 @@ class ApiClient {
       'POST',
       uri,
       body: body,
-      extraHeaders: {
-        'Authorization': 'token ${ApiConfig.erpApiToken}',
-      },
+      extraHeaders: {'Authorization': 'token ${ApiConfig.erpApiToken}'},
       allowCreated: true,
     );
     if (json.containsKey('exc') || json['exception'] != null) {
@@ -154,53 +209,14 @@ class ApiClient {
       final response = verb == 'GET'
           ? await _http.get(uri, headers: headers).timeout(timeout)
           : await _http
-              .post(
-                uri,
-                headers: headers,
-                body: body == null ? null : jsonEncode(body),
-              )
-              .timeout(timeout);
+                .post(
+                  uri,
+                  headers: headers,
+                  body: body == null ? null : jsonEncode(body),
+                )
+                .timeout(timeout);
 
-      final ok = response.statusCode == 200 ||
-          (allowCreated && response.statusCode == 201);
-      if (response.body.isEmpty) {
-        if (!ok) {
-          throw RepositoryException('Server error: ${response.statusCode}');
-        }
-        return {};
-      }
-      Map<String, dynamic>? decodedMap;
-      try {
-        final decoded = json.decode(response.body);
-        if (decoded is Map<String, dynamic>) {
-          decodedMap = decoded;
-        } else if (decoded is Map) {
-          decodedMap = Map<String, dynamic>.from(decoded);
-        }
-      } catch (_) {
-        decodedMap = null;
-      }
-      if (!ok) {
-        final fromFrappe = decodedMap == null
-            ? null
-            : FrappeMessage.exceptionMessage(decodedMap) ??
-                FrappeMessage.parseServerMessages(
-                    decodedMap['_server_messages']) ??
-                decodedMap['message']?.toString();
-        throw RepositoryException(
-          (fromFrappe != null && fromFrappe.trim().isNotEmpty)
-              ? fromFrappe
-              : 'Server error: ${response.statusCode}',
-        );
-      }
-      if (decodedMap != null) {
-        final fault = FrappeMessage.exceptionMessage(decodedMap);
-        if (fault != null && fault.trim().isNotEmpty) {
-          throw RepositoryException(fault);
-        }
-        return decodedMap;
-      }
-      throw const RepositoryException('Invalid JSON response');
+      return _decodeResponse(response, allowCreated: allowCreated);
     } on TimeoutException {
       throw const RepositoryException('Request timeout');
     } on RepositoryException {
@@ -208,5 +224,53 @@ class ApiClient {
     } catch (e) {
       throw RepositoryException('Network error: $e');
     }
+  }
+
+  Map<String, dynamic> _decodeResponse(
+    http.Response response, {
+    bool allowCreated = false,
+  }) {
+    final ok =
+        response.statusCode == 200 ||
+        (allowCreated && response.statusCode == 201);
+    if (response.body.isEmpty) {
+      if (!ok) {
+        throw RepositoryException('Server error: ${response.statusCode}');
+      }
+      return {};
+    }
+    Map<String, dynamic>? decodedMap;
+    try {
+      final decoded = json.decode(response.body);
+      if (decoded is Map<String, dynamic>) {
+        decodedMap = decoded;
+      } else if (decoded is Map) {
+        decodedMap = Map<String, dynamic>.from(decoded);
+      }
+    } catch (_) {
+      decodedMap = null;
+    }
+    if (!ok) {
+      final fromFrappe = decodedMap == null
+          ? null
+          : FrappeMessage.exceptionMessage(decodedMap) ??
+                FrappeMessage.parseServerMessages(
+                  decodedMap['_server_messages'],
+                ) ??
+                decodedMap['message']?.toString();
+      throw RepositoryException(
+        (fromFrappe != null && fromFrappe.trim().isNotEmpty)
+            ? fromFrappe
+            : 'Server error: ${response.statusCode}',
+      );
+    }
+    if (decodedMap != null) {
+      final fault = FrappeMessage.exceptionMessage(decodedMap);
+      if (fault != null && fault.trim().isNotEmpty) {
+        throw RepositoryException(fault);
+      }
+      return decodedMap;
+    }
+    throw const RepositoryException('Invalid JSON response');
   }
 }

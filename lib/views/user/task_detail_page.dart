@@ -6,6 +6,7 @@ import '../../presentation/controllers/task_detail_controller.dart';
 import '../../widgets/header.dart';
 import '../../widgets/task/task_card.dart';
 import '../../widgets/task/task_form_sheet.dart';
+import '../../widgets/attachment_photo_gallery.dart';
 
 class TaskDetailPage extends StatelessWidget {
   const TaskDetailPage({super.key});
@@ -88,6 +89,15 @@ class TaskDetailPage extends StatelessWidget {
                       _section(
                         'task_description'.tr,
                         Text(task.descriptionText),
+                      ),
+                    if (task.photos.isNotEmpty)
+                      _section(
+                        'erp_task_attachment_photos'.tr,
+                        AttachmentPhotoGallery(
+                          photos: task.photos,
+                          loadPhoto: (id, {required thumbnail}) =>
+                              c.fetchPhoto(task.name, id, thumbnail: thumbnail),
+                        ),
                       ),
                     _section(
                       'erp_task_progress'.tr,

@@ -1,12 +1,15 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../domain/entities/attachment_photo.dart';
 import '../../core/theme/app_colors.dart';
 import '../../domain/entities/task.dart';
 import '../../presentation/controllers/task_controller.dart';
 import '../../utils/error_feedback.dart';
 import 'pick_assignable_user_sheet.dart';
 import 'task_card.dart';
+import '../attachment_photo_field.dart';
+import '../attachment_photo_gallery.dart';
 
 Future<ErpTask?> showTaskForm({
   required BuildContext context,
@@ -48,6 +51,8 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
   late final TextEditingController _progress;
   final _assignees = <AssignableUser>[];
   TaskOptions? _options;
+  SelectedPhoto? _photo;
+  bool _pickingPhoto = false;
   TaskProject? _project;
   String _company = '';
   String _priority = 'Medium';
@@ -163,7 +168,7 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
   }
 
   Future<void> _save() async {
-    if (_saving || !_form.currentState!.validate()) return;
+    if (_saving || _pickingPhoto || !_form.currentState!.validate()) return;
     if (_start.isNotEmpty && _end.isNotEmpty && _start.compareTo(_end) > 0) {
       setState(() => _error = 'erp_task_dates_error'.tr);
       return;
@@ -189,6 +194,7 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
         assignees: _assignees.map((user) => user.email).toList(),
         updateAssignments: _assignmentsEditable,
         issue: widget.issue,
+        photo: _photo,
       );
       final saved = await widget.controller.saveTask(input, task: current);
       if (!mounted) return;
@@ -205,6 +211,7 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
   @override
   Widget build(BuildContext context) {
     final options = _options;
+    final task = widget.task;
     final companies = <String>{'', ...?options?.companies, _company}.toList();
     final priorities = <String>{...?options?.priorities, _priority}.toList();
     final canSave =
@@ -251,7 +258,7 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
                         key: _form,
                         child: Column(
                           children: [
-                            if (_error.isNotEmpty)
+                            if (_error.isNotEmpty && options == null)
                               Padding(
                                 padding: const EdgeInsets.only(bottom: 12),
                                 child: Text(
@@ -435,12 +442,54 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
                                 padding: const EdgeInsets.only(top: 8),
                                 child: Text('erp_task_reopen_assignments'.tr),
                               ),
+                            if (task != null && task.photos.isNotEmpty) ...[
+                              const SizedBox(height: 16),
+                              Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  'erp_task_attachment_photos'.tr,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              AttachmentPhotoGallery(
+                                photos: task.photos,
+                                loadPhoto: (id, {required thumbnail}) =>
+                                    widget.controller.fetchPhoto(
+                                      task.name,
+                                      id,
+                                      thumbnail: thumbnail,
+                                    ),
+                              ),
+                            ],
+                            if (canSave && options.photoMaxBytes > 0) ...[
+                              const SizedBox(height: 16),
+                              AttachmentPhotoField(
+                                maxBytes: options.photoMaxBytes,
+                                photo: _photo,
+                                disabled: _saving,
+                                onChanged: (photo) =>
+                                    setState(() => _photo = photo),
+                                onPickingChanged: (picking) =>
+                                    setState(() => _pickingPhoto = picking),
+                              ),
+                            ],
                             const SizedBox(height: 16),
                           ],
                         ),
                       ),
                     ),
             ),
+            if (_error.isNotEmpty && options != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: Text(
+                  _error,
+                  style: const TextStyle(color: AppColors.danger),
+                ),
+              ),
             SafeArea(
               top: false,
               child: Padding(
@@ -448,7 +497,9 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
                 child: SizedBox(
                   width: double.infinity,
                   child: FilledButton(
-                    onPressed: canSave && !_saving ? _save : null,
+                    onPressed: canSave && !_saving && !_pickingPhoto
+                        ? _save
+                        : null,
                     child: _saving
                         ? const SizedBox(
                             width: 20,

@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../core/network/api_client.dart';
 import '../../core/theme/app_colors.dart';
-import '../../domain/entities/task.dart';
-import '../../presentation/controllers/task_controller.dart';
+import '../../data/mappers/attachment_photo_mapper.dart';
+import '../../domain/entities/attachment_photo.dart';
+import '../../utils/error_feedback.dart';
+import '../../widgets/attachment_photo_field.dart';
+import '../../widgets/attachment_photo_gallery.dart';
 import '../../widgets/header.dart';
 import '../../widgets/task/task_card.dart';
 import '../../presentation/controllers/session_controller.dart';
@@ -135,6 +138,7 @@ class _IssuesPageState extends State<IssuesPage> {
       return;
     }
     final issue = Map<String, dynamic>.from(r['issue'] as Map);
+    final issueType = issue['issue_type']?.toString().trim() ?? '';
     final reply = TextEditingController();
     await showModalBottomSheet<void>(
       context: context,
@@ -193,7 +197,25 @@ class _IssuesPageState extends State<IssuesPage> {
                   ],
                 ),
               ],
+              if (issueType.isNotEmpty) ...[
+                Text(
+                  'Type de ticket : $issueType',
+                  style: const TextStyle(
+                    color: AppColors.primaryDark,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
               Text(plainText(issue['description'])),
+              const SizedBox(height: 12),
+              _IssuePhotos(
+                issueName: issue['name'].toString(),
+                photos: mapAttachmentPhotos(r['photos']),
+                photoMaxBytes: r['can_write'] == true
+                    ? int.tryParse(r['photo_max_bytes']?.toString() ?? '') ?? 0
+                    : 0,
+              ),
               const SizedBox(height: 12),
               OutlinedButton.icon(
                 onPressed: () => createTaskFromIssue(issue),
@@ -349,27 +371,32 @@ class _IssuesPageState extends State<IssuesPage> {
           child: FutureBuilder<Map<String, dynamic>>(
             future: request,
             builder: (context, snap) {
-              if (snap.connectionState != ConnectionState.done)
+              if (snap.connectionState != ConnectionState.done) {
                 return const Center(child: CircularProgressIndicator());
-              if (snap.hasError)
+              }
+              if (snap.hasError) {
                 return Center(
                   child: TextButton(
                     onPressed: load,
                     child: const Text('Réessayer'),
                   ),
                 );
+              }
               final m = unwrap(snap.data!);
-              if (m['error'] != null)
+              if (m['error'] != null) {
                 return Center(child: Text('${m['error']}'));
+              }
               final rows = (m['issues'] as List? ?? []);
-              if (rows.isEmpty)
+              if (rows.isEmpty) {
                 return const Center(child: Text('Aucune Issue accessible'));
+              }
               return RefreshIndicator(
                 onRefresh: () async => load(),
                 child: ListView.builder(
                   itemCount: rows.length,
                   itemBuilder: (_, i) {
                     final x = Map<String, dynamic>.from(rows[i] as Map);
+                    final issueType = x['issue_type']?.toString().trim() ?? '';
                     return Card(
                       margin: const EdgeInsets.symmetric(
                         horizontal: 16,
@@ -389,6 +416,14 @@ class _IssuesPageState extends State<IssuesPage> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text('${x['name']} • ${x['opening_date']}'),
+                            if (issueType.isNotEmpty)
+                              Text(
+                                'Type de ticket : $issueType',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.muted,
+                                ),
+                              ),
                             const SizedBox(height: 5),
                             TaskStatusChip(status: '${x['status']}'),
                           ],
@@ -406,4 +441,117 @@ class _IssuesPageState extends State<IssuesPage> {
       ],
     ),
   );
+}
+
+class _IssuePhotos extends StatefulWidget {
+  const _IssuePhotos({
+    required this.issueName,
+    required this.photos,
+    required this.photoMaxBytes,
+  });
+  final String issueName;
+  final List<AttachmentPhoto> photos;
+  final int photoMaxBytes;
+
+  @override
+  State<_IssuePhotos> createState() => _IssuePhotosState();
+}
+
+class _IssuePhotosState extends State<_IssuePhotos> {
+  late List<AttachmentPhoto> _photos = widget.photos;
+  SelectedPhoto? _selected;
+  bool _picking = false;
+  bool _saving = false;
+  String? _error;
+  ApiClient get _api => Get.find<ApiClient>();
+  String get _token => Get.find<SessionController>().token.value;
+
+  Future<void> _save() async {
+    final photo = _selected;
+    if (photo == null || _saving || _picking) return;
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+    try {
+      final result = _api.unwrap(
+        await _api.postMobileFile(
+          'add_issue_photo',
+          fields: {'token': _token, 'name': widget.issueName},
+          fieldName: 'photo',
+          filename: photo.name,
+          bytes: photo.bytes,
+        ),
+      );
+      final photos = mapAttachmentPhotos((result as Map)['photos']);
+      if (!mounted) return;
+      setState(() {
+        _photos = photos;
+        _selected = null;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _error = ErrorFeedback.message(error, fallbackKey: 'error_occurred');
+      });
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_photos.isEmpty && widget.photoMaxBytes <= 0) {
+      return const SizedBox.shrink();
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'erp_task_attachment_photos'.tr,
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+        if (_photos.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          AttachmentPhotoGallery(
+            photos: _photos,
+            loadPhoto: (fileId, {required thumbnail}) => _api.postMobileImage(
+              'get_issue_photo',
+              body: {
+                'token': _token,
+                'name': widget.issueName,
+                'file_id': fileId,
+                'thumbnail': thumbnail,
+              },
+            ),
+          ),
+        ],
+        if (widget.photoMaxBytes > 0) ...[
+          AttachmentPhotoField(
+            maxBytes: widget.photoMaxBytes,
+            photo: _selected,
+            disabled: _saving,
+            onChanged: (photo) => setState(() {
+              _selected = photo;
+              _error = null;
+            }),
+            onPickingChanged: (picking) => setState(() => _picking = picking),
+          ),
+          if (_selected != null)
+            FilledButton.icon(
+              onPressed: _saving || _picking ? null : _save,
+              icon: _saving
+                  ? const SizedBox.square(
+                      dimension: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.attach_file),
+              label: Text('erp_issue_attach_selected_photo'.tr),
+            ),
+          if (_error case final String error)
+            Text(error, style: const TextStyle(color: AppColors.danger)),
+        ],
+      ],
+    );
+  }
 }

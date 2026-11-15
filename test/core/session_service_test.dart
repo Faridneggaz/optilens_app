@@ -27,14 +27,37 @@ void main() {
 
   test('saveSession keeps the SID in the vault, not prefs', () async {
     await service.init();
-    await service.saveSession(code: 'emp@x.com', role: 'user', token: 'sid-1');
+    await service.saveSession(
+      code: 'emp@x.com',
+      role: 'user',
+      token: 'sid-1',
+      displayName: '  Farid Example  ',
+    );
 
     expect(service.authToken, 'sid-1');
     expect(await vault.read(), 'sid-1');
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getString('auth_token'), isNull);
     expect(prefs.getString('user_code'), 'emp@x.com');
-    expect(service.isSessionValid(), isTrue);
+    final restored = await SessionService(tokenVault: vault).init();
+    expect(restored.userDisplayName, 'Farid Example');
+    expect(restored.userCode, 'emp@x.com');
+    await restored.clearSession();
+    expect(restored.userDisplayName, isEmpty);
+    expect(restored.isSessionValid(), isFalse);
+  });
+
+  test('an email is never used as a cached display name', () async {
+    SharedPreferences.setMockInitialValues({
+      'user_code': 'emp@x.com',
+      'user_display_name': '  emp@x.com ',
+    });
+    await service.init();
+
+    expect(service.userCode, 'emp@x.com');
+    expect(service.userDisplayName, isEmpty);
+    await service.saveUserDisplayName(' Farid Neggaz ');
+    expect(service.userDisplayName, 'Farid Neggaz');
   });
 
   test('clearSession wipes the vault and profile keys', () async {

@@ -4,7 +4,7 @@ import 'token_vault.dart';
 
 class SessionService extends GetxService {
   SessionService({TokenVault? tokenVault})
-      : _tokenVault = tokenVault ?? SecureTokenVault();
+    : _tokenVault = tokenVault ?? SecureTokenVault();
 
   late SharedPreferences _prefs;
   final TokenVault _tokenVault;
@@ -12,6 +12,14 @@ class SessionService extends GetxService {
 
   String get userCode => _prefs.getString('user_code') ?? '';
   String get userRole => _prefs.getString('user_role') ?? '';
+  String get userDisplayName =>
+      _normalizeDisplayName(_prefs.getString('user_display_name') ?? '');
+
+  static String _normalizeDisplayName(String value) {
+    final name = value.trim();
+    return RegExp(r'^\S+@\S+$').hasMatch(name) ? '' : name;
+  }
+
   String get authToken => _authToken;
   String getSid() => _authToken;
   String get tokenExpiry => _prefs.getString('token_expiry') ?? '';
@@ -42,15 +50,21 @@ class SessionService extends GetxService {
     required String code,
     required String role,
     required String token,
+    String displayName = '',
   }) async {
     await _prefs.setString('user_code', code);
+    await saveUserDisplayName(displayName);
     await _prefs.setString('user_role', role);
     await _persistToken(token);
 
-    final expiry =
-        DateTime.now().add(const Duration(hours: 24)).toIso8601String();
+    final expiry = DateTime.now()
+        .add(const Duration(hours: 24))
+        .toIso8601String();
     await _prefs.setString('token_expiry', expiry);
   }
+
+  Future<void> saveUserDisplayName(String name) =>
+      _prefs.setString('user_display_name', _normalizeDisplayName(name));
 
   Future<void> _persistToken(String token) async {
     _authToken = token;
@@ -65,6 +79,7 @@ class SessionService extends GetxService {
     _authToken = '';
     await _tokenVault.delete();
     await _prefs.remove('user_code');
+    await _prefs.remove('user_display_name');
     await _prefs.remove('user_role');
     await _prefs.remove('auth_token');
     await _prefs.remove('token_expiry');

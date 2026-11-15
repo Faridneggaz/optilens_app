@@ -125,20 +125,11 @@ class TaskRepositoryImpl implements TaskRepository {
   Future<ErpTask> _saveTask(
     String method,
     Map<String, dynamic> body, {
-    SelectedPhoto? photo,
+    required List<SelectedPhoto> photos,
   }) async {
-    final response = photo == null
+    final response = photos.isEmpty
         ? await _client.postMobile(method, attachToken: false, body: body)
-        : await _client.postMobileFile(
-            method,
-            fields: body.map(
-              (key, value) =>
-                  MapEntry(key, value is String ? value : jsonEncode(value)),
-            ),
-            fieldName: 'photo',
-            filename: photo.name,
-            bytes: photo.bytes,
-          );
+        : await _client.postMobilePhotos(method, body: body, photos: photos);
     return TaskDetailResponseMapper.fromJson(_message(response)).task;
   }
 
@@ -149,7 +140,7 @@ class TaskRepositoryImpl implements TaskRepository {
   }) => _saveTask('create_task', {
     'token': token,
     ..._input(input),
-  }, photo: input.photo);
+  }, photos: input.photos);
 
   @override
   Future<ErpTask> updateTask({
@@ -166,5 +157,5 @@ class TaskRepositoryImpl implements TaskRepository {
     if (input != null) ..._input(input),
     if (status != null) 'status': status,
     if (progress != null) 'progress': progress,
-  }, photo: input?.photo);
+  }, photos: input?.photos ?? const []);
 }

@@ -86,7 +86,7 @@ class TaskInput {
     this.progress = 0,
     this.assignees = const [],
     this.updateAssignments = true,
-    this.photo,
+    this.photos = const [],
     this.issue = '',
     this.type = '',
   });
@@ -100,7 +100,7 @@ class TaskInput {
   final double progress;
   final List<String> assignees;
   final bool updateAssignments;
-  final SelectedPhoto? photo;
+  final List<SelectedPhoto> photos;
   final String issue;
   final String type;
 }
@@ -120,6 +120,8 @@ class TaskOptions {
   const TaskOptions({
     this.canCreate = false,
     this.photoMaxBytes = 0,
+    this.photoBatchMaxBytes = 0,
+    this.photoMaxCount = 1,
     this.statuses = const [],
     this.priorities = const [],
     this.companies = const [],
@@ -128,6 +130,8 @@ class TaskOptions {
   });
   final bool canCreate;
   final int photoMaxBytes;
+  final int photoBatchMaxBytes;
+  final int photoMaxCount;
   final List<String> statuses;
   final List<String> priorities;
   final List<String> companies;

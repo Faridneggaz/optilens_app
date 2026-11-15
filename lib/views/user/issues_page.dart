@@ -215,6 +215,13 @@ class _IssuesPageState extends State<IssuesPage> {
                 photoMaxBytes: r['can_write'] == true
                     ? int.tryParse(r['photo_max_bytes']?.toString() ?? '') ?? 0
                     : 0,
+                photoBatchMaxBytes:
+                    int.tryParse(
+                      r['photo_batch_max_bytes']?.toString() ?? '',
+                    ) ??
+                    0,
+                photoMaxCount:
+                    int.tryParse(r['photo_max_count']?.toString() ?? '') ?? 1,
               ),
               const SizedBox(height: 12),
               OutlinedButton.icon(
@@ -448,10 +455,14 @@ class _IssuePhotos extends StatefulWidget {
     required this.issueName,
     required this.photos,
     required this.photoMaxBytes,
+    required this.photoBatchMaxBytes,
+    required this.photoMaxCount,
   });
   final String issueName;
   final List<AttachmentPhoto> photos;
   final int photoMaxBytes;
+  final int photoBatchMaxBytes;
+  final int photoMaxCount;
 
   @override
   State<_IssuePhotos> createState() => _IssuePhotosState();
@@ -459,7 +470,7 @@ class _IssuePhotos extends StatefulWidget {
 
 class _IssuePhotosState extends State<_IssuePhotos> {
   late List<AttachmentPhoto> _photos = widget.photos;
-  SelectedPhoto? _selected;
+  List<SelectedPhoto> _selected = const [];
   bool _picking = false;
   bool _saving = false;
   String? _error;
@@ -467,27 +478,24 @@ class _IssuePhotosState extends State<_IssuePhotos> {
   String get _token => Get.find<SessionController>().token.value;
 
   Future<void> _save() async {
-    final photo = _selected;
-    if (photo == null || _saving || _picking) return;
+    if (_selected.isEmpty || _saving || _picking) return;
     setState(() {
       _saving = true;
       _error = null;
     });
     try {
       final result = _api.unwrap(
-        await _api.postMobileFile(
+        await _api.postMobilePhotos(
           'add_issue_photo',
-          fields: {'token': _token, 'name': widget.issueName},
-          fieldName: 'photo',
-          filename: photo.name,
-          bytes: photo.bytes,
+          body: {'token': _token, 'name': widget.issueName},
+          photos: _selected,
         ),
       );
       final photos = mapAttachmentPhotos((result as Map)['photos']);
       if (!mounted) return;
       setState(() {
         _photos = photos;
-        _selected = null;
+        _selected = const [];
       });
     } catch (error) {
       if (!mounted) return;
@@ -529,15 +537,17 @@ class _IssuePhotosState extends State<_IssuePhotos> {
         if (widget.photoMaxBytes > 0) ...[
           AttachmentPhotoField(
             maxBytes: widget.photoMaxBytes,
-            photo: _selected,
+            maxBatchBytes: widget.photoBatchMaxBytes,
+            maxCount: widget.photoMaxCount,
+            photos: _selected,
             disabled: _saving,
-            onChanged: (photo) => setState(() {
-              _selected = photo;
+            onChanged: (photos) => setState(() {
+              _selected = photos;
               _error = null;
             }),
             onPickingChanged: (picking) => setState(() => _picking = picking),
           ),
-          if (_selected != null)
+          if (_selected.isNotEmpty)
             FilledButton.icon(
               onPressed: _saving || _picking ? null : _save,
               icon: _saving
@@ -546,7 +556,12 @@ class _IssuePhotosState extends State<_IssuePhotos> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.attach_file),
-              label: Text('erp_issue_attach_selected_photo'.tr),
+              label: Text(
+                (_selected.length == 1
+                        ? 'erp_issue_attach_selected_photo'
+                        : 'erp_issue_attach_selected_photos')
+                    .tr,
+              ),
             ),
           if (_error case final String error)
             Text(error, style: const TextStyle(color: AppColors.danger)),

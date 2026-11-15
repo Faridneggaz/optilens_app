@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../domain/usecases/usecases.dart';
@@ -15,13 +17,13 @@ class LoginController extends GetxController {
 
   // Form controllers — disposed in onClose
   final clientCodeController = TextEditingController();
-  final emailController      = TextEditingController();
-  final passwordController   = TextEditingController();
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
 
   // Reactive state
-  final isLoading    = false.obs;
-  final isUserLogin  = false.obs;
-  final isObscure    = true.obs;
+  final isLoading = false.obs;
+  final isUserLogin = false.obs;
+  final isObscure = true.obs;
   final errorMessage = ''.obs;
 
   @override
@@ -36,30 +38,31 @@ class LoginController extends GetxController {
     isUserLogin.value = !isUserLogin.value;
     errorMessage.value = '';
   }
-  void toggleObscure()    => isObscure.value     = !isObscure.value;
+
+  void toggleObscure() => isObscure.value = !isObscure.value;
 
   Future<void> loginClient() async {
     final code = clientCodeController.text.trim();
     if (code.isEmpty) {
-      Get.snackbar('error'.tr, 'error_enter_client_code'.tr,
-          backgroundColor: Colors.orange, colorText: Colors.white);
+      Get.snackbar(
+        'error'.tr,
+        'error_enter_client_code'.tr,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
       return;
     }
     errorMessage.value = '';
     isLoading.value = true;
     try {
       final response = await _auth.fetchCustomer(code);
-      
+
       final sessionService = Get.find<SessionService>();
-      await sessionService.saveSession(
-        code: code,
-        role: 'client',
-        token: '',
-      );
+      await sessionService.saveSession(code: code, role: 'client', token: '');
 
       final session = Get.find<SessionController>();
       session.customer.value = response.customer;
-      session.isUser.value   = false;
+      session.isUser.value = false;
 
       Get.offAllNamed(AppRoutes.main);
     } catch (e) {
@@ -72,11 +75,15 @@ class LoginController extends GetxController {
   }
 
   Future<void> loginUser() async {
-    final email    = emailController.text.trim();
+    final email = emailController.text.trim();
     final password = passwordController.text.trim();
     if (email.isEmpty || password.isEmpty) {
-      Get.snackbar('error'.tr, 'error_email_password_required'.tr,
-          backgroundColor: Colors.orange, colorText: Colors.white);
+      Get.snackbar(
+        'error'.tr,
+        'error_email_password_required'.tr,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
       return;
     }
     errorMessage.value = '';
@@ -84,25 +91,29 @@ class LoginController extends GetxController {
     try {
       final response = await _auth.login(email: email, password: password);
       final sid = response.user.sid;
+      final code = response.user.email ?? email;
+      final displayName = response.user.name?.trim() ?? '';
 
       AuthEvents.resetGuards();
 
       final sessionService = Get.find<SessionService>();
       await sessionService.saveSession(
-        code: response.user.email ?? email,
+        code: code,
         role: 'user',
         token: sid,
+        displayName: displayName,
       );
-      
+
       await sessionService.saveUserPermissions(
         response.user.allowedCompanies,
         response.user.allowedWarehouses,
       );
 
       final session = Get.find<SessionController>();
-      session.token.value    = sid;
-      session.userName.value = response.user.name ?? 'Utilisateur';
-      session.isUser.value   = true;
+      session.token.value = sid;
+      session.userName.value = sessionService.userDisplayName;
+      session.isUser.value = true;
+      unawaited(session.loadUserNameIfMissing());
 
       Get.offAllNamed(AppRoutes.main);
     } on MissingTokenException {

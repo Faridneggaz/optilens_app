@@ -10,6 +10,16 @@ class LoginRepositoryImpl implements LoginRepository {
 
   final ApiClient _client;
 
+  Future<String> fetchUserDisplayName(String token) async {
+    final response = await _client.postMobile(
+      'get_my_user_name',
+      attachToken: false,
+      body: {'token': token},
+    );
+    final message = response['message'];
+    return message is Map ? (message['name']?.toString().trim() ?? '') : '';
+  }
+
   Future<LoginResponse> login({
     required String email,
     required String password,

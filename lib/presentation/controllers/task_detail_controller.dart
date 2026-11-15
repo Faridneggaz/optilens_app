@@ -67,6 +67,9 @@ class TaskDetailController extends GetxController {
     thumbnail: thumbnail,
   );
 
+  Future<TaskVoiceAudio> fetchVoice(String taskName, String fileId) =>
+      _tasks.fetchVoice(token: _token, taskName: taskName, fileId: fileId);
+
   Future<ActionResult> changeStatus(String status) async {
     final current = task.value;
     if (current == null ||

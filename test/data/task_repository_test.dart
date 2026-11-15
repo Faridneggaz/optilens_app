@@ -130,25 +130,22 @@ void main() {
     expect(saved.name, 'TASK-1');
   });
 
-  test('editing a Task sends every selected photo in one request', () async {
-    var requests = 0;
+  test('creating a Task sends the voice note with the task fields', () async {
     final repo = TaskRepositoryImpl(
       ApiClient(
         httpClient: MockClient((request) async {
-          requests++;
-          expect(request.url.path, endsWith('mobile_app.api.update_task'));
+          expect(request.url.path, endsWith('mobile_app.api.create_task'));
           expect(
             request.headers['content-type'],
-            startsWith('multipart/form-data;'),
+            startsWith('multipart/form-data'),
           );
-          expect(request.body, contains('name="photo"; filename="first.jpg"'));
-          expect(request.body, contains('name="photo"; filename="second.png"'));
-          expect(request.body, contains('name="modified"\r\n\r\nversion-1'));
-          expect(request.body, contains('name="token"\r\n\r\nsid'));
+          expect(request.body, contains('name="subject"\r\n\r\nInventory'));
           expect(
             request.body,
-            contains('name="assignees"\r\n\r\n["a@example.com"]'),
+            contains('name="voice"; filename="note-vocale.wav"'),
           );
+          expect(request.body, contains('RIFF'));
+          expect(request.body, isNot(contains('name="photo"')));
           return response({
             'success': true,
             'task': {'name': 'TASK-1', 'subject': 'Inventory'},
@@ -156,23 +153,117 @@ void main() {
         }),
       ),
     );
-
-    await repo.updateTask(
+    final saved = await repo.createTask(
       token: 'sid',
-      name: 'TASK-1',
-      modified: 'version-1',
       input: TaskInput(
         subject: 'Inventory',
-        assignees: const ['a@example.com'],
-        photos: [
-          SelectedPhoto(name: 'first.jpg', bytes: Uint8List.fromList([1])),
-          SelectedPhoto(name: 'second.png', bytes: Uint8List.fromList([2])),
-        ],
+        voiceRecording: Uint8List.fromList(ascii.encode('RIFF')),
       ),
     );
-
-    expect(requests, 1);
+    expect(saved.name, 'TASK-1');
   });
+
+  test(
+    'fetching a Task exposes its saved OGG voice and preserves the format',
+    () async {
+      final audio = ascii.encode('OggS');
+      final repo = TaskRepositoryImpl(
+        ApiClient(
+          httpClient: MockClient((request) async {
+            if (request.method == 'GET') {
+              expect(request.url.path, endsWith('mobile_app.api.get_task'));
+              return response({
+                'task': {
+                  'name': 'TASK-1',
+                  'subject': 'Inventory',
+                  'voice_ids': ['FILE-1'],
+                },
+              });
+            }
+            expect(request.url.path, endsWith('mobile_app.api.get_task_voice'));
+            expect(request.headers['accept'], contains('audio/ogg'));
+            expect(jsonDecode(request.body), {
+              'token': 'sid',
+              'name': 'TASK-1',
+              'file_id': 'FILE-1',
+            });
+            return http.Response.bytes(
+              audio,
+              200,
+              headers: {'content-type': 'audio/ogg'},
+            );
+          }),
+        ),
+      );
+      final detail = await repo.fetchTaskDetail(token: 'sid', name: 'TASK-1');
+      expect(detail.task.voiceIds, ['FILE-1']);
+      final recording = await repo.fetchVoice(
+        token: 'sid',
+        taskName: detail.task.name,
+        fileId: detail.task.voiceIds.single,
+      );
+      expect(recording.mimeType, 'audio/ogg');
+      expect(recording.bytes, audio);
+    },
+  );
+
+  test(
+    'task edits send new photos and voice removals in one request',
+    () async {
+      var requests = 0;
+      final repo = TaskRepositoryImpl(
+        ApiClient(
+          httpClient: MockClient((request) async {
+            requests++;
+            expect(request.url.path, endsWith('mobile_app.api.update_task'));
+            expect(
+              request.headers['content-type'],
+              startsWith('multipart/form-data;'),
+            );
+            expect(
+              request.body,
+              contains('name="photo"; filename="first.jpg"'),
+            );
+            expect(
+              request.body,
+              contains('name="photo"; filename="second.png"'),
+            );
+            expect(request.body, contains('name="modified"\r\n\r\nversion-1'));
+            expect(request.body, contains('name="token"\r\n\r\nsid'));
+            expect(
+              request.body,
+              contains('name="removed_voice_ids"\r\n\r\n["VOICE-1"]'),
+            );
+            expect(
+              request.body,
+              contains('name="assignees"\r\n\r\n["a@example.com"]'),
+            );
+            return response({
+              'success': true,
+              'task': {'name': 'TASK-1', 'subject': 'Inventory'},
+            });
+          }),
+        ),
+      );
+
+      await repo.updateTask(
+        token: 'sid',
+        name: 'TASK-1',
+        modified: 'version-1',
+        input: TaskInput(
+          subject: 'Inventory',
+          assignees: const ['a@example.com'],
+          removedVoiceIds: const ['VOICE-1'],
+          photos: [
+            SelectedPhoto(name: 'first.jpg', bytes: Uint8List.fromList([1])),
+            SelectedPhoto(name: 'second.png', bytes: Uint8List.fromList([2])),
+          ],
+        ),
+      );
+
+      expect(requests, 1);
+    },
+  );
 
   test('edit preserves unchanged rich text and closed assignments', () async {
     final repo = TaskRepositoryImpl(

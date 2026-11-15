@@ -51,6 +51,11 @@ class ErpTaskMapper {
     previousAssignees: AssignableUserMapper.fromList(row['previous_assignees']),
     allowedStatuses: _strings(row['allowed_statuses']),
     photos: mapAttachmentPhotos(row['photos']),
+    voiceIds: [
+      if (row['voice_ids'] case final List ids)
+        for (final id in ids)
+          if (id is String && id.isNotEmpty) id,
+    ],
   );
 }
 
@@ -98,6 +103,8 @@ class TaskOptionsMapper {
     photoBatchMaxBytes:
         int.tryParse(root['photo_batch_max_bytes']?.toString() ?? '') ?? 0,
     photoMaxCount: int.tryParse(root['photo_max_count']?.toString() ?? '') ?? 1,
+    voiceMaxBytes: int.tryParse(root['voice_max_bytes']?.toString() ?? '') ?? 0,
+    canRemoveVoice: _flag(root['can_remove_voice']),
     statuses: _strings(root['statuses']),
     priorities: _strings(root['priorities']),
     types: _strings(root['types']),

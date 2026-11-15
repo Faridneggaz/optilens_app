@@ -6,6 +6,7 @@ import '../../presentation/controllers/task_detail_controller.dart';
 import '../../widgets/header.dart';
 import '../../widgets/task/task_card.dart';
 import '../../widgets/task/task_form_sheet.dart';
+import '../../widgets/task/task_voice_player.dart';
 import '../../widgets/attachment_photo_gallery.dart';
 
 class TaskDetailPage extends StatelessWidget {
@@ -85,10 +86,27 @@ class TaskDetailPage extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    if (task.descriptionText.isNotEmpty)
+                    if (task.descriptionText.isNotEmpty ||
+                        task.voiceIds.isNotEmpty)
                       _section(
                         'task_description'.tr,
-                        Text(task.descriptionText),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (task.descriptionText.isNotEmpty)
+                              Text(task.descriptionText),
+                            if (task.voiceIds.isNotEmpty)
+                              TaskVoicePlayer(
+                                key: ValueKey((
+                                  task.name,
+                                  task.voiceIds.join(','),
+                                )),
+                                recordingIds: task.voiceIds,
+                                loadRecording: (id) =>
+                                    c.fetchVoice(task.name, id),
+                              ),
+                          ],
+                        ),
                       ),
                     if (task.photos.isNotEmpty)
                       _section(

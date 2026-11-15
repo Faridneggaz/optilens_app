@@ -6,6 +6,8 @@
 	<string>Choose a photo to attach to a task or issue in OptiLens.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Take a photo to attach to a task or issue in OptiLens.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Record a voice note to attach to a task in OptiLens.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

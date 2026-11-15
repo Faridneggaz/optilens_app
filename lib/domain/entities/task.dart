@@ -1,4 +1,8 @@
+import 'dart:typed_data';
+
 import 'attachment_photo.dart';
+
+typedef TaskVoiceAudio = ({Uint8List bytes, String mimeType});
 
 class TaskSummary {
   const TaskSummary({
@@ -50,6 +54,7 @@ class ErpTask {
     this.previousAssignees = const [],
     this.allowedStatuses = const [],
     this.photos = const [],
+    this.voiceIds = const [],
   });
   final String name;
   final String subject;
@@ -72,6 +77,7 @@ class ErpTask {
   final List<AssignableUser> previousAssignees;
   final List<String> allowedStatuses;
   final List<AttachmentPhoto> photos;
+  final List<String> voiceIds;
   bool get isFinished => status == 'Completed' || status == 'Cancelled';
 }
 
@@ -89,6 +95,8 @@ class TaskInput {
     this.assignees = const [],
     this.updateAssignments = true,
     this.photos = const [],
+    this.voiceRecording,
+    this.removedVoiceIds = const [],
     this.issue = '',
     this.type,
   });
@@ -103,6 +111,8 @@ class TaskInput {
   final List<String> assignees;
   final bool updateAssignments;
   final List<SelectedPhoto> photos;
+  final Uint8List? voiceRecording;
+  final List<String> removedVoiceIds;
   final String issue;
   final String? type;
 }
@@ -124,6 +134,8 @@ class TaskOptions {
     this.photoMaxBytes = 0,
     this.photoBatchMaxBytes = 0,
     this.photoMaxCount = 1,
+    this.voiceMaxBytes = 0,
+    this.canRemoveVoice = false,
     this.statuses = const [],
     this.priorities = const [],
     this.types = const [],
@@ -135,6 +147,8 @@ class TaskOptions {
   final int photoMaxBytes;
   final int photoBatchMaxBytes;
   final int photoMaxCount;
+  final int voiceMaxBytes;
+  final bool canRemoveVoice;
   final List<String> statuses;
   final List<String> priorities;
   final List<String> types;

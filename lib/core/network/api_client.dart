@@ -84,6 +84,13 @@ class ApiClient {
     String endpoint, {
     required Map<String, dynamic> body,
     required List<SelectedPhoto> photos,
+  }) => postMobileAttachments(endpoint, body: body, photos: photos);
+
+  Future<Map<String, dynamic>> postMobileAttachments(
+    String endpoint, {
+    required Map<String, dynamic> body,
+    required List<SelectedPhoto> photos,
+    Uint8List? voiceRecording,
   }) async {
     try {
       final request = http.MultipartRequest('POST', mobileUri(endpoint))
@@ -100,6 +107,15 @@ class ApiClient {
             'photo',
             photo.bytes,
             filename: photo.name,
+          ),
+        );
+      }
+      if (voiceRecording != null) {
+        request.files.add(
+          http.MultipartFile.fromBytes(
+            'voice',
+            voiceRecording,
+            filename: 'note-vocale.wav',
           ),
         );
       }
@@ -120,6 +136,25 @@ class ApiClient {
   Future<Uint8List> postMobileImage(
     String endpoint, {
     required Map<String, dynamic> body,
+  }) async => (await _postMobileFile(
+    endpoint,
+    body: body,
+    mimeTypes: const {'image/jpeg'},
+  )).bytes;
+
+  Future<({Uint8List bytes, String mimeType})> postMobileAudio(
+    String endpoint, {
+    required Map<String, dynamic> body,
+  }) => _postMobileFile(
+    endpoint,
+    body: body,
+    mimeTypes: const {'audio/wav', 'audio/ogg'},
+  );
+
+  Future<({Uint8List bytes, String mimeType})> _postMobileFile(
+    String endpoint, {
+    required Map<String, dynamic> body,
+    required Set<String> mimeTypes,
   }) async {
     final http.Response response;
     try {
@@ -128,7 +163,7 @@ class ApiClient {
             mobileUri(endpoint),
             headers: {
               ..._jsonHeaders,
-              'Accept': 'image/jpeg, application/json',
+              'Accept': '${mimeTypes.join(', ')}, application/json',
             },
             body: jsonEncode(body),
           )
@@ -138,13 +173,17 @@ class ApiClient {
     } on http.ClientException catch (error) {
       throw RepositoryException('Network error: $error');
     }
+    final mimeType = response.headers['content-type']?.split(';').first.trim();
     if (response.statusCode == 200 &&
-        response.headers['content-type']?.split(';').first == 'image/jpeg' &&
+        mimeType != null &&
+        mimeTypes.contains(mimeType) &&
         response.bodyBytes.isNotEmpty) {
-      return response.bodyBytes;
+      return (bytes: response.bodyBytes, mimeType: mimeType);
     }
     unwrap(_decodeResponse(response));
-    throw const RepositoryException('Invalid image response');
+    throw RepositoryException(
+      'Invalid ${mimeTypes.first.split('/').first} response',
+    );
   }
 
   Future<Map<String, dynamic>> getJson(

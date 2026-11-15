@@ -37,8 +37,17 @@ class _TasksPageState extends State<TasksPage> {
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   elevation: 0,
-                  onPressed: () =>
-                      showTaskForm(context: context, controller: c),
+                  onPressed: () async {
+                    final saved = await showTaskForm(
+                      context: context,
+                      controller: c,
+                    );
+                    if (context.mounted &&
+                        saved != null &&
+                        saved.voiceIds.isNotEmpty) {
+                      c.openDetail(saved);
+                    }
+                  },
                   icon: const Icon(Icons.add),
                   label: Text('task_new'.tr),
                 )

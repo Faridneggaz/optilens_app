@@ -43,6 +43,11 @@ class TaskUseCases {
     fileId: fileId,
     thumbnail: thumbnail,
   );
+  Future<TaskVoiceAudio> fetchVoice({
+    required String token,
+    required String taskName,
+    required String fileId,
+  }) => _repo.fetchVoice(token: token, taskName: taskName, fileId: fileId);
   Future<TaskOptions> getOptions({
     required String token,
     String kind = 'all',

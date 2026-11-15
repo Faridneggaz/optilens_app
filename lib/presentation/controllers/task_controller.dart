@@ -211,6 +211,9 @@ class TaskController extends GetxController {
     thumbnail: thumbnail,
   );
 
+  Future<TaskVoiceAudio> fetchVoice(String taskName, String fileId) =>
+      _tasks.fetchVoice(token: _token, taskName: taskName, fileId: fileId);
+
   Future<ErpTask> saveTask(TaskInput input, {ErpTask? task}) async {
     final saved = task == null
         ? await _tasks.createTask(token: _token, input: input)

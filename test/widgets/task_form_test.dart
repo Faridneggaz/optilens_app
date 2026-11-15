@@ -7,9 +7,63 @@ import 'package:optilens/presentation/controllers/task_controller.dart';
 import 'package:optilens/utils/translations/app_translations.dart';
 import 'package:optilens/widgets/task/task_form_sheet.dart';
 import 'package:optilens/widgets/task/pick_assignable_user_sheet.dart';
-import '../presentation/task_controller_test.dart' show FakeTasks;
+import '../presentation/task_controller_test.dart' show FakeTasks, listing;
 
 void main() {
+  testWidgets('saved voices can be removed or restored before saving', (
+    tester,
+  ) async {
+    Get.testMode = true;
+    addTearDown(Get.reset);
+    final repo = FakeTasks()..requests.add(Future.value(listing('TASK-1')));
+    final controller = TaskController(
+      tasks: TaskUseCases(repo),
+      tokenProvider: () => 'sid',
+    );
+    await tester.pumpWidget(
+      GetMaterialApp(
+        translations: AppTranslations(),
+        locale: const Locale('fr', 'FR'),
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => showTaskForm(
+                context: context,
+                controller: controller,
+                task: const ErpTask(
+                  name: 'TASK-1',
+                  subject: 'Inventory',
+                  canWrite: true,
+                  voiceIds: ['VOICE-1', 'VOICE-2'],
+                ),
+              ),
+              child: const Text('Ouvrir'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Ouvrir'));
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Écouter'), findsNWidgets(2));
+    final remove = find.byTooltip('Retirer le vocal');
+    await tester.ensureVisible(remove.first);
+    await tester.tap(remove.first);
+    await tester.pumpAndSettle();
+    expect(find.text('Retrait à l’enregistrement'), findsOneWidget);
+    expect(repo.updates, 0);
+    await tester.tap(find.byTooltip('Annuler le retrait'));
+    await tester.pumpAndSettle();
+    expect(find.text('Retrait à l’enregistrement'), findsNothing);
+    await tester.ensureVisible(remove.last);
+    await tester.tap(remove.last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Enregistrer'));
+    await tester.pumpAndSettle();
+    expect(repo.updatedInput?.removedVoiceIds, ['VOICE-2']);
+    controller.onClose();
+  });
+
   testWidgets(
     'Task form keeps multiple users and stays scrollable above keyboard',
     (tester) async {

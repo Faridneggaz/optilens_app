@@ -17,12 +17,20 @@ class FakeTasks implements TaskRepository {
     required String fileId,
     required bool thumbnail,
   }) async => Uint8List(0);
+  @override
+  Future<TaskVoiceAudio> fetchVoice({
+    required String token,
+    required String taskName,
+    required String fileId,
+  }) async => (bytes: Uint8List(0), mimeType: 'audio/wav');
   final requests = <Future<TaskListResponse>>[];
   int calls = 0;
   int updates = 0;
   String? updatedStatus;
   String? updatedVersion;
+  TaskInput? updatedInput;
   final queries = <String>[];
+  TaskDetailResponse? detail;
   @override
   Future<TaskListResponse> fetchTasks({
     required String token,
@@ -51,6 +59,7 @@ class FakeTasks implements TaskRepository {
     updates++;
     updatedStatus = status;
     updatedVersion = modified;
+    updatedInput = input;
     return ErpTask(
       name: name,
       subject: 'Done',
@@ -67,6 +76,7 @@ class FakeTasks implements TaskRepository {
     String? company,
   }) async => const TaskOptions(
     canCreate: true,
+    canRemoveVoice: true,
     priorities: ['Low', 'Medium', 'High', 'Urgent'],
     users: [
       AssignableUser(email: 'a@example.com', fullName: 'Alice'),
@@ -77,7 +87,7 @@ class FakeTasks implements TaskRepository {
   Future<TaskDetailResponse> fetchTaskDetail({
     required String token,
     required String name,
-  }) => throw UnimplementedError();
+  }) async => detail ?? (throw UnimplementedError());
   @override
   Future<ErpTask> createTask({
     required String token,

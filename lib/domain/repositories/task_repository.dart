@@ -24,6 +24,11 @@ abstract class TaskRepository {
     required String fileId,
     required bool thumbnail,
   });
+  Future<TaskVoiceAudio> fetchVoice({
+    required String token,
+    required String taskName,
+    required String fileId,
+  });
   Future<TaskOptions> getOptions({
     required String token,
     String kind = 'all',

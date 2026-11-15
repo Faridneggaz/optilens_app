@@ -85,6 +85,16 @@ class TaskRepositoryImpl implements TaskRepository {
   );
 
   @override
+  Future<TaskVoiceAudio> fetchVoice({
+    required String token,
+    required String taskName,
+    required String fileId,
+  }) => _client.postMobileAudio(
+    'get_task_voice',
+    body: {'token': token, 'name': taskName, 'file_id': fileId},
+  );
+
+  @override
   Future<TaskOptions> getOptions({
     required String token,
     String kind = 'all',
@@ -125,11 +135,18 @@ class TaskRepositoryImpl implements TaskRepository {
   Future<ErpTask> _saveTask(
     String method,
     Map<String, dynamic> body, {
-    required List<SelectedPhoto> photos,
+    TaskInput? input,
   }) async {
-    final response = photos.isEmpty
+    final photos = input?.photos ?? const <SelectedPhoto>[];
+    final voice = input?.voiceRecording;
+    final response = photos.isEmpty && voice == null
         ? await _client.postMobile(method, attachToken: false, body: body)
-        : await _client.postMobilePhotos(method, body: body, photos: photos);
+        : await _client.postMobileAttachments(
+            method,
+            body: body,
+            photos: photos,
+            voiceRecording: voice,
+          );
     return TaskDetailResponseMapper.fromJson(_message(response)).task;
   }
 
@@ -140,7 +157,7 @@ class TaskRepositoryImpl implements TaskRepository {
   }) => _saveTask('create_task', {
     'token': token,
     ..._input(input),
-  }, photos: input.photos);
+  }, input: input);
 
   @override
   Future<ErpTask> updateTask({
@@ -155,7 +172,9 @@ class TaskRepositoryImpl implements TaskRepository {
     'name': name,
     'modified': modified,
     if (input != null) ..._input(input),
+    if (input != null && input.removedVoiceIds.isNotEmpty)
+      'removed_voice_ids': input.removedVoiceIds,
     if (status != null) 'status': status,
     if (progress != null) 'progress': progress,
-  }, photos: input?.photos ?? const []);
+  }, input: input);
 }

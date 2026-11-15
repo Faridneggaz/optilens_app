@@ -11,9 +11,11 @@ import 'package:optilens/domain/entities/task.dart';
 import 'package:optilens/domain/failures/failures.dart';
 import 'package:optilens/domain/usecases/task_usecases.dart';
 import 'package:optilens/presentation/controllers/task_controller.dart';
+import 'package:optilens/presentation/controllers/task_detail_controller.dart';
 import 'package:optilens/presentation/controllers/language_controller.dart';
 import 'package:optilens/utils/translations/app_translations.dart';
 import 'package:optilens/views/user/tasks_page.dart';
+import 'package:optilens/views/user/task_detail_page.dart';
 import 'package:optilens/core/theme/app_theme.dart';
 import '../presentation/task_controller_test.dart' show FakeTasks;
 
@@ -76,6 +78,47 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
   tearDown(Get.reset);
+
+  testWidgets('a saved voice is playable below the read-only description', (
+    tester,
+  ) async {
+    final repo = FakeTasks()
+      ..detail = const TaskDetailResponse(
+        task: ErpTask(
+          name: 'TASK-1',
+          subject: 'Contrôler le stock',
+          descriptionText: 'Vérifier les quantités.',
+          voiceIds: ['FILE-1'],
+        ),
+      );
+    Get.put(
+      TaskDetailController(
+        tasks: TaskUseCases(repo),
+        name: 'TASK-1',
+        tokenProvider: () => 'sid',
+      ),
+    );
+    await tester.pumpWidget(
+      GetMaterialApp(
+        locale: const Locale('fr', 'FR'),
+        translations: AppTranslations(),
+        home: const TaskDetailPage(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final play = find.byWidgetPredicate(
+      (widget) => widget is IconButton && widget.tooltip == 'Écouter',
+    );
+    expect(play, findsOneWidget);
+    expect(tester.widget<IconButton>(play).onPressed, isNotNull);
+    expect(
+      tester.getTopLeft(play).dy,
+      greaterThan(
+        tester.getBottomLeft(find.text('Vérifier les quantités.')).dy,
+      ),
+    );
+    expect(find.byIcon(Icons.edit_outlined), findsNothing);
+  });
 
   Future<TaskController> mount(
     WidgetTester tester,

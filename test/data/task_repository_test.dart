@@ -1,10 +1,12 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:optilens/core/network/api_client.dart';
 import 'package:optilens/data/mappers/task_mappers.dart';
 import 'package:optilens/data/repositories/task_repository.dart';
+import 'package:optilens/domain/entities/attachment_photo.dart';
 import 'package:optilens/domain/entities/task.dart';
 import 'package:optilens/domain/failures/failures.dart';
 
@@ -121,6 +123,50 @@ void main() {
       ),
     );
     expect(saved.name, 'TASK-1');
+  });
+
+  test('editing a Task sends every selected photo in one request', () async {
+    var requests = 0;
+    final repo = TaskRepositoryImpl(
+      ApiClient(
+        httpClient: MockClient((request) async {
+          requests++;
+          expect(request.url.path, endsWith('mobile_app.api.update_task'));
+          expect(
+            request.headers['content-type'],
+            startsWith('multipart/form-data;'),
+          );
+          expect(request.body, contains('name="photo"; filename="first.jpg"'));
+          expect(request.body, contains('name="photo"; filename="second.png"'));
+          expect(request.body, contains('name="modified"\r\n\r\nversion-1'));
+          expect(request.body, contains('name="token"\r\n\r\nsid'));
+          expect(
+            request.body,
+            contains('name="assignees"\r\n\r\n["a@example.com"]'),
+          );
+          return response({
+            'success': true,
+            'task': {'name': 'TASK-1', 'subject': 'Inventory'},
+          });
+        }),
+      ),
+    );
+
+    await repo.updateTask(
+      token: 'sid',
+      name: 'TASK-1',
+      modified: 'version-1',
+      input: TaskInput(
+        subject: 'Inventory',
+        assignees: const ['a@example.com'],
+        photos: [
+          SelectedPhoto(name: 'first.jpg', bytes: Uint8List.fromList([1])),
+          SelectedPhoto(name: 'second.png', bytes: Uint8List.fromList([2])),
+        ],
+      ),
+    );
+
+    expect(requests, 1);
   });
 
   test('edit preserves unchanged rich text and closed assignments', () async {

@@ -51,7 +51,7 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
   late final TextEditingController _progress;
   final _assignees = <AssignableUser>[];
   TaskOptions? _options;
-  SelectedPhoto? _photo;
+  List<SelectedPhoto> _photos = const [];
   bool _pickingPhoto = false;
   TaskProject? _project;
   String _company = '';
@@ -194,7 +194,7 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
         assignees: _assignees.map((user) => user.email).toList(),
         updateAssignments: _assignmentsEditable,
         issue: widget.issue,
-        photo: _photo,
+        photos: _photos,
       );
       final saved = await widget.controller.saveTask(input, task: current);
       if (!mounted) return;
@@ -468,10 +468,12 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
                               const SizedBox(height: 16),
                               AttachmentPhotoField(
                                 maxBytes: options.photoMaxBytes,
-                                photo: _photo,
+                                maxBatchBytes: options.photoBatchMaxBytes,
+                                maxCount: options.photoMaxCount,
+                                photos: _photos,
                                 disabled: _saving,
-                                onChanged: (photo) =>
-                                    setState(() => _photo = photo),
+                                onChanged: (photos) =>
+                                    setState(() => _photos = photos),
                                 onPickingChanged: (picking) =>
                                     setState(() => _pickingPhoto = picking),
                               ),

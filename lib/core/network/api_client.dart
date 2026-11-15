@@ -5,6 +5,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../../domain/entities/attachment_photo.dart';
 import '../../domain/failures/failures.dart';
 import 'frappe_message.dart';
 import '../../utils/api_config.dart';
@@ -79,20 +80,29 @@ class ApiClient {
     );
   }
 
-  Future<Map<String, dynamic>> postMobileFile(
+  Future<Map<String, dynamic>> postMobilePhotos(
     String endpoint, {
-    required Map<String, String> fields,
-    required String fieldName,
-    required String filename,
-    required List<int> bytes,
+    required Map<String, dynamic> body,
+    required List<SelectedPhoto> photos,
   }) async {
     try {
       final request = http.MultipartRequest('POST', mobileUri(endpoint))
         ..headers['Accept'] = 'application/json'
-        ..fields.addAll(fields)
-        ..files.add(
-          http.MultipartFile.fromBytes(fieldName, bytes, filename: filename),
+        ..fields.addAll(
+          body.map(
+            (key, value) =>
+                MapEntry(key, value is String ? value : jsonEncode(value)),
+          ),
         );
+      for (final photo in photos) {
+        request.files.add(
+          http.MultipartFile.fromBytes(
+            'photo',
+            photo.bytes,
+            filename: photo.name,
+          ),
+        );
+      }
       final response = await _http
           .send(request)
           .then(http.Response.fromStream)

@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../core/network/api_client.dart';
@@ -31,7 +29,7 @@ class _IssueCreatePageState extends State<IssueCreatePage> {
   bool _loading = true;
   bool _saving = false;
   bool _pickingPhoto = false;
-  SelectedPhoto? _photo;
+  List<SelectedPhoto> _photos = const [];
   ApiClient get _api => Get.find<ApiClient>();
   String get _token => Get.find<SessionController>().token.value;
 
@@ -122,25 +120,17 @@ class _IssueCreatePageState extends State<IssueCreatePage> {
         'status': _status ?? 'Open',
         'assignees': _assignees.map((u) => u.email).toList(),
       };
-      final photo = _photo;
       final result = _unwrap(
-        photo == null
+        _photos.isEmpty
             ? await _api.postMobile(
                 'create_issue',
                 attachToken: false,
                 body: body,
               )
-            : await _api.postMobileFile(
+            : await _api.postMobilePhotos(
                 'create_issue',
-                fields: body.map(
-                  (key, value) => MapEntry(
-                    key,
-                    value is String ? value : jsonEncode(value),
-                  ),
-                ),
-                fieldName: 'photo',
-                filename: photo.name,
-                bytes: photo.bytes,
+                body: body,
+                photos: _photos,
               ),
       );
       if (result['error'] != null) throw Exception(result['error']);
@@ -272,10 +262,22 @@ class _IssueCreatePageState extends State<IssueCreatePage> {
                           'erp_task_attachment_photos'.tr,
                           AttachmentPhotoField(
                             maxBytes: photoMaxBytes,
-                            photo: _photo,
+                            maxBatchBytes:
+                                int.tryParse(
+                                  _options['photo_batch_max_bytes']
+                                          ?.toString() ??
+                                      '',
+                                ) ??
+                                0,
+                            maxCount:
+                                int.tryParse(
+                                  _options['photo_max_count']?.toString() ?? '',
+                                ) ??
+                                1,
+                            photos: _photos,
                             disabled: _saving,
-                            onChanged: (photo) =>
-                                setState(() => _photo = photo),
+                            onChanged: (photos) =>
+                                setState(() => _photos = photos),
                             onPickingChanged: (picking) =>
                                 setState(() => _pickingPhoto = picking),
                           ),

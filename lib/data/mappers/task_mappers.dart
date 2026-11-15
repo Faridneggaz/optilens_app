@@ -94,6 +94,9 @@ class TaskOptionsMapper {
   static TaskOptions fromJson(Map<String, dynamic> root) => TaskOptions(
     canCreate: _flag(root['can_create']),
     photoMaxBytes: int.tryParse(root['photo_max_bytes']?.toString() ?? '') ?? 0,
+    photoBatchMaxBytes:
+        int.tryParse(root['photo_batch_max_bytes']?.toString() ?? '') ?? 0,
+    photoMaxCount: int.tryParse(root['photo_max_count']?.toString() ?? '') ?? 1,
     statuses: _strings(root['statuses']),
     priorities: _strings(root['priorities']),
     companies: _strings(root['companies']),

@@ -11,15 +11,19 @@ class AttachmentPhotoField extends StatefulWidget {
   const AttachmentPhotoField({
     super.key,
     required this.maxBytes,
-    required this.photo,
+    required this.photos,
+    this.maxBatchBytes = 0,
+    this.maxCount = 1,
     required this.onChanged,
     this.onPickingChanged,
     this.disabled = false,
   });
 
   final int maxBytes;
-  final SelectedPhoto? photo;
-  final ValueChanged<SelectedPhoto?> onChanged;
+  final int maxBatchBytes;
+  final int maxCount;
+  final List<SelectedPhoto> photos;
+  final ValueChanged<List<SelectedPhoto>> onChanged;
   final ValueChanged<bool>? onPickingChanged;
   final bool disabled;
 
@@ -32,62 +36,66 @@ class _AttachmentPhotoFieldState extends State<AttachmentPhotoField> {
   String? _error;
 
   Future<void> _pick() async {
-    if (_picking || widget.disabled) return;
-    final canTakePhoto =
-        !kIsWeb &&
-        (defaultTargetPlatform == TargetPlatform.android ||
-            defaultTargetPlatform == TargetPlatform.iOS);
-    final source = canTakePhoto
-        ? await showModalBottomSheet<ImageSource>(
-            context: context,
-            builder: (sheetContext) => SafeArea(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ListTile(
-                    leading: const Icon(Icons.photo_camera_outlined),
-                    title: Text('attachment_take_photo'.tr),
-                    onTap: () =>
-                        Navigator.pop(sheetContext, ImageSource.camera),
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.photo_library_outlined),
-                    title: Text('attachment_choose_gallery'.tr),
-                    onTap: () =>
-                        Navigator.pop(sheetContext, ImageSource.gallery),
-                  ),
-                ],
-              ),
-            ),
-          )
-        : ImageSource.gallery;
-    if (!mounted || source == null || _picking || widget.disabled) return;
-
+    final remaining = widget.maxCount - widget.photos.length;
+    if (_picking || widget.disabled || remaining <= 0) return;
     setState(() {
       _picking = true;
       _error = null;
     });
     widget.onPickingChanged?.call(true);
     try {
-      final image = await ImagePicker().pickImage(
-        source: source,
-        maxWidth: 2560,
-        maxHeight: 2560,
-        imageQuality: 90,
-        requestFullMetadata: false,
-      );
-      if (image == null || !mounted) return;
-      if (await image.length() > widget.maxBytes) {
-        if (!mounted) return;
-        final limit = (widget.maxBytes / (1024 * 1024)).toStringAsFixed(1);
-        setState(() {
-          _error = 'erp_task_photo_too_large'.trParams({'limit': limit});
-        });
-        return;
+      final canTakePhoto =
+          !kIsWeb &&
+          (defaultTargetPlatform == TargetPlatform.android ||
+              defaultTargetPlatform == TargetPlatform.iOS);
+      final source = canTakePhoto
+          ? await showModalBottomSheet<ImageSource>(
+              context: context,
+              builder: (sheetContext) => SafeArea(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.photo_camera_outlined),
+                      title: Text('attachment_take_photo'.tr),
+                      onTap: () =>
+                          Navigator.pop(sheetContext, ImageSource.camera),
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.photo_library_outlined),
+                      title: Text('attachment_choose_gallery'.tr),
+                      onTap: () =>
+                          Navigator.pop(sheetContext, ImageSource.gallery),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : ImageSource.gallery;
+      if (!mounted || source == null || widget.disabled) return;
+
+      final picker = ImagePicker();
+      final List<XFile> images;
+      if (source == ImageSource.gallery && remaining > 1) {
+        images = await picker.pickMultiImage(
+          limit: remaining,
+          maxWidth: 2560,
+          maxHeight: 2560,
+          imageQuality: 90,
+          requestFullMetadata: false,
+        );
+      } else {
+        final image = await picker.pickImage(
+          source: source,
+          maxWidth: 2560,
+          maxHeight: 2560,
+          imageQuality: 90,
+          requestFullMetadata: false,
+        );
+        images = [if (image != null) image];
       }
-      final bytes = await image.readAsBytes();
-      if (!mounted) return;
-      widget.onChanged(SelectedPhoto(name: image.name, bytes: bytes));
+      if (!mounted || images.isEmpty) return;
+      await _addPhotos(images);
     } on PlatformException catch (error) {
       if (!mounted) return;
       setState(() {
@@ -109,20 +117,56 @@ class _AttachmentPhotoFieldState extends State<AttachmentPhotoField> {
     }
   }
 
+  Future<void> _addPhotos(List<XFile> images) async {
+    final selected = [...widget.photos];
+    final batchLimit = widget.maxBatchBytes > 0
+        ? widget.maxBatchBytes
+        : widget.maxBytes;
+    var totalBytes = selected.fold<int>(
+      0,
+      (sum, photo) => sum + photo.bytes.length,
+    );
+    String? error;
+
+    for (final image in images) {
+      if (selected.length == widget.maxCount) {
+        error ??= _countLimit;
+        break;
+      }
+      final length = await image.length();
+      if (!mounted) return;
+      if (length > widget.maxBytes) {
+        error ??= _sizeError('erp_task_photo_too_large', widget.maxBytes);
+        continue;
+      }
+      if (totalBytes + length > batchLimit) {
+        error ??= _sizeError('attachment_batch_too_large', batchLimit);
+        continue;
+      }
+      final bytes = await image.readAsBytes();
+      if (!mounted) return;
+      selected.add(SelectedPhoto(name: image.name, bytes: bytes));
+      totalBytes += bytes.length;
+    }
+
+    setState(() => _error = error);
+    widget.onChanged(selected);
+  }
+
+  String _sizeError(String key, int bytes) =>
+      key.trParams({'limit': (bytes / (1024 * 1024)).toStringAsFixed(1)});
+
+  String get _countLimit => 'attachment_photo_count_limit'.trParams({
+    'count': widget.maxCount.toString(),
+  });
+
   @override
   Widget build(BuildContext context) {
-    final photo = widget.photo;
     final disabled = widget.disabled || _picking;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (photo == null)
-          ActionChip(
-            avatar: const Icon(Icons.add_photo_alternate_outlined, size: 18),
-            label: Text('erp_task_add_photo'.tr),
-            onPressed: disabled ? null : _pick,
-          )
-        else
+        for (final photo in widget.photos)
           ListTile(
             contentPadding: EdgeInsets.zero,
             leading: ClipRRect(
@@ -141,18 +185,28 @@ class _AttachmentPhotoFieldState extends State<AttachmentPhotoField> {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            onTap: disabled ? null : _pick,
+
             trailing: IconButton(
               tooltip: 'erp_task_remove_photo'.tr,
               onPressed: disabled
                   ? null
                   : () {
                       setState(() => _error = null);
-                      widget.onChanged(null);
+                      widget.onChanged(
+                        widget.photos.where((item) => item != photo).toList(),
+                      );
                     },
               icon: const Icon(Icons.close),
             ),
           ),
+        if (widget.photos.length < widget.maxCount)
+          ActionChip(
+            avatar: const Icon(Icons.add_photo_alternate_outlined, size: 18),
+            label: Text('erp_task_add_photo'.tr),
+            onPressed: disabled ? null : _pick,
+          )
+        else if (_error == null && widget.maxCount > 1)
+          Text(_countLimit),
         if (_error case final String error)
           Text(error, style: const TextStyle(color: AppColors.danger)),
       ],

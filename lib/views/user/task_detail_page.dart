@@ -118,8 +118,8 @@ class TaskDetailPage extends StatelessWidget {
                         children: [
                           if (task.company.isNotEmpty)
                             Text('${'erp_task_company'.tr}: ${task.company}'),
-                          if (task.project.isNotEmpty)
-                            Text('${'erp_task_project'.tr}: ${task.project}'),
+                          if (task.type.isNotEmpty)
+                            Text('${'erp_task_type'.tr}: ${task.type}'),
                           if (task.startDate.isNotEmpty)
                             Text('${'erp_task_start'.tr}: ${task.startDate}'),
                           if (task.endDate.isNotEmpty)

@@ -53,7 +53,7 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
   TaskOptions? _options;
   List<SelectedPhoto> _photos = const [];
   bool _pickingPhoto = false;
-  TaskProject? _project;
+  String _type = '';
   String _company = '';
   String _priority = 'Medium';
   String _start = '';
@@ -75,14 +75,12 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
     );
     _progress = TextEditingController(text: '${task?.progress ?? 0}');
     _company = task?.company ?? '';
+    _type = task?.type ?? '';
     _priority = task?.priority ?? 'Medium';
     _start = task?.startDate ?? '';
     _end = task?.endDate ?? '';
     if (task != null) {
       _assignees.addAll(task.assignees);
-      if (task.project.isNotEmpty) {
-        _project = TaskProject(name: task.project, title: task.project);
-      }
     } else {
       final me = widget.controller.currentAssignableUser;
       if (me != null) _assignees.add(me);
@@ -129,17 +127,16 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
     setState(() => _assignees.add(picked));
   }
 
-  Future<void> _pickProject() async {
-    final picked = await showModalBottomSheet<TaskProject>(
+  Future<void> _pickType() async {
+    final picked = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: AppColors.scaffold,
-      builder: (_) =>
-          _ProjectPicker(controller: widget.controller, company: _company),
+      builder: (_) => _TaskTypePicker(controller: widget.controller),
     );
     if (!mounted || picked == null) return;
-    setState(() => _project = picked);
+    setState(() => _type = picked);
   }
 
   Future<void> _pickDate(bool start) async {
@@ -186,7 +183,7 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
             ? null
             : _description.text,
         company: _company,
-        project: _project?.name ?? '',
+        type: _type == (current?.type ?? '') ? null : _type,
         startDate: _start,
         endDate: _end,
         priority: _priority,
@@ -310,25 +307,23 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
                                   .toList(),
                               onChanged: _saving
                                   ? null
-                                  : (value) => setState(() {
-                                      _company = value ?? '';
-                                      _project = null;
-                                    }),
+                                  : (value) =>
+                                        setState(() => _company = value ?? ''),
                             ),
                             ListTile(
                               contentPadding: EdgeInsets.zero,
-                              title: Text('erp_task_project'.tr),
+                              title: Text('erp_task_type'.tr),
                               subtitle: Text(
-                                _project?.title ?? 'erp_task_optional'.tr,
+                                _type.isEmpty ? 'erp_task_optional'.tr : _type,
                               ),
-                              onTap: _saving ? null : _pickProject,
-                              trailing: _project == null
+                              onTap: _saving ? null : _pickType,
+                              trailing: _type.isEmpty
                                   ? const Icon(Icons.chevron_right)
                                   : IconButton(
                                       onPressed: _saving
                                           ? null
                                           : () =>
-                                                setState(() => _project = null),
+                                                setState(() => _type = ''),
                                       icon: const Icon(Icons.clear),
                                     ),
                             ),
@@ -545,18 +540,19 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
   );
 }
 
-class _ProjectPicker extends StatefulWidget {
-  const _ProjectPicker({required this.controller, required this.company});
+class _TaskTypePicker extends StatefulWidget {
+  const _TaskTypePicker({required this.controller});
+
   final TaskController controller;
-  final String company;
+
   @override
-  State<_ProjectPicker> createState() => _ProjectPickerState();
+  State<_TaskTypePicker> createState() => _TaskTypePickerState();
 }
 
-class _ProjectPickerState extends State<_ProjectPicker> {
+class _TaskTypePickerState extends State<_TaskTypePicker> {
   final _search = TextEditingController();
   Timer? _timer;
-  List<TaskProject> _projects = [];
+  List<String> _types = const [];
   bool _loading = true;
   String _error = '';
   int _generation = 0;
@@ -581,13 +577,12 @@ class _ProjectPickerState extends State<_ProjectPicker> {
     });
     try {
       final options = await widget.controller.loadOptions(
-        kind: 'projects',
+        kind: 'types',
         search: value,
-        company: widget.company,
       );
       if (!mounted || generation != _generation) return;
       setState(() {
-        _projects = options.projects;
+        _types = options.types;
         _loading = false;
       });
     } catch (error) {
@@ -615,7 +610,7 @@ class _ProjectPickerState extends State<_ProjectPicker> {
               controller: _search,
               autofocus: true,
               decoration: InputDecoration(
-                labelText: 'erp_task_project'.tr,
+                labelText: 'erp_task_type'.tr,
                 prefixIcon: const Icon(Icons.search),
               ),
               onChanged: (v) {
@@ -630,15 +625,20 @@ class _ProjectPickerState extends State<_ProjectPicker> {
           if (_loading) const LinearProgressIndicator(),
           if (_error.isNotEmpty)
             Padding(padding: const EdgeInsets.all(12), child: Text(_error)),
+          if (!_loading && _error.isEmpty && _types.isEmpty)
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Text('erp_task_no_types'.tr),
+            ),
           Expanded(
             child: ListView(
               children: [
-                for (final project in _projects)
-                  ListTile(
-                    title: Text(project.title),
-                    subtitle: Text(project.name),
-                    onTap: () => Navigator.pop(context, project),
-                  ),
+                if (!_loading && _error.isEmpty)
+                  for (final type in _types)
+                    ListTile(
+                      title: Text(type),
+                      onTap: () => Navigator.pop(context, type),
+                    ),
               ],
             ),
           ),

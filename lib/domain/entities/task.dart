@@ -40,6 +40,7 @@ class ErpTask {
     this.endDate = '',
     this.company = '',
     this.project = '',
+    this.type = '',
     this.department = '',
     this.owner = '',
     this.modified = '',
@@ -61,6 +62,7 @@ class ErpTask {
   final String endDate;
   final String company;
   final String project;
+  final String type;
   final String department;
   final String owner;
   final String modified;
@@ -73,13 +75,13 @@ class ErpTask {
   bool get isFinished => status == 'Completed' || status == 'Cancelled';
 }
 
-/// Null description preserves an existing rich-text description when editing.
+/// Omitted description, project and type are preserved when editing.
 class TaskInput {
   const TaskInput({
     required this.subject,
     this.description,
     this.company = '',
-    this.project = '',
+    this.project,
     this.startDate = '',
     this.endDate = '',
     this.priority = 'Medium',
@@ -88,12 +90,12 @@ class TaskInput {
     this.updateAssignments = true,
     this.photos = const [],
     this.issue = '',
-    this.type = '',
+    this.type,
   });
   final String subject;
   final String? description;
   final String company;
-  final String project;
+  final String? project;
   final String startDate;
   final String endDate;
   final String priority;
@@ -102,7 +104,7 @@ class TaskInput {
   final bool updateAssignments;
   final List<SelectedPhoto> photos;
   final String issue;
-  final String type;
+  final String? type;
 }
 
 class TaskProject {
@@ -124,6 +126,7 @@ class TaskOptions {
     this.photoMaxCount = 1,
     this.statuses = const [],
     this.priorities = const [],
+    this.types = const [],
     this.companies = const [],
     this.users = const [],
     this.projects = const [],
@@ -134,6 +137,7 @@ class TaskOptions {
   final int photoMaxCount;
   final List<String> statuses;
   final List<String> priorities;
+  final List<String> types;
   final List<String> companies;
   final List<AssignableUser> users;
   final List<TaskProject> projects;

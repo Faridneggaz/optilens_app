@@ -37,6 +37,8 @@ void main() {
                 name: 'TASK-1',
                 subject: 'Inventory',
                 priority: 'Urgent',
+                type: 'Maintenance',
+                project: 'PRJ-00001',
                 progress: 35.5,
                 canWrite: true,
                 assignees: [
@@ -51,6 +53,9 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Inventory'), findsOneWidget);
       expect(find.text('Urgente'), findsOneWidget);
+      expect(find.text('Type de tâche'), findsOneWidget);
+      expect(find.text('Maintenance'), findsOneWidget);
+      expect(find.text('PRJ-00001'), findsNothing);
       expect(find.text('35.5'), findsOneWidget);
       await tester.scrollUntilVisible(
         find.text('Alice'),

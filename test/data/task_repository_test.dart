@@ -71,6 +71,7 @@ void main() {
       'subject': 'Inventory',
       'description': '<p>Check stock</p>',
       'priority': 'Urgent',
+      'type': 'Maintenance',
       'status': 'Working',
       'progress': 35.5,
       'can_write': 1,
@@ -88,6 +89,7 @@ void main() {
     expect(task.assignees.map((a) => a.displayName), ['Alice', 'Bob']);
     expect(task.previousAssignees.single.displayName, 'Charlie');
     expect(task.priority, 'Urgent');
+    expect(task.type, 'Maintenance');
     expect(task.progress, 35.5);
     expect(task.canWrite, isTrue);
   });
@@ -104,6 +106,8 @@ void main() {
           expect(body['priority'], 'Urgent');
           expect(body['exp_end_date'], '2026-10-22');
           expect(body['description'], 'A &lt; B<br>Next');
+          expect(body['type'], 'Maintenance');
+          expect(body.containsKey('project'), isFalse);
           expect(body.containsKey('allocated_to'), isFalse);
           return response({
             'success': true,
@@ -118,6 +122,7 @@ void main() {
         subject: ' Inventory ',
         description: 'A < B\nNext',
         priority: 'Urgent',
+        type: 'Maintenance',
         endDate: '2026-10-22',
         assignees: ['a@example.com', 'b@example.com'],
       ),
@@ -178,6 +183,8 @@ void main() {
           expect(body['modified'], 'version-1');
           expect(body.containsKey('description'), isFalse);
           expect(body.containsKey('assignees'), isFalse);
+          expect(body.containsKey('project'), isFalse);
+          expect(body, containsPair('type', ''));
           expect(body['progress'], 35.5);
           return response({
             'success': true,
@@ -194,8 +201,29 @@ void main() {
         subject: 'Inventory',
         progress: 35.5,
         updateAssignments: false,
+        type: '',
       ),
     );
+  });
+
+  test('searches native Task Types through Task options', () async {
+    final repo = TaskRepositoryImpl(
+      ApiClient(
+        httpClient: MockClient((request) async {
+          expect(request.url.path, endsWith('mobile_app.api.get_task_options'));
+          expect(request.url.queryParameters, containsPair('kind', 'types'));
+          expect(request.url.queryParameters, containsPair('search_text', 'maint'));
+          return response({'success': true, 'types': ['Maintenance']});
+        }),
+      ),
+    );
+
+    final result = await repo.getOptions(
+      token: 'sid',
+      kind: 'types',
+      searchText: 'maint',
+    );
+    expect(result.types, ['Maintenance']);
   });
 
   test('status update uses Completed and trusts native progress', () async {

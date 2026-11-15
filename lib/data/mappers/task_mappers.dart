@@ -41,6 +41,7 @@ class ErpTaskMapper {
     endDate: (row['exp_end_date'] ?? '').toString(),
     company: (row['company'] ?? '').toString(),
     project: (row['project'] ?? '').toString(),
+    type: (row['type'] ?? '').toString(),
     department: (row['department'] ?? '').toString(),
     owner: (row['owner'] ?? '').toString(),
     modified: (row['modified'] ?? '').toString(),
@@ -99,6 +100,7 @@ class TaskOptionsMapper {
     photoMaxCount: int.tryParse(root['photo_max_count']?.toString() ?? '') ?? 1,
     statuses: _strings(root['statuses']),
     priorities: _strings(root['priorities']),
+    types: _strings(root['types']),
     companies: _strings(root['companies']),
     users: AssignableUserMapper.fromList(root['users']),
     projects: root['projects'] is List

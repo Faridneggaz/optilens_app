@@ -112,13 +112,13 @@ class TaskRepositoryImpl implements TaskRepository {
           .convert(input.description!)
           .replaceAll('\n', '<br>'),
     'company': input.company,
-    'project': input.project,
+    if (input.project != null) 'project': input.project,
     'exp_start_date': input.startDate,
     'exp_end_date': input.endDate,
     'priority': input.priority,
     'progress': input.progress,
     if (input.issue.isNotEmpty) 'issue': input.issue,
-    if (input.type.isNotEmpty) 'type': input.type,
+    if (input.type != null) 'type': input.type,
     if (input.updateAssignments) 'assignees': input.assignees,
   };
 

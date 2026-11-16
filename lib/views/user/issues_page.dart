@@ -8,6 +8,7 @@ import '../../utils/error_feedback.dart';
 import '../../widgets/attachment_photo_field.dart';
 import '../../widgets/attachment_photo_gallery.dart';
 import '../../widgets/header.dart';
+import '../../widgets/issue_voice_attachments.dart';
 import '../../widgets/task/task_card.dart';
 import '../../presentation/controllers/session_controller.dart';
 import '../../app/routes/app_routes.dart';
@@ -208,6 +209,14 @@ class _IssuesPageState extends State<IssuesPage> {
                 const SizedBox(height: 8),
               ],
               Text(plainText(issue['description'])),
+              IssueVoiceAttachments(
+                issueName: issue['name'].toString(),
+                recordingIds: (r['voice_ids'] as List? ?? const [])
+                    .cast<String>(),
+                canRemove: r['can_remove_voice'] == true,
+                maxBytes:
+                    int.tryParse(r['voice_max_bytes']?.toString() ?? '') ?? 0,
+              ),
               const SizedBox(height: 12),
               _IssuePhotos(
                 issueName: issue['name'].toString(),

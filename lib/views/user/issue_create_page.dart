@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../core/network/api_client.dart';
@@ -10,6 +12,7 @@ import '../../presentation/controllers/session_controller.dart';
 import '../../presentation/controllers/task_controller.dart';
 import '../../widgets/header.dart';
 import '../../widgets/task/pick_assignable_user_sheet.dart';
+import '../../widgets/voice_recording_field.dart';
 
 class IssueCreatePage extends StatefulWidget {
   const IssueCreatePage({super.key});
@@ -29,7 +32,9 @@ class _IssueCreatePageState extends State<IssueCreatePage> {
   bool _loading = true;
   bool _saving = false;
   bool _pickingPhoto = false;
+  bool _voiceDialogOpen = false;
   List<SelectedPhoto> _photos = const [];
+  Uint8List? _voiceRecording;
   ApiClient get _api => Get.find<ApiClient>();
   String get _token => Get.find<SessionController>().token.value;
 
@@ -100,8 +105,18 @@ class _IssueCreatePageState extends State<IssueCreatePage> {
     setState(() => _assignees.add(user));
   }
 
+  int _attachmentLimit(String key) =>
+      int.tryParse(_options[key]?.toString() ?? '') ?? 0;
+
   Future<void> _save() async {
-    if (_saving || _pickingPhoto) return;
+    if (_saving || _pickingPhoto || _voiceDialogOpen) return;
+    final voice = _voiceRecording;
+    if (voice != null &&
+        _photos.fold(voice.length, (size, photo) => size + photo.bytes.length) >
+            _attachmentLimit('photo_batch_max_bytes')) {
+      setState(() => _error = 'erp_task_voice_batch_limit'.tr);
+      return;
+    }
     if (_subject.text.trim().isEmpty) {
       setState(() => _error = 'Le sujet est obligatoire');
       return;
@@ -121,16 +136,17 @@ class _IssueCreatePageState extends State<IssueCreatePage> {
         'assignees': _assignees.map((u) => u.email).toList(),
       };
       final result = _unwrap(
-        _photos.isEmpty
+        _photos.isEmpty && voice == null
             ? await _api.postMobile(
                 'create_issue',
                 attachToken: false,
                 body: body,
               )
-            : await _api.postMobilePhotos(
+            : await _api.postMobileAttachments(
                 'create_issue',
                 body: body,
                 photos: _photos,
+                voiceRecording: voice,
               ),
       );
       if (result['error'] != null) throw Exception(result['error']);
@@ -149,8 +165,7 @@ class _IssueCreatePageState extends State<IssueCreatePage> {
 
   @override
   Widget build(BuildContext context) {
-    final photoMaxBytes =
-        int.tryParse(_options['photo_max_bytes']?.toString() ?? '') ?? 0;
+    final photoMaxBytes = _attachmentLimit('photo_max_bytes');
     final statuses = (_options['statuses'] as List? ?? <String>[])
         .cast<String>();
     final types = (_options['issue_types'] as List? ?? <String>[])
@@ -201,6 +216,16 @@ class _IssueCreatePageState extends State<IssueCreatePage> {
                               decoration: const InputDecoration(
                                 labelText: 'Description',
                               ),
+                            ),
+                            VoiceRecordingField(
+                              maxBytes: _attachmentLimit('voice_max_bytes'),
+                              recording: _voiceRecording,
+                              dialogOpen: _voiceDialogOpen,
+                              enabled: !_saving,
+                              onChanged: (voice) =>
+                                  setState(() => _voiceRecording = voice),
+                              onDialogChanged: (open) =>
+                                  setState(() => _voiceDialogOpen = open),
                             ),
                           ],
                         ),
@@ -262,13 +287,9 @@ class _IssueCreatePageState extends State<IssueCreatePage> {
                           'erp_task_attachment_photos'.tr,
                           AttachmentPhotoField(
                             maxBytes: photoMaxBytes,
-                            maxBatchBytes:
-                                int.tryParse(
-                                  _options['photo_batch_max_bytes']
-                                          ?.toString() ??
-                                      '',
-                                ) ??
-                                0,
+                            maxBatchBytes: _attachmentLimit(
+                              'photo_batch_max_bytes',
+                            ),
                             maxCount:
                                 int.tryParse(
                                   _options['photo_max_count']?.toString() ?? '',
@@ -292,7 +313,8 @@ class _IssueCreatePageState extends State<IssueCreatePage> {
               child: SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
-                  onPressed: _saving || _loading || _pickingPhoto
+                  onPressed:
+                      _saving || _loading || _pickingPhoto || _voiceDialogOpen
                       ? null
                       : _save,
                   icon: _saving

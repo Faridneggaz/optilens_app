@@ -1,8 +1,8 @@
 /// Runtime API configuration.
 ///
 /// Override at build/run time:
-/// `flutter run --dart-define=API_BASE_URL=https://optilens.example.com`
-/// `flutter run --dart-define=ERP_BASE_URL=https://erp.example.com --dart-define=ERP_API_TOKEN=...`
+/// `flutter run --dart-define=API_BASE_URL=http://192.168.100.20:8000`
+/// `flutter run --dart-define=ERP_BASE_URL=https://optilens.jethings.com --dart-define=ERP_API_TOKEN=...`
 class ApiConfig {
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',

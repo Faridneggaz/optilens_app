@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../app/routes/app_routes.dart';
-import '../../core/theme/app_colors.dart';
-import '../../domain/entities/activity_report.dart';
-import '../../presentation/controllers/activity_report_detail_controller.dart';
-import '../../widgets/activity_report/report_widgets.dart';
+import '../../../app/routes/app_routes.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../domain/entities/activity_report.dart';
+import '../../../presentation/controllers/activity_report_detail_controller.dart';
+import '../../../widgets/activity_report/report_widgets.dart';
 
 class ActivityReportDetailPage extends StatelessWidget {
   const ActivityReportDetailPage({super.key});

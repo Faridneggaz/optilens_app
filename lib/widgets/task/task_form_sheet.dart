@@ -9,7 +9,7 @@ import '../../presentation/controllers/task_controller.dart';
 import '../../utils/error_feedback.dart';
 import 'pick_assignable_user_sheet.dart';
 import 'task_card.dart';
-import 'task_voice_dialog.dart';
+import '../voice_recording_field.dart';
 import 'task_voice_player.dart';
 import '../attachment_photo_field.dart';
 import '../attachment_photo_gallery.dart';
@@ -170,22 +170,13 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
     });
   }
 
-  Future<void> _recordVoice(int maxBytes) async {
-    setState(() => _voiceDialogOpen = true);
-    final voice = await showDialog<Uint8List>(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => TaskVoiceDialog(maxBytes: maxBytes),
-    );
-    if (!mounted) return;
-    setState(() {
-      _voiceDialogOpen = false;
-      if (voice != null) _voiceRecording = voice;
-    });
-  }
-
   Future<void> _save() async {
-    if (_saving || _pickingPhoto || !_form.currentState!.validate()) return;
+    if (_saving ||
+        _pickingPhoto ||
+        _voiceDialogOpen ||
+        !_form.currentState!.validate()) {
+      return;
+    }
     final voice = _voiceRecording;
     if (voice != null &&
         _photos.fold(voice.length, (size, photo) => size + photo.bytes.length) >
@@ -339,51 +330,17 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
                                       })
                                     : null,
                               ),
-                            if (canSave &&
-                                options.voiceMaxBytes > 0 &&
-                                TaskVoiceDialog.isSupported) ...[
-                              if (voice == null)
-                                ListTile(
-                                  contentPadding: EdgeInsets.zero,
-                                  leading: const Icon(Icons.mic_none),
-                                  title: Text('erp_task_voice_record'.tr),
-                                  onTap: _saving
-                                      ? null
-                                      : () =>
-                                            _recordVoice(options.voiceMaxBytes),
-                                )
-                              else if (!_voiceDialogOpen)
-                                TaskVoicePlayer(
-                                  key: ObjectKey(voice),
-                                  recordingIds: const ['draft'],
-                                  loadRecording: (_) async =>
-                                      (bytes: voice, mimeType: 'audio/wav'),
-                                  label: 'erp_task_voice_attached'.tr,
-                                  enabled: !_saving,
-                                  trailing: Wrap(
-                                    children: [
-                                      IconButton(
-                                        tooltip: 'erp_task_voice_replace'.tr,
-                                        onPressed: _saving
-                                            ? null
-                                            : () => _recordVoice(
-                                                options.voiceMaxBytes,
-                                              ),
-                                        icon: const Icon(Icons.mic_none),
-                                      ),
-                                      IconButton(
-                                        tooltip: 'erp_task_voice_remove'.tr,
-                                        onPressed: _saving
-                                            ? null
-                                            : () => setState(
-                                                () => _voiceRecording = null,
-                                              ),
-                                        icon: const Icon(Icons.close),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                            ],
+                            if (canSave)
+                              VoiceRecordingField(
+                                maxBytes: options.voiceMaxBytes,
+                                recording: voice,
+                                dialogOpen: _voiceDialogOpen,
+                                enabled: !_saving,
+                                onChanged: (voice) =>
+                                    setState(() => _voiceRecording = voice),
+                                onDialogChanged: (open) =>
+                                    setState(() => _voiceDialogOpen = open),
+                              ),
                             const SizedBox(height: 12),
                             DropdownButtonFormField<String>(
                               initialValue: _company,
@@ -416,8 +373,7 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
                                   : IconButton(
                                       onPressed: _saving
                                           ? null
-                                          : () =>
-                                                setState(() => _type = ''),
+                                          : () => setState(() => _type = ''),
                                       icon: const Icon(Icons.clear),
                                     ),
                             ),

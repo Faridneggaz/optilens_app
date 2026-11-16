@@ -1,6 +1,6 @@
-import '../../views/activity_report/activity_report_list_page.dart';
-import '../../views/activity_report/activity_report_detail_page.dart';
-import '../../views/activity_report/activity_report_form_page.dart';
+import '../../views/user/activity_report/activity_report_list_page.dart';
+import '../../views/user/activity_report/activity_report_detail_page.dart';
+import '../../views/user/activity_report/activity_report_form_page.dart';
 import '../../views/user/issues_page.dart';
 import '../../views/user/issue_create_page.dart';
 import '../../views/user/task_create_from_issue_page.dart';

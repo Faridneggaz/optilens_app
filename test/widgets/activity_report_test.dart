@@ -16,10 +16,9 @@ import 'package:optilens/presentation/controllers/activity_report_list_controlle
 import 'package:optilens/presentation/controllers/activity_report_detail_controller.dart';
 import 'package:optilens/presentation/controllers/language_controller.dart';
 import 'package:optilens/utils/translations/app_translations.dart';
-import 'package:optilens/utils/translations/activity_report_translations.dart';
-import 'package:optilens/views/activity_report/activity_report_form_page.dart';
-import 'package:optilens/views/activity_report/activity_report_list_page.dart';
-import 'package:optilens/views/activity_report/activity_report_detail_page.dart';
+import 'package:optilens/views/user/activity_report/activity_report_form_page.dart';
+import 'package:optilens/views/user/activity_report/activity_report_list_page.dart';
+import 'package:optilens/views/user/activity_report/activity_report_detail_page.dart';
 import 'package:optilens/widgets/activity_report/report_line_editor.dart';
 import 'package:optilens/widgets/activity_report/report_widgets.dart';
 import '../presentation/activity_report_controller_test.dart'
@@ -97,8 +96,15 @@ void main() {
   }
 
   test('all Activity Report translations have the same keys', () {
-    expect(activityReportFr.keys.toSet(), activityReportEn.keys.toSet());
-    expect(activityReportFr.keys.toSet(), activityReportAr.keys.toSet());
+    final translations = AppTranslations().keys;
+    Set<String> reportKeys(String locale) => translations[locale]!.keys
+        .where((key) => key.startsWith('ar_'))
+        .toSet();
+
+    final frenchKeys = reportKeys('fr_FR');
+    expect(frenchKeys, contains('ar_nav'));
+    expect(reportKeys('en_US'), frenchKeys);
+    expect(reportKeys('ar_DZ'), frenchKeys);
   });
   testWidgets(
     'list shows accessible reports and hides creation for read-only users',

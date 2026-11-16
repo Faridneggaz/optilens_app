@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../core/theme/app_colors.dart';
-import '../../domain/entities/activity_report.dart';
-import '../../presentation/controllers/activity_report_form_controller.dart';
-import '../../widgets/activity_report/report_line_editor.dart';
-import '../../widgets/activity_report/report_lookup_sheet.dart';
-import '../../widgets/activity_report/report_widgets.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../domain/entities/activity_report.dart';
+import '../../../presentation/controllers/activity_report_form_controller.dart';
+import '../../../widgets/activity_report/report_line_editor.dart';
+import '../../../widgets/activity_report/report_lookup_sheet.dart';
+import '../../../widgets/activity_report/report_widgets.dart';
 
 class ActivityReportFormPage extends StatefulWidget {
   const ActivityReportFormPage({super.key});

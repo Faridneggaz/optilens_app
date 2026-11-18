@@ -151,8 +151,7 @@ class PaymentMapper {
 }
 
 class PaymentResponseMapper {
-  static PaymentResponse fromJson(Map<String, dynamic> json, int limit) {
-    final message = json['message'];
+  static PaymentResponse fromJson(Object? message, int limit) {
     List<Payment> list = [];
     var isSearch = false;
 

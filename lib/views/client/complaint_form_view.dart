@@ -81,7 +81,6 @@ class ComplaintFormPage extends StatelessWidget {
                                   : () async {
                                       if (!formKey.currentState!.validate()) return;
                                       final ok = await c.submitComplaint(
-                                        client:      customer.name,
                                         description: descCtrl.text,
                                       );
                                       if (ok) {

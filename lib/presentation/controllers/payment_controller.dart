@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import '../../domain/usecases/usecases.dart';
 import '../../widgets/payment/payment_list.dart';
 import '../../utils/error_feedback.dart';
-import 'session_controller.dart';
 
 class PaymentController extends GetxController {
   PaymentController({PaymentUseCases? payments})
@@ -36,11 +35,10 @@ class PaymentController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    final code = Get.find<SessionController>().customer.value?.code ?? '';
     
     _debounce = debounce(searchQuery, (query) {
       if (query.isNotEmpty) {
-        fetchSearchResults(code);
+        fetchSearchResults();
       } else {
         isSearching.value = false;
         searchPayments.clear();
@@ -49,13 +47,13 @@ class PaymentController extends GetxController {
 
     ever(selectedStatus, (_) {
       if (searchQuery.value.isNotEmpty) {
-        fetchSearchResults(code);
+        fetchSearchResults();
       } else {
         onRefresh();
       }
     });
 
-    loadPayments(code);
+    loadPayments();
   }
 
   @override
@@ -65,14 +63,13 @@ class PaymentController extends GetxController {
     super.onClose();
   }
 
-  Future<void> loadPayments(String customerCode) async {
+  Future<void> loadPayments() async {
     isLoading.value = true;
     _offset = 0;
     payments.clear();
     hasMore.value = true;
     try {
       final response = await _payments.fetchPayments(
-        customerCode,
         limit: _limit,
         offset: _offset,
         status: selectedStatus.value == 'All' ? null : selectedStatus.value,
@@ -91,9 +88,7 @@ class PaymentController extends GetxController {
     if (isLoadingMore.value || !hasMore.value) return;
     isLoadingMore.value = true;
     try {
-      final code = Get.find<SessionController>().customer.value?.code ?? '';
       final response = await _payments.fetchPayments(
-        code,
         limit: _limit,
         offset: _offset,
         status: selectedStatus.value == 'All' ? null : selectedStatus.value,
@@ -108,16 +103,12 @@ class PaymentController extends GetxController {
     }
   }
 
-  Future<void> onRefresh() async {
-    final code = Get.find<SessionController>().customer.value?.code ?? '';
-    await loadPayments(code);
-  }
+  Future<void> onRefresh() => loadPayments();
 
-  Future<void> fetchSearchResults(String customerCode) async {
+  Future<void> fetchSearchResults() async {
     isSearching.value = true;
     try {
       final response = await _payments.fetchPayments(
-        customerCode,
         limit: 20,
         offset: 0,
         searchText: searchQuery.value,

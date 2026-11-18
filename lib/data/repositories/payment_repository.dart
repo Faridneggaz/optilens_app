@@ -10,15 +10,13 @@ class PaymentRepositoryImpl implements PaymentRepository {
   final ApiClient _client;
   static const int pageSize = 20;
 
-  Future<PaymentResponse> fetchPayments(
-    String customerCode, {
+  Future<PaymentResponse> fetchPayments({
     int limit = pageSize,
     int offset = 0,
     String? searchText,
     String? status,
   }) async {
     final query = <String, String>{
-      'code': customerCode,
       'limit': '$limit',
       'offset': '$offset',
     };
@@ -28,11 +26,10 @@ class PaymentRepositoryImpl implements PaymentRepository {
     if (status != null && status != 'All') {
       query['status'] = status;
     }
-    final json = await _client.postMobile(
-      'get_payments_by_customer_code',
-      body: query,
-      attachToken: false,
+    final json = await _client.getCustomerMethod(
+      'get_customer_payments',
+      query: query,
     );
-    return PaymentResponseMapper.fromJson(json, limit);
+    return PaymentResponseMapper.fromJson(_client.unwrap(json), limit);
   }
 }

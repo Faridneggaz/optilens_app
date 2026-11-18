@@ -9,13 +9,10 @@ class ComplaintController extends GetxController {
   final ComplaintUseCases _complaints;
   final isLoading = false.obs;
 
-  Future<bool> submitComplaint({
-    required String client,
-    required String description,
-  }) async {
+  Future<bool> submitComplaint({required String description}) async {
     isLoading.value = true;
     try {
-      await _complaints.submitComplaint(client: client, description: description);
+      await _complaints.submitComplaint(description: description);
       return true;
     } catch (e) {
       ErrorFeedback.snackbar(e, fallbackKey: 'complaint_send_error');

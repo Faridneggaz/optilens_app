@@ -4,11 +4,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:optilens/core/network/api_client.dart';
+import 'package:optilens/data/repositories/complaint_repository.dart';
 import 'package:optilens/data/repositories/invoice_detail_repository.dart';
 import 'package:optilens/data/repositories/invoice_repository.dart';
 import 'package:optilens/data/repositories/customer_repository.dart';
 import 'package:optilens/data/repositories/login_repository.dart';
 import 'package:optilens/data/repositories/order_repository.dart';
+import 'package:optilens/data/repositories/payment_repository.dart';
 import 'package:optilens/domain/failures/failures.dart';
 import 'package:optilens/utils/api_config.dart';
 import 'package:optilens/utils/error_feedback.dart';
@@ -185,6 +187,77 @@ void main() {
           throwsA(isA<InvalidSessionException>()));
       await expectLater(InvoiceDetailRepositoryImpl(client).getInvoiceDetails(invoiceName: 'INV-1'),
           throwsA(isA<InvalidSessionException>()));
+    });
+  });
+
+  group('Customer payments and complaints', () {
+    test('loads a page of payments and linked invoices using the customer session', () async {
+      final client = ApiClient(
+        tokenProvider: () => 'employee-session',
+        customerSessionProvider: () => 'customer-session',
+        httpClient: MockClient((request) async {
+          expect(request.method, 'GET');
+          expect(request.url.path, '/api/method/mobile_app.api.get_customer_payments');
+          expect(request.url.queryParameters, {'limit': '1', 'offset': '5', 'search_text': 'PAY'});
+          expect(request.headers['X-Mobile-Customer-Session'], 'customer-session');
+          expect(request.body, isEmpty);
+          return http.Response(jsonEncode({
+            'message': {
+              'payments': [
+                {
+                  'name': 'PAY-1',
+                  'invoices_payed': [
+                    {'invoice': 'INV-1', 'allocated_amount': 25}
+                  ],
+                }
+              ],
+              'is_search': true,
+            }
+          }), 200);
+        }),
+      );
+      final page = await PaymentRepositoryImpl(client).fetchPayments(
+        limit: 1, offset: 5, searchText: 'PAY',
+      );
+      expect(page.payments.single.name, 'PAY-1');
+      final invoice = page.payments.single.invoicesPayed.single;
+      expect(invoice.invoice, 'INV-1');
+      expect(invoice.allocatedAmount, 25);
+      expect(page.isSearch, isTrue);
+      expect(page.hasMore, isTrue);
+    });
+
+    test('submits a complaint using only its description and the session header', () async {
+      final client = ApiClient(
+        customerSessionProvider: () => 'customer-session',
+        httpClient: MockClient((request) async {
+          expect(request.method, 'POST');
+          expect(request.url.path, '/api/method/mobile_app.api.create_customer_complaint');
+          expect(request.url.queryParameters, isEmpty);
+          expect(request.headers['X-Mobile-Customer-Session'], 'customer-session');
+          expect(jsonDecode(request.body), {'description': 'Order incomplete'});
+          return http.Response('{"message":{"message":"Success","id":"REC-1"}}', 200);
+        }),
+      );
+      await ComplaintRepositoryImpl(client).submitComplaint(description: 'Order incomplete');
+    });
+
+    test('reports expired sessions for payments and complaints', () async {
+      final client = ApiClient(httpClient: MockClient((_) async =>
+          http.Response('{"message":{"error":"Invalid session"}}', 200)));
+      await expectLater(PaymentRepositoryImpl(client).fetchPayments(),
+          throwsA(isA<InvalidSessionException>()));
+      await expectLater(ComplaintRepositoryImpl(client).submitComplaint(description: 'Test'),
+          throwsA(isA<InvalidSessionException>()));
+    });
+
+    test('a rejected complaint is not displayed as successful', () async {
+      final client = ApiClient(httpClient: MockClient((_) async =>
+          http.Response('{"message":{"error":"Unable to create complaint"}}', 200)));
+      await expectLater(ComplaintRepositoryImpl(client).submitComplaint(description: 'Test'),
+          throwsA(isA<RepositoryException>().having(
+            (e) => e.message, 'message', 'Unable to create complaint',
+          )));
     });
   });
 

@@ -107,18 +107,17 @@ class SalesInvoiceMapper {
 class InvoicesResponseMapper {
   static InvoicesResponse fromJson(Map<String, dynamic> json) =>
       InvoicesResponse(
-        customerCode: json['message']['customer_code'],
-        salesInvoices: (json['message']['sales_invoices'] as List)
+        salesInvoices: (json['sales_invoices'] as List)
             .map((s) => SalesInvoiceMapper.fromJson(
                   Map<String, dynamic>.from(s as Map),
                 ))
             .toList(),
-        posInvoices: (json['message']['pos_invoices'] as List)
+        posInvoices: (json['pos_invoices'] as List)
             .map((p) => SalesInvoiceMapper.fromJson(
                   Map<String, dynamic>.from(p as Map),
                 ))
             .toList(),
-        isSearch: json['message']['is_search'] ?? false,
+        isSearch: json['is_search'] ?? false,
       );
 }
 

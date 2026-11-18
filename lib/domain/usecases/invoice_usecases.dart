@@ -8,15 +8,13 @@ class InvoiceUseCases {
   final InvoiceRepository _invoices;
   final InvoiceDetailRepository _details;
 
-  Future<InvoicesResponse> fetchInvoices(
-    String customerCode, {
+  Future<InvoicesResponse> fetchInvoices({
     int limit = 20,
     int offset = 0,
     String? searchText,
     String? status,
   }) =>
       _invoices.fetchInvoices(
-        customerCode,
         limit: limit,
         offset: offset,
         searchText: searchText,

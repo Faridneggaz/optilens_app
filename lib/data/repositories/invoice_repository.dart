@@ -1,6 +1,7 @@
 // ignore_for_file: annotate_overrides
 import '../../core/network/api_client.dart';
 import '../../domain/entities/invoices_response.dart';
+import '../../domain/failures/failures.dart';
 import '../../domain/repositories/invoice_repository.dart';
 import '../mappers/json_mappers.dart';
 
@@ -9,15 +10,13 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
 
   final ApiClient _client;
 
-  Future<InvoicesResponse> fetchInvoices(
-    String customerCode, {
+  Future<InvoicesResponse> fetchInvoices({
     int limit = 20,
     int offset = 0,
     String? searchText,
     String? status,
   }) async {
     final query = <String, String>{
-      'code': customerCode,
       'limit': '$limit',
       'offset': '$offset',
     };
@@ -27,11 +26,16 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
     if (status != null && status != 'All') {
       query['status'] = status;
     }
-    final json = await _client.postMobile(
-      'get_invoices_by_customer_code',
-      body: query,
-      attachToken: false,
+    final json = await _client.getCustomerMethod(
+      'get_customer_invoices',
+      query: query,
     );
-    return InvoicesResponseMapper.fromJson(json);
+    final message = _client.unwrap(json);
+    if (message is! Map<String, dynamic> ||
+        message['sales_invoices'] is! List ||
+        message['pos_invoices'] is! List) {
+      throw const RepositoryException('Invalid invoice list in response');
+    }
+    return InvoicesResponseMapper.fromJson(message);
   }
 }

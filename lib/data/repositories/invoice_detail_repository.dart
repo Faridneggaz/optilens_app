@@ -13,17 +13,14 @@ class InvoiceDetailRepositoryImpl implements InvoiceDetailRepository {
   Future<InvoiceDetailResponse> getInvoiceDetails({
     required String invoiceName,
   }) async {
-    final json = await _client.postMobile(
+    final json = await _client.getCustomerMethod(
       'get_single_invoice_details',
-      body: {'invoice_name': invoiceName},
-      attachToken: false,
+      query: {'invoice_name': invoiceName},
     );
-    final message = json['message'];
-    if (message == null) {
-      throw const RepositoryException('Empty message in response');
+    final message = _client.unwrap(json);
+    if (message is! Map<String, dynamic> || message['invoice'] is! Map) {
+      throw const RepositoryException('Missing invoice in response');
     }
-    return InvoiceDetailResponseMapper.fromJson(
-      Map<String, dynamic>.from(message as Map),
-    );
+    return InvoiceDetailResponseMapper.fromJson(message);
   }
 }

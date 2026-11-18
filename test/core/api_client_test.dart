@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:optilens/core/network/api_client.dart';
+import 'package:optilens/data/repositories/invoice_detail_repository.dart';
 import 'package:optilens/data/repositories/invoice_repository.dart';
 import 'package:optilens/data/repositories/customer_repository.dart';
 import 'package:optilens/data/repositories/login_repository.dart';
@@ -109,18 +110,25 @@ void main() {
   });
 
   group('InvoiceRepository', () {
-    test('fetchInvoices maps sales and POS lists', () async {
-      late Uri captured;
-      late Map payload;
+    test('loads sales and POS lists with the customer session and selected filters', () async {
       final client = ApiClient(
+        tokenProvider: () => 'employee-session',
+        customerSessionProvider: () => 'customer-session',
         httpClient: MockClient((request) async {
-          captured = request.url;
-          payload = jsonDecode(request.body) as Map;
+          expect(request.method, 'GET');
+          expect(request.url.path, '/api/method/mobile_app.api.get_customer_invoices');
+          expect(request.url.queryParameters, {
+            'limit': '5', 'offset': '10', 'search_text': 'INV', 'status': 'Unpaid',
+          });
+          expect(request.headers['X-Mobile-Customer-Session'], 'customer-session');
+          expect(request.body, isEmpty);
           return http.Response(
-            '{"message":{"customer_code":"C1","sales_invoices":['
+            '{"message":{"sales_invoices":['
             '{"name":"INV-1","posting_date":"2026-01-01","grand_total":10,'
             '"outstanding_amount":2,"status":"Unpaid","is_pos":0}'
-            '],"pos_invoices":[],"is_search":false}}',
+            '],"pos_invoices":[{"name":"POS-1","posting_date":"2026-01-01",'
+            '"grand_total":15,"outstanding_amount":0,"status":"Paid","is_pos":1}],'
+            '"is_search":true}}',
             200,
             headers: {'content-type': 'application/json'},
           );
@@ -128,23 +136,60 @@ void main() {
       );
 
       final result = await InvoiceRepositoryImpl(client).fetchInvoices(
-        'C1',
+        limit: 5,
+        offset: 10,
         searchText: 'INV',
         status: 'Unpaid',
       );
 
       expect(result.salesInvoices, hasLength(1));
       expect(result.salesInvoices.first.name, 'INV-1');
-      expect(captured.queryParameters, isEmpty);
-      expect(payload['code'], 'C1');
-      expect(payload['search_text'], 'INV');
-      expect(payload['status'], 'Unpaid');
-      expect(captured.queryParameters.containsKey('token'), isFalse);
+      expect(result.posInvoices.single.name, 'POS-1');
+      expect(result.isSearch, isTrue);
+    });
+
+    test('opens an invoice with the session and surfaces an unavailable invoice', () async {
+      final client = ApiClient(
+        tokenProvider: () => 'employee-session',
+        customerSessionProvider: () => 'customer-session',
+        httpClient: MockClient((request) async {
+          expect(request.method, 'GET');
+          expect(request.url.path, '/api/method/mobile_app.api.get_single_invoice_details');
+          expect(request.headers['X-Mobile-Customer-Session'], 'customer-session');
+          expect(request.url.queryParameters.keys, ['invoice_name']);
+          final name = request.url.queryParameters['invoice_name'];
+          final message = name == 'INV-1'
+              ? {'invoice': {'name': name}, 'items': [{'item_code': 'LENS'}]}
+              : {'error': 'Invoice not found'};
+          return http.Response(jsonEncode({'message': message}), 200);
+        }),
+      );
+      final repository = InvoiceDetailRepositoryImpl(client);
+      final result = await repository.getInvoiceDetails(invoiceName: 'INV-1');
+      expect(result.invoice.name, 'INV-1');
+      expect(result.items.single.itemCode, 'LENS');
+      await expectLater(
+        repository.getInvoiceDetails(invoiceName: 'MISSING'),
+        throwsA(isA<RepositoryException>().having(
+          (e) => e.message, 'message', 'Invoice not found',
+        )),
+      );
+    });
+
+    test('reports an expired session for the invoice list and detail', () async {
+      final client = ApiClient(
+        httpClient: MockClient((_) async =>
+            http.Response('{"message":{"error":"Invalid session"}}', 200)),
+      );
+      await expectLater(InvoiceRepositoryImpl(client).fetchInvoices(),
+          throwsA(isA<InvalidSessionException>()));
+      await expectLater(InvoiceDetailRepositoryImpl(client).getInvoiceDetails(invoiceName: 'INV-1'),
+          throwsA(isA<InvalidSessionException>()));
     });
   });
 
   group('OrderRepository', () {
-    test('login exchanges a personal code and only orders receive the customer session header', () async {
+    test('login exchanges a personal code for the session used on orders and logout', () async {
       String? customerSession;
       final calls = <http.Request>[];
       final client = ApiClient(

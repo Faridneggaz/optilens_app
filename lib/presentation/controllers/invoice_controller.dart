@@ -4,7 +4,6 @@ import '../../domain/entities/sales_invoice.dart';
 import '../../domain/usecases/usecases.dart';
 import '../../widgets/invoice/invoice_list.dart';
 import '../../utils/error_feedback.dart';
-import 'session_controller.dart';
 
 class InvoiceController extends GetxController {
   InvoiceController({InvoiceUseCases? invoices})
@@ -76,9 +75,6 @@ class InvoiceController extends GetxController {
     _lastScrollOffset = current;
   }
 
-  String get _customerCode =>
-      Get.find<SessionController>().customer.value?.code ?? '';
-
   List<InvoiceItemData> get filteredSalesItems {
     final list = searchQuery.value.isNotEmpty ? searchSalesInvoices : salesInvoices;
     return list.map((i) => InvoiceItemData(
@@ -125,7 +121,6 @@ class InvoiceController extends GetxController {
       }
 
       final response = await _invoices.fetchInvoices(
-        _customerCode,
         limit: _limit,
         offset: _offset,
         status: selectedStatus.value == 'All' ? null : selectedStatus.value,
@@ -157,7 +152,6 @@ class InvoiceController extends GetxController {
     isSearching.value = true;
     try {
       final response = await _invoices.fetchInvoices(
-        _customerCode,
         limit: 20,
         offset: 0,
         searchText: searchQuery.value,

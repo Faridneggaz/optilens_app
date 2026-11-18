@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../domain/usecases/usecases.dart';
-import '../../core/services/session_service.dart';
+import 'session_controller.dart';
 import '../../core/theme/app_colors.dart';
 
 class ChangePasswordController extends GetxController {
@@ -46,14 +46,8 @@ class ChangePasswordController extends GetxController {
       );
 
       if (result.success) {
-        final service = Get.find<SessionService>();
-        await service.saveSession(
-          code:  newPassword.value.trim(),
-          role:  service.userRole,
-          token: service.authToken,
-        );
-
         isSuccess.value = true;
+        await Get.find<SessionController>().logout();
         Get.snackbar(
           'success'.tr,
           'password_changed_successfully'.tr,
@@ -65,8 +59,6 @@ class ChangePasswordController extends GetxController {
           borderRadius: 12,
           icon: const Icon(Icons.check_circle, color: Colors.white, size: 28),
         );
-        await Future.delayed(const Duration(seconds: 3));
-        Get.back();
 
       } else {
         final error = result.error ?? '';

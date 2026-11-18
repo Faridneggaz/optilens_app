@@ -12,7 +12,7 @@ void main() {
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
     vault = MemoryTokenVault();
-    service = SessionService(tokenVault: vault);
+    service = SessionService(tokenVault: vault, customerCodeVault: MemoryTokenVault());
   });
 
   test('migrates a SID from SharedPreferences into the vault', () async {
@@ -60,12 +60,41 @@ void main() {
     expect(service.userDisplayName, 'Farid Neggaz');
   });
 
+  test('legacy customer login requires reauthentication after upgrade', () async {
+    SharedPreferences.setMockInitialValues({
+      'user_role': 'client',
+      'user_code': 'old-personal-code',
+      'token_expiry': DateTime.now().add(const Duration(hours: 1)).toIso8601String(),
+    });
+    await service.init();
+    expect(service.isSessionValid(), isFalse);
+    expect((await SharedPreferences.getInstance()).containsKey('user_code'), isFalse);
+  });
+
+  test('restored customer session stays separate from the employee SID', () async {
+    final codes = MemoryTokenVault();
+    final first = await SessionService(tokenVault: vault, customerCodeVault: codes).init();
+    await first.saveSession(code: 'personal', role: 'client', token: 'order-session');
+    final restored = await SessionService(tokenVault: vault, customerCodeVault: codes).init();
+    expect(restored.isSessionValid(), isTrue);
+    expect(restored.userCode, 'personal');
+    expect(restored.customerSession, 'order-session');
+    expect(restored.authToken, isEmpty);
+    await restored.clearSession();
+    expect(await codes.read(), isNull);
+  });
+
   test('clearSession wipes the vault and profile keys', () async {
     await service.init();
     await service.saveSession(code: 'C001', role: 'client', token: 'sid-2');
+    expect(service.customerSession, 'sid-2');
+    expect(service.getSid(), isEmpty);
+    expect(service.userCode, 'C001');
+    expect((await SharedPreferences.getInstance()).getString('user_code'), isNull);
     await service.clearSession();
 
     expect(service.authToken, isEmpty);
+    expect(service.customerSession, isEmpty);
     expect(await vault.read(), isNull);
     expect(service.isSessionValid(), isFalse);
   });

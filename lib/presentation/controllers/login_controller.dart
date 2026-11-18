@@ -55,10 +55,11 @@ class LoginController extends GetxController {
     errorMessage.value = '';
     isLoading.value = true;
     try {
-      final response = await _auth.fetchCustomer(code);
+      final response = await _auth.loginCustomer(code);
 
       final sessionService = Get.find<SessionService>();
-      await sessionService.saveSession(code: code, role: 'client', token: '');
+      await sessionService.saveSession(code: code, role: 'client', token: response.sessionToken!);
+      AuthEvents.resetGuards();
 
       final session = Get.find<SessionController>();
       session.customer.value = response.customer;

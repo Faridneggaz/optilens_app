@@ -3,14 +3,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'token_vault.dart';
 
 class SessionService extends GetxService {
-  SessionService({TokenVault? tokenVault})
-    : _tokenVault = tokenVault ?? SecureTokenVault();
+  SessionService({TokenVault? tokenVault, TokenVault? customerCodeVault})
+    : _tokenVault = tokenVault ?? SecureTokenVault(),
+      _customerCodeVault = customerCodeVault ?? SecureTokenVault(key: 'mobile_customer_code');
 
   late SharedPreferences _prefs;
   final TokenVault _tokenVault;
+  final TokenVault _customerCodeVault;
+  String _customerCode = '';
   String _authToken = '';
 
-  String get userCode => _prefs.getString('user_code') ?? '';
+  String get userCode => userRole == 'client' ? _customerCode : _prefs.getString('user_code') ?? '';
   String get userRole => _prefs.getString('user_role') ?? '';
   String get userDisplayName =>
       _normalizeDisplayName(_prefs.getString('user_display_name') ?? '');
@@ -20,15 +23,20 @@ class SessionService extends GetxService {
     return RegExp(r'^\S+@\S+$').hasMatch(name) ? '' : name;
   }
 
-  String get authToken => _authToken;
-  String getSid() => _authToken;
+  String get authToken => userRole == 'client' ? '' : _authToken;
+  String getSid() => authToken;
+  String get customerSession => userRole == 'client' ? _authToken : '';
   String get tokenExpiry => _prefs.getString('token_expiry') ?? '';
 
   Future<SessionService> init() async {
     _prefs = await SharedPreferences.getInstance();
     await _migrateLegacyToken();
+    if (userRole == 'client') {
+      await _prefs.remove('user_code');
+    }
     try {
       _authToken = await _tokenVault.read() ?? '';
+      if (userRole == 'client') _customerCode = await _customerCodeVault.read() ?? '';
     } catch (_) {
       _authToken = '';
     }
@@ -52,7 +60,15 @@ class SessionService extends GetxService {
     required String token,
     String displayName = '',
   }) async {
-    await _prefs.setString('user_code', code);
+    if (role == 'client') {
+      await _customerCodeVault.write(code);
+      _customerCode = code;
+      await _prefs.remove('user_code');
+    } else {
+      if (_customerCode.isNotEmpty) await _customerCodeVault.delete();
+      _customerCode = '';
+      await _prefs.setString('user_code', code);
+    }
     await saveUserDisplayName(displayName);
     await _prefs.setString('user_role', role);
     await _persistToken(token);
@@ -77,6 +93,8 @@ class SessionService extends GetxService {
 
   Future<void> clearSession() async {
     _authToken = '';
+    if (userRole == 'client' || _customerCode.isNotEmpty) await _customerCodeVault.delete();
+    _customerCode = '';
     await _tokenVault.delete();
     await _prefs.remove('user_code');
     await _prefs.remove('user_display_name');
@@ -99,6 +117,7 @@ class SessionService extends GetxService {
     final expiryStr = tokenExpiry;
 
     if (role.isEmpty || expiryStr.isEmpty) return false;
+    if (role == 'client' && (customerSession.isEmpty || _customerCode.isEmpty)) return false;
 
     try {
       final expiryDate = DateTime.parse(expiryStr);

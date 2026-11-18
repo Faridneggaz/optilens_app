@@ -8,9 +8,9 @@ class NotificationRepositoryImpl implements NotificationRepository {
   final ApiClient _client;
 
   Future<List<dynamic>> fetchNotifications(String customerCode) async {
-    final json = await _client.getMobile(
+    final json = await _client.postMobile(
       'get_notification_by_customer_code',
-      query: {'code': customerCode},
+      body: {'code': customerCode},
       attachToken: false,
     );
     final message = json['message'];

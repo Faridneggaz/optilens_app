@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../core/services/session_service.dart';
+import '../presentation/controllers/session_controller.dart';
 import '../core/theme/app_colors.dart';
-import '../app/routes/app_routes.dart';
 
 class LogoutDialog {
   static void show(BuildContext context) {
@@ -46,8 +45,7 @@ class LogoutDialog {
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
             onPressed: () async {
-              await Get.find<SessionService>().clearSession();
-              Get.offAllNamed(AppRoutes.login);
+              await Get.find<SessionController>().logout();
             },
             child: Text(
               'btn_confirm'.tr,

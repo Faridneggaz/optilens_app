@@ -17,7 +17,10 @@ Future<void> main() async {
 
   await Get.putAsync(() => SessionService().init());
   Get.put(
-    ApiClient(tokenProvider: () => Get.find<SessionService>().getSid()),
+    ApiClient(
+      tokenProvider: () => Get.find<SessionService>().getSid(),
+      customerSessionProvider: () => Get.find<SessionService>().customerSession,
+    ),
     permanent: true,
   );
   RepositoryBinding.register();

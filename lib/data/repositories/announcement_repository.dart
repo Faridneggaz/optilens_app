@@ -14,9 +14,9 @@ class AnnouncementRepositoryImpl implements AnnouncementRepository {
     int limit = 10,
     int offset = 0,
   }) async {
-    final json = await _client.getMobile(
+    final json = await _client.postMobile(
       'get_announcements_by_customer_code',
-      query: {
+      body: {
         'code': customerCode,
         'limit': '$limit',
         'offset': '$offset',

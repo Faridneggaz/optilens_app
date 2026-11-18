@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_zoom_drawer/flutter_zoom_drawer.dart';
 import 'package:get/get.dart';
 import '../../domain/entities/customer.dart';
@@ -86,6 +88,10 @@ class SessionController extends GetxController {
 
   Future<void> logout() async {
     final sessionService = Get.find<SessionService>();
+    if (sessionService.customerSession.isNotEmpty) {
+      // Clear the local credentials even when the server is unreachable.
+      unawaited(Get.find<AuthUseCases>().logoutCustomer().catchError((Object _) {}));
+    }
     await sessionService.clearSession();
     customer.value = null;
     token.value = '';

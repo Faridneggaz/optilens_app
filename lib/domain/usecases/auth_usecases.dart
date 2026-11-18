@@ -26,6 +26,14 @@ class AuthUseCases {
   Future<CustomerResponse> fetchCustomer(String code) =>
       _customers.fetchCustomer(code);
 
+  Future<CustomerResponse> loginCustomer(String code) async {
+    final response = await _customers.loginCustomer(code);
+    if (response.sessionToken?.isNotEmpty != true) throw const MissingTokenException();
+    return response;
+  }
+
+  Future<void> logoutCustomer() => _customers.logoutCustomer();
+
   Future<ChangeCodeResult> changePassword({
     required String oldPassword,
     required String newPassword,

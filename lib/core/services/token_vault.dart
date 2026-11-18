@@ -8,23 +8,23 @@ abstract class TokenVault {
 }
 
 class SecureTokenVault implements TokenVault {
-  SecureTokenVault({FlutterSecureStorage? storage})
+  SecureTokenVault({FlutterSecureStorage? storage, this.key = 'auth_token'})
       : _storage = storage ??
             const FlutterSecureStorage(
               aOptions: AndroidOptions(encryptedSharedPreferences: true),
             );
 
-  static const _key = 'auth_token';
+  final String key;
   final FlutterSecureStorage _storage;
 
   @override
-  Future<String?> read() => _storage.read(key: _key);
+  Future<String?> read() => _storage.read(key: key);
 
   @override
-  Future<void> write(String value) => _storage.write(key: _key, value: value);
+  Future<void> write(String value) => _storage.write(key: key, value: value);
 
   @override
-  Future<void> delete() => _storage.delete(key: _key);
+  Future<void> delete() => _storage.delete(key: key);
 }
 
 /// In-memory vault for unit tests.

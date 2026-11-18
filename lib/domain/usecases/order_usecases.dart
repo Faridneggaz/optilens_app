@@ -15,13 +15,12 @@ class OrderUseCases {
       _repo.searchItems(searchText: searchText, customerCode: customerCode);
 
   Future<bool> submitOrder({
-    required String customerCode,
     required List<Map<String, dynamic>> items,
   }) =>
-      _repo.submitOrder(customerCode: customerCode, items: items);
+      _repo.submitOrder(items: items);
 
-  Future<List<dynamic>> fetchOrders(String customerCode) =>
-      _repo.fetchOrders(customerCode);
+  Future<List<dynamic>> fetchOrders() =>
+      _repo.fetchOrders();
 
   Future<List<dynamic>?> getOrderItems(String orderId) =>
       _repo.getOrderItems(orderId);

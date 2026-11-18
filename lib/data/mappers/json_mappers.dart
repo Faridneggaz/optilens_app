@@ -85,6 +85,7 @@ class CustomerResponseMapper {
       throw Exception('Customer data not found');
     }
     return CustomerResponse(
+      sessionToken: json['message']['customer_session'] as String?,
       customer: CustomerMapper.fromJson(
         Map<String, dynamic>.from(customerJson as Map),
       ),

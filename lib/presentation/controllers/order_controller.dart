@@ -122,7 +122,6 @@ class OrderController extends GetxController {
     try {
       final payload = cart.map((item) => item.toJson()).toList();
       final result = await _orders.submitOrder(
-        customerCode: _customerCode,
         items: payload,
       );
       if (result) {
@@ -147,7 +146,7 @@ class OrderController extends GetxController {
   Future<void> loadOrders() async {
     isLoading.value = true;
     try {
-      orders.value = await _orders.fetchOrders(_customerCode);
+      orders.value = await _orders.fetchOrders();
     } catch (e) {
       ErrorFeedback.snackbar(e, fallbackKey: 'error_load_orders');
       orders.value = [];

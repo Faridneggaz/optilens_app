@@ -72,6 +72,9 @@ class LoginPage extends StatelessWidget {
                               if (!c.isUserLogin.value)
                                 TextField(
                                   controller: c.clientCodeController,
+                                  obscureText: true,
+                                  autocorrect: false,
+                                  enableSuggestions: false,
                                   onChanged: (v) => c.errorMessage.value = '',
                                   decoration: InputDecoration(
                                     hintText: 'hint_client_code'.tr,

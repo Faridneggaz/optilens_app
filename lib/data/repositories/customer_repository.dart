@@ -9,10 +9,21 @@ class CustomerRepositoryImpl implements CustomerRepository {
 
   final ApiClient _client;
 
+  Future<CustomerResponse> loginCustomer(String code) async {
+    final json = await _client.postMobile('login_customer', body: {'code': code}, attachToken: false);
+    _client.unwrap(json);
+    return CustomerResponseMapper.fromJson(json);
+  }
+
+  Future<void> logoutCustomer() async {
+    await _client.postCustomerMethod('logout_customer');
+  }
+
   Future<CustomerResponse> fetchCustomer(String code) async {
-    final json = await _client.getMobile(
+    final json = await _client.postMobile(
       'get_client_by_code',
-      query: {'code': code},
+      body: {'code': code},
+      attachToken: false,
     );
     return CustomerResponseMapper.fromJson(json);
   }
@@ -23,7 +34,8 @@ class CustomerRepositoryImpl implements CustomerRepository {
   }) async {
     final json = await _client.postMobile(
       'change_customer_code',
-      query: {
+      attachToken: false,
+      body: {
         'old_code': oldPassword,
         'new_code': newPassword,
       },

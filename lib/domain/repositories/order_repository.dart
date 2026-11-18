@@ -9,11 +9,10 @@ abstract class OrderRepository {
   });
 
   Future<bool> submitOrder({
-    required String customerCode,
     required List<Map<String, dynamic>> items,
   });
 
-  Future<List<dynamic>> fetchOrders(String customerCode);
+  Future<List<dynamic>> fetchOrders();
 
   Future<List<dynamic>?> getOrderItems(String orderId);
 }

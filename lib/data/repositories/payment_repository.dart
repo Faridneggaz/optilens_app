@@ -28,9 +28,9 @@ class PaymentRepositoryImpl implements PaymentRepository {
     if (status != null && status != 'All') {
       query['status'] = status;
     }
-    final json = await _client.getMobile(
+    final json = await _client.postMobile(
       'get_payments_by_customer_code',
-      query: query,
+      body: query,
       attachToken: false,
     );
     return PaymentResponseMapper.fromJson(json, limit);

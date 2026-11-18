@@ -27,9 +27,9 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
     if (status != null && status != 'All') {
       query['status'] = status;
     }
-    final json = await _client.getMobile(
+    final json = await _client.postMobile(
       'get_invoices_by_customer_code',
-      query: query,
+      body: query,
       attachToken: false,
     );
     return InvoicesResponseMapper.fromJson(json);

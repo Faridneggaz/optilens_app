@@ -23,6 +23,11 @@ class _FakeLoginRepository implements LoginRepository {
 
 class _FakeCustomerRepository implements CustomerRepository {
   @override
+  Future<CustomerResponse> loginCustomer(String code) => throw UnimplementedError();
+
+  @override
+  Future<void> logoutCustomer() async {}
+  @override
   Future<CustomerResponse> fetchCustomer(String code) {
     throw UnimplementedError();
   }

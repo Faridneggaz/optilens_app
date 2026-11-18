@@ -15,11 +15,13 @@ class ApiClient {
   ApiClient({
     http.Client? httpClient,
     this.tokenProvider,
+    this.customerSessionProvider,
     this.timeout = const Duration(seconds: 15),
   }) : _http = httpClient ?? http.Client();
 
   final http.Client _http;
   final String? Function()? tokenProvider;
+  final String? Function()? customerSessionProvider;
   final Duration timeout;
 
   static const _jsonHeaders = {
@@ -30,6 +32,16 @@ class ApiClient {
   String get currentToken => tokenProvider?.call() ?? '';
 
   String get _token => currentToken;
+
+  Map<String, String> get _customerHeaders => {
+    'X-Mobile-Customer-Session': customerSessionProvider?.call() ?? '',
+  };
+
+  Future<Map<String, dynamic>> getCustomerMethod(String method, {Map<String, String>? query}) =>
+      _send('GET', mobileUri(method, query: query), extraHeaders: _customerHeaders);
+
+  Future<Map<String, dynamic>> postCustomerMethod(String method, {Map<String, dynamic>? body}) =>
+      _send('POST', mobileUri(method), body: body, extraHeaders: _customerHeaders);
 
   /// Unwraps Frappe `{ message: ... }` and maps session / access errors.
   dynamic unwrap(Map<String, dynamic> decoded) => FrappeMessage.unwrap(decoded);

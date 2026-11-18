@@ -11,9 +11,10 @@ class OrderRepositoryImpl implements OrderRepository {
   final ApiClient _client;
 
   Future<List<Item>> fetchItems(String customerCode) async {
-    final data = await _client.getMobile(
+    final data = await _client.postMobile(
       'get_items_by_customer_code',
-      query: {'customer_code': customerCode},
+      attachToken: false,
+      body: {'customer_code': customerCode},
     );
     final msg = data['message'];
     if (msg == null) throw const RepositoryException('Empty response');
@@ -35,9 +36,10 @@ class OrderRepositoryImpl implements OrderRepository {
   }) async {
     if (searchText.isEmpty) return [];
     try {
-      final data = await _client.getMobile(
+      final data = await _client.postMobile(
         'search_items',
-        query: {
+        attachToken: false,
+        body: {
           'search_text': searchText,
           'customer_code': customerCode,
         },
@@ -58,22 +60,10 @@ class OrderRepositoryImpl implements OrderRepository {
   }
 
   Future<bool> submitOrder({
-    required String customerCode,
     required List<Map<String, dynamic>> items,
   }) async {
-    if (customerCode.isEmpty) {
-      throw const RepositoryException('Customer code not found in session');
-    }
-    final decoded = await _client.postMobile(
-      'create_sales_order',
-      body: {
-        'customer_code': customerCode,
-        'items': items,
-        'token': _client.currentToken,
-      },
-      attachToken: false,
-    );
-    final msg = decoded['message'];
+    final decoded = await _client.postCustomerMethod('create_sales_order', body: {'items': items});
+    final msg = _client.unwrap(decoded);
     if (msg == null) {
       throw const RepositoryException('Null message in response');
     }
@@ -86,26 +76,22 @@ class OrderRepositoryImpl implements OrderRepository {
     throw RepositoryException(errorMsg.toString());
   }
 
-  Future<List<dynamic>> fetchOrders(String customerCode) async {
-    if (customerCode.isEmpty) {
-      throw const RepositoryException('Customer code not found in session');
-    }
-    final data = await _client.getMobile(
-      'get_customer_orders',
-      query: {'customer_code': customerCode},
-    );
-    return (data['message']?['orders'] as List<dynamic>?) ?? [];
+  Future<List<dynamic>> fetchOrders() async {
+    final data = await _client.getCustomerMethod('get_customer_orders');
+    final msg = _client.unwrap(data);
+    if (msg is Map && msg['orders'] is List) return msg['orders'] as List;
+    throw const RepositoryException('Failed to load orders');
   }
 
   Future<List<dynamic>?> getOrderItems(String orderId) async {
-    final data = await _client.getMobile(
+    final data = await _client.getCustomerMethod(
       'get_order_details',
       query: {'order_id': orderId},
     );
-    final msg = data['message'];
+    final msg = _client.unwrap(data);
     if (msg is Map && msg['status'] == 'success') {
       return msg['items'] as List<dynamic>?;
     }
-    return null;
+    throw RepositoryException(msg is Map ? msg['message']?.toString() ?? 'Order not found' : 'Order not found');
   }
 }

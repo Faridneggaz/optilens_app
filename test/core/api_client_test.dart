@@ -1,8 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:optilens/core/network/api_client.dart';
 import 'package:optilens/data/repositories/invoice_repository.dart';
+import 'package:optilens/data/repositories/customer_repository.dart';
 import 'package:optilens/data/repositories/login_repository.dart';
 import 'package:optilens/data/repositories/order_repository.dart';
 import 'package:optilens/domain/failures/failures.dart';
@@ -108,9 +111,11 @@ void main() {
   group('InvoiceRepository', () {
     test('fetchInvoices maps sales and POS lists', () async {
       late Uri captured;
+      late Map payload;
       final client = ApiClient(
         httpClient: MockClient((request) async {
           captured = request.url;
+          payload = jsonDecode(request.body) as Map;
           return http.Response(
             '{"message":{"customer_code":"C1","sales_invoices":['
             '{"name":"INV-1","posting_date":"2026-01-01","grand_total":10,'
@@ -130,20 +135,61 @@ void main() {
 
       expect(result.salesInvoices, hasLength(1));
       expect(result.salesInvoices.first.name, 'INV-1');
-      expect(captured.queryParameters['code'], 'C1');
-      expect(captured.queryParameters['search_text'], 'INV');
-      expect(captured.queryParameters['status'], 'Unpaid');
+      expect(captured.queryParameters, isEmpty);
+      expect(payload['code'], 'C1');
+      expect(payload['search_text'], 'INV');
+      expect(payload['status'], 'Unpaid');
       expect(captured.queryParameters.containsKey('token'), isFalse);
     });
   });
 
   group('OrderRepository', () {
+    test('login exchanges a personal code and only orders receive the customer session header', () async {
+      String? customerSession;
+      final calls = <http.Request>[];
+      final client = ApiClient(
+        customerSessionProvider: () => customerSession,
+        httpClient: MockClient((request) async {
+          calls.add(request);
+          final payload = switch (request.url.path.split('.').last) {
+            'login_customer' => {'customer_session': 'session-a', 'customer': {
+              'name': 'A', 'custom_customer_code': 'code-a', 'custom_debt': 0.0,
+            }},
+            'get_customer_orders' => {'orders': []},
+            'get_order_details' => {'status': 'success', 'items': []},
+            'create_sales_order' => {'status': 'success', 'order_id': 'SO-1'},
+            'logout_customer' => {'success': true},
+            _ => throw StateError('Unexpected method'),
+          };
+          return http.Response(jsonEncode({'message': payload}), 200);
+        }),
+      );
+      final customers = CustomerRepositoryImpl(client);
+      final orders = OrderRepositoryImpl(client);
+      customerSession = (await customers.loginCustomer('code-a')).sessionToken;
+      await orders.fetchOrders();
+      await orders.getOrderItems('SO-1');
+      await orders.submitOrder(items: [{'item_code': 'TEST', 'qty': 1}]);
+      await customers.logoutCustomer();
+      expect(calls.first.method, 'POST');
+      expect(jsonDecode(calls.first.body), {'code': 'code-a'});
+      expect(calls.first.headers.containsKey('X-Mobile-Customer-Session'), isFalse);
+      for (final request in calls) {
+        expect(request.url.toString(), isNot(contains('code-a')));
+        expect(request.url.toString(), isNot(contains('session-a')));
+      }
+      for (final request in calls.skip(1)) {
+        expect(request.headers['X-Mobile-Customer-Session'], 'session-a');
+        expect(request.body, isNot(contains('code-a')));
+      }
+    });
+
     test('fetchItems reads the success payload', () async {
       final client = ApiClient(
         tokenProvider: () => 'sid',
         httpClient: MockClient((request) async {
-          expect(request.url.queryParameters['token'], 'sid');
-          expect(request.url.queryParameters['customer_code'], 'C1');
+          expect(request.url.queryParameters, isEmpty);
+          expect(jsonDecode(request.body)['customer_code'], 'C1');
           return http.Response(
             '{"message":{"status":"success","items":['
             '{"item_code":"X","item_name":"Lens","rate":12.5}'

@@ -50,14 +50,6 @@ class UserMapper {
         sid: json['sid']?.toString() ?? '',
         email: json['email']?.toString(),
         name: json['name']?.toString(),
-        allowedCompanies: (json['allowed_companies'] as List<dynamic>?)
-                ?.map((e) => e.toString())
-                .toList() ??
-            const [],
-        allowedWarehouses: (json['allowed_warehouses'] as List<dynamic>?)
-                ?.map((e) => e.toString())
-                .toList() ??
-            const [],
       );
 }
 

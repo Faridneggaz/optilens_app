@@ -55,6 +55,7 @@ class ErpTask {
     this.allowedStatuses = const [],
     this.photos = const [],
     this.voiceIds = const [],
+    this.attachmentCount,
   });
   final String name;
   final String subject;
@@ -78,6 +79,7 @@ class ErpTask {
   final List<String> allowedStatuses;
   final List<AttachmentPhoto> photos;
   final List<String> voiceIds;
+  final int? attachmentCount;
   bool get isFinished => status == 'Completed' || status == 'Cancelled';
 }
 
@@ -95,7 +97,7 @@ class TaskInput {
     this.assignees = const [],
     this.updateAssignments = true,
     this.photos = const [],
-    this.voiceRecording,
+    this.voiceRecordings = const [],
     this.removedVoiceIds = const [],
     this.issue = '',
     this.type,
@@ -111,7 +113,7 @@ class TaskInput {
   final List<String> assignees;
   final bool updateAssignments;
   final List<SelectedPhoto> photos;
-  final Uint8List? voiceRecording;
+  final List<Uint8List> voiceRecordings;
   final List<String> removedVoiceIds;
   final String issue;
   final String? type;
@@ -134,6 +136,7 @@ class TaskOptions {
     this.photoMaxBytes = 0,
     this.photoBatchMaxBytes = 0,
     this.photoMaxCount = 1,
+    this.attachmentLimit = 5,
     this.voiceMaxBytes = 0,
     this.canRemoveVoice = false,
     this.statuses = const [],
@@ -147,6 +150,7 @@ class TaskOptions {
   final int photoMaxBytes;
   final int photoBatchMaxBytes;
   final int photoMaxCount;
+  final int attachmentLimit;
   final int voiceMaxBytes;
   final bool canRemoveVoice;
   final List<String> statuses;

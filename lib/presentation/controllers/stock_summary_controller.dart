@@ -47,39 +47,26 @@ class StockSummaryController extends GetxController {
     super.onInit();
     _debounce = debounce(searchQuery, (_) => onRefresh(),
         time: const Duration(milliseconds: 400));
-    ever(selectedWarehouse, (_) => onRefresh());
     ever(qtyFilter, (_) => onRefresh());
     ever(onlyLowStock, (_) => onRefresh());
-    _bootstrap();
   }
 
-  Future<void> _bootstrap() async {
-    await _loadWarehouses();
-    await onRefresh();
-  }
-
-  Future<void> _loadWarehouses() async {
-    final allowed = Get.find<SessionService>().getAllowedWarehouses();
-    if (allowed.isNotEmpty) {
-      warehouses.value = ['All', ...allowed];
-      return;
-    }
+  Future<void> loadPage() async {
     try {
-      final companies = await _materialRequests.fetchCompanies(token: _token);
-      final company =
-          companies.isNotEmpty ? companies.first : 'OPTILENS ALGER';
-      final rows = await _materialRequests.fetchWarehouses(
-        token: _token,
-        company: company,
-      );
+      final rows = await _materialRequests.fetchWarehouses(token: _token);
       final names = rows
           .map((w) => w['name'] ?? '')
           .where((n) => n.isNotEmpty)
           .toList();
       warehouses.value = ['All', ...names];
-    } catch (_) {
+    } catch (e) {
       warehouses.value = ['All'];
+      ErrorFeedback.snackbar(e, fallbackKey: 'failed_load_stock_summary');
     }
+    if (!warehouses.contains(selectedWarehouse.value)) {
+      selectedWarehouse.value = 'All';
+    }
+    await onRefresh();
   }
 
   @override

@@ -62,11 +62,11 @@ class MaterialRequestRepositoryImpl implements MaterialRequestRepository {
 
   Future<List<Map<String, String>>> fetchWarehouses({
     required String token,
-    required String company,
+    String? company,
   }) async {
     final body = await _client.getMobile(
       'get_warehouses',
-      query: {'token': token, 'company': company},
+      query: {'token': token, if (company != null) 'company': company},
       attachToken: false,
     );
     final msg = _client.unwrap(body);

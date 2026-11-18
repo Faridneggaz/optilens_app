@@ -32,9 +32,9 @@ class _IssueCreatePageState extends State<IssueCreatePage> {
   bool _loading = true;
   bool _saving = false;
   bool _pickingPhoto = false;
-  bool _voiceDialogOpen = false;
+  bool _voiceCaptureActive = false;
   List<SelectedPhoto> _photos = const [];
-  Uint8List? _voiceRecording;
+  List<Uint8List> _voiceRecordings = const [];
   ApiClient get _api => Get.find<ApiClient>();
   String get _token => Get.find<SessionController>().token.value;
 
@@ -109,10 +109,10 @@ class _IssueCreatePageState extends State<IssueCreatePage> {
       int.tryParse(_options[key]?.toString() ?? '') ?? 0;
 
   Future<void> _save() async {
-    if (_saving || _pickingPhoto || _voiceDialogOpen) return;
-    final voice = _voiceRecording;
-    if (voice != null &&
-        _photos.fold(voice.length, (size, photo) => size + photo.bytes.length) >
+    if (_saving || _pickingPhoto || _voiceCaptureActive) return;
+    final voices = _voiceRecordings;
+    if (voices.isNotEmpty &&
+        attachmentUploadBytes(_photos, voices) >
             _attachmentLimit('photo_batch_max_bytes')) {
       setState(() => _error = 'erp_task_voice_batch_limit'.tr);
       return;
@@ -136,7 +136,7 @@ class _IssueCreatePageState extends State<IssueCreatePage> {
         'assignees': _assignees.map((u) => u.email).toList(),
       };
       final result = _unwrap(
-        _photos.isEmpty && voice == null
+        _photos.isEmpty && voices.isEmpty
             ? await _api.postMobile(
                 'create_issue',
                 attachToken: false,
@@ -146,7 +146,7 @@ class _IssueCreatePageState extends State<IssueCreatePage> {
                 'create_issue',
                 body: body,
                 photos: _photos,
-                voiceRecording: voice,
+                voiceRecordings: voices,
               ),
       );
       if (result['error'] != null) throw Exception(result['error']);
@@ -216,16 +216,6 @@ class _IssueCreatePageState extends State<IssueCreatePage> {
                               decoration: const InputDecoration(
                                 labelText: 'Description',
                               ),
-                            ),
-                            VoiceRecordingField(
-                              maxBytes: _attachmentLimit('voice_max_bytes'),
-                              recording: _voiceRecording,
-                              dialogOpen: _voiceDialogOpen,
-                              enabled: !_saving,
-                              onChanged: (voice) =>
-                                  setState(() => _voiceRecording = voice),
-                              onDialogChanged: (open) =>
-                                  setState(() => _voiceDialogOpen = open),
                             ),
                           ],
                         ),
@@ -303,6 +293,29 @@ class _IssueCreatePageState extends State<IssueCreatePage> {
                                 setState(() => _pickingPhoto = picking),
                           ),
                         ),
+                      if (_attachmentLimit('voice_max_bytes') > 0 &&
+                          VoiceRecordingField.isRecordingSupported)
+                        _fieldCard(
+                          'erp_task_attachment_voice'.tr,
+                          VoiceRecordingField(
+                            maxBytes: _attachmentLimit('voice_max_bytes'),
+                            recordings: _voiceRecordings,
+                            enabled: !_saving,
+                            onAttach: (voice) => setState(
+                              () => _voiceRecordings = [
+                                ..._voiceRecordings,
+                                voice,
+                              ],
+                            ),
+                            onRemove: (voice) => setState(
+                              () => _voiceRecordings = _voiceRecordings
+                                  .where((item) => item != voice)
+                                  .toList(),
+                            ),
+                            onCaptureChanged: (active) =>
+                                setState(() => _voiceCaptureActive = active),
+                          ),
+                        ),
                     ],
                   ),
           ),
@@ -314,7 +327,10 @@ class _IssueCreatePageState extends State<IssueCreatePage> {
                 width: double.infinity,
                 child: FilledButton.icon(
                   onPressed:
-                      _saving || _loading || _pickingPhoto || _voiceDialogOpen
+                      _saving ||
+                          _loading ||
+                          _pickingPhoto ||
+                          _voiceCaptureActive
                       ? null
                       : _save,
                   icon: _saving

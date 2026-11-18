@@ -20,8 +20,8 @@ class _StockSummaryPageState extends State<StockSummaryPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (Get.isRegistered<StockSummaryController>()) {
-        Get.find<StockSummaryController>().onRefresh();
+      if (mounted) {
+        Get.find<StockSummaryController>().loadPage();
       }
     });
   }
@@ -47,7 +47,7 @@ class _StockSummaryPageState extends State<StockSummaryPage> {
                   return const Center(child: CircularProgressIndicator());
                 }
                 return RefreshIndicator(
-                  onRefresh: c.onRefresh,
+                  onRefresh: c.loadPage,
                   color: AppColors.primary,
                   child: ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
@@ -156,6 +156,7 @@ class _FilterRow extends StatelessWidget {
                       onChanged: (v) {
                         if (v != null) {
                           controller.selectedWarehouse.value = v;
+                          controller.onRefresh();
                         }
                       },
                     )),

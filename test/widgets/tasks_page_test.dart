@@ -79,7 +79,7 @@ void main() {
   });
   tearDown(Get.reset);
 
-  testWidgets('a saved voice is playable below the read-only description', (
+  testWidgets('a saved voice is playable in its own attachment section', (
     tester,
   ) async {
     final repo = FakeTasks()
@@ -111,6 +111,7 @@ void main() {
     );
     expect(play, findsOneWidget);
     expect(tester.widget<IconButton>(play).onPressed, isNotNull);
+    expect(find.text('Notes vocales'), findsOneWidget);
     expect(
       tester.getTopLeft(play).dy,
       greaterThan(

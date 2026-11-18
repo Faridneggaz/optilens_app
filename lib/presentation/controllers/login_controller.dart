@@ -104,11 +104,6 @@ class LoginController extends GetxController {
         displayName: displayName,
       );
 
-      await sessionService.saveUserPermissions(
-        response.user.allowedCompanies,
-        response.user.allowedWarehouses,
-      );
-
       final session = Get.find<SessionController>();
       session.token.value = sid;
       session.userName.value = sessionService.userDisplayName;

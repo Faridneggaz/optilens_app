@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:optilens/domain/entities/task.dart';
+import 'package:optilens/domain/failures/failures.dart';
 import 'package:optilens/domain/usecases/task_usecases.dart';
 import 'package:optilens/presentation/controllers/task_controller.dart';
 import 'package:optilens/utils/translations/app_translations.dart';
+import 'package:optilens/utils/error_feedback.dart';
 import 'package:optilens/widgets/task/task_form_sheet.dart';
 import 'package:optilens/widgets/task/pick_assignable_user_sheet.dart';
 import '../presentation/task_controller_test.dart' show FakeTasks, listing;
@@ -35,6 +37,7 @@ void main() {
                   subject: 'Inventory',
                   canWrite: true,
                   voiceIds: ['VOICE-1', 'VOICE-2'],
+                  attachmentCount: 5,
                 ),
               ),
               child: const Text('Ouvrir'),
@@ -46,15 +49,31 @@ void main() {
     await tester.tap(find.text('Ouvrir'));
     await tester.pumpAndSettle();
     expect(find.byTooltip('Écouter'), findsNWidgets(2));
+    final full = find.textContaining('Limite de 5 pièces jointes atteinte');
+    expect(full, findsOneWidget);
+    expect(
+      ErrorFeedback.message(
+        const RepositoryException(
+          'Maximum Attachment Limit of <strong>5</strong> has been reached for Task TASK-1.',
+        ),
+        fallbackKey: 'error_occurred',
+      ),
+      startsWith('Ce document est limité à 5 pièces jointes'),
+    );
     final remove = find.byTooltip('Retirer le vocal');
     await tester.ensureVisible(remove.first);
     await tester.tap(remove.first);
     await tester.pumpAndSettle();
     expect(find.text('Retrait à l’enregistrement'), findsOneWidget);
+    expect(
+      find.text('Places restantes pour les pièces jointes · 1'),
+      findsOneWidget,
+    );
     expect(repo.updates, 0);
     await tester.tap(find.byTooltip('Annuler le retrait'));
     await tester.pumpAndSettle();
     expect(find.text('Retrait à l’enregistrement'), findsNothing);
+    expect(full, findsOneWidget);
     await tester.ensureVisible(remove.last);
     await tester.tap(remove.last);
     await tester.pumpAndSettle();

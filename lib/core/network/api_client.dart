@@ -90,7 +90,7 @@ class ApiClient {
     String endpoint, {
     required Map<String, dynamic> body,
     required List<SelectedPhoto> photos,
-    Uint8List? voiceRecording,
+    List<Uint8List> voiceRecordings = const [],
   }) async {
     try {
       final request = http.MultipartRequest('POST', mobileUri(endpoint))
@@ -110,12 +110,14 @@ class ApiClient {
           ),
         );
       }
-      if (voiceRecording != null) {
+      for (final (index, recording) in voiceRecordings.indexed) {
         request.files.add(
           http.MultipartFile.fromBytes(
             'voice',
-            voiceRecording,
-            filename: 'note-vocale.wav',
+            recording,
+            filename: voiceRecordings.length == 1
+                ? 'note-vocale.wav'
+                : 'note-vocale-${index + 1}.wav',
           ),
         );
       }

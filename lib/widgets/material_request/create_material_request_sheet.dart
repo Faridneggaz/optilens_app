@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../app/routes/app_routes.dart';
-import '../../core/services/session_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../presentation/controllers/material_request_controller.dart';
 import '../../presentation/controllers/user_dashboard_controller.dart';
@@ -22,7 +21,7 @@ class CreateMaterialRequestSheet extends StatefulWidget {
 
 class CreateMaterialRequestSheetState
     extends State<CreateMaterialRequestSheet> {
-  String _selectedCompany = 'OPTILENS ALGER';
+  String? _selectedCompany;
   String _selectedPurpose = 'Material Transfer';
   DateTime _transactionDate = DateTime.now();
   DateTime _requiredBy = DateTime.now().add(const Duration(days: 7));
@@ -32,7 +31,9 @@ class CreateMaterialRequestSheetState
 
   String? _selectedPriceList;
   List<String> _priceLists = [];
-  List<String> _companies = ['OPTILENS ALGER'];
+  List<String> _companies = [];
+  List<Map<String, String>> _warehouses = [];
+  bool _loadingLookups = true;
 
   final List<Map<String, dynamic>> _selectedItems = [];
   bool _isSaving = false;
@@ -51,35 +52,31 @@ class CreateMaterialRequestSheetState
   }
 
   Future<void> _initLookups() async {
-    final session = Get.find<SessionService>();
-    final allowed = session.getAllowedCompanies();
-    if (allowed.isNotEmpty) {
-      _companies = allowed;
-      if (!_companies.contains(_selectedCompany)) {
-        _selectedCompany = _companies.first;
-      }
-    }
-
-    await Future.wait([
+    final (companies, priceLists) = await (
       widget.c.loadCompanies(),
       widget.c.loadPriceLists(),
-    ]);
+    ).wait;
     if (!mounted) return;
 
     setState(() {
-      if (widget.c.companies.isNotEmpty) {
-        _companies = widget.c.companies.toList();
-        if (!_companies.contains(_selectedCompany)) {
-          _selectedCompany = _companies.first;
-        }
-      }
-      _priceLists = widget.c.priceLists.toList();
-      if (_selectedPriceList != null &&
-          !_priceLists.contains(_selectedPriceList)) {
-        _selectedPriceList = null;
-      }
+      _loadingLookups = false;
+      _companies = companies;
+      _priceLists = priceLists;
     });
-    await widget.c.loadWarehouses(_selectedCompany);
+    if (_companies.isNotEmpty) await _selectCompany(_companies.first);
+  }
+
+  Future<void> _selectCompany(String company) async {
+    setState(() {
+      _selectedCompany = company;
+      _sourceWarehouse = null;
+      _targetWarehouse = null;
+      _warehouses = [];
+    });
+    final rows = await widget.c.loadWarehouses(company);
+    if (mounted && _selectedCompany == company) {
+      setState(() => _warehouses = rows);
+    }
   }
 
   int _itemQty(Map<String, dynamic> item) {
@@ -191,8 +188,8 @@ class CreateMaterialRequestSheetState
   }
 
   Future<void> _saveDraft() async {
-    if (_savedDocName != null) return;
-    if (!_validateForm()) return;
+    final company = _selectedCompany;
+    if (_savedDocName != null || company == null || !_validateForm()) return;
 
     setState(() => _isSaving = true);
     final requiredByStr =
@@ -212,7 +209,7 @@ class CreateMaterialRequestSheetState
 
     try {
       final res = await widget.c.createRequest(
-        company: _selectedCompany,
+        company: company,
         purpose: purpose,
         requiredBy: requiredByStr,
         setWarehouse: setWarehouse,
@@ -405,7 +402,11 @@ class CreateMaterialRequestSheetState
                     MrSectionCard(
                       title: 'mr_details_section'.tr,
                       children: [
-                        if (_companies.length > 1) ...[
+                        if (_loadingLookups)
+                          const LinearProgressIndicator()
+                        else if (_companies.isEmpty)
+                          Text('mr_no_available_company'.tr)
+                        else if (_companies.length > 1) ...[
                           MrLabeledField(
                             label: 'select_company'.tr,
                             required: true,
@@ -419,8 +420,7 @@ class CreateMaterialRequestSheetState
                                     .toList(),
                                 onChanged: (v) {
                                   if (v != null) {
-                                    setState(() => _selectedCompany = v);
-                                    widget.c.loadWarehouses(v);
+                                    _selectCompany(v);
                                   }
                                 },
                               ),
@@ -506,8 +506,8 @@ class CreateMaterialRequestSheetState
                         ),
                       ],
                     ),
-                    Obx(() {
-                      final whList = widget.c.warehouses
+                    Builder(builder: (_) {
+                      final whList = _warehouses
                           .where((w) => (w['name'] ?? '').isNotEmpty)
                           .toList();
                       final names = whList.map((w) => w['name']!).toSet();
@@ -621,7 +621,7 @@ class CreateMaterialRequestSheetState
                         SizedBox(
                           width: double.infinity,
                           child: OutlinedButton.icon(
-                            onPressed: _isSaving ? null : _saveDraft,
+                            onPressed: _isSaving || _selectedCompany == null ? null : _saveDraft,
                             icon: _isSaving
                                 ? const SizedBox(
                                     width: 18,

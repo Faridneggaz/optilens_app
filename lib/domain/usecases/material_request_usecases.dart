@@ -29,7 +29,7 @@ class MaterialRequestUseCases {
 
   Future<List<Map<String, String>>> fetchWarehouses({
     required String token,
-    required String company,
+    String? company,
   }) =>
       _repo.fetchWarehouses(token: token, company: company);
 

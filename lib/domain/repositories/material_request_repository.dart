@@ -16,7 +16,7 @@ abstract class MaterialRequestRepository {
 
   Future<List<Map<String, String>>> fetchWarehouses({
     required String token,
-    required String company,
+    String? company,
   });
 
   Future<List<String>> fetchCompanies({required String token});

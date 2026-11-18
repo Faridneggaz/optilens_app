@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../domain/failures/failures.dart';
+import 'html_plain_text.dart';
 
 /// Maps API failures to translated snackbars / messages.
 class ErrorFeedback {
@@ -21,7 +22,15 @@ class ErrorFeedback {
     if (error is RepositoryException &&
         error.message.isNotEmpty &&
         error.message != 'Unknown response format') {
-      return error.message;
+      final message = stripHtmlToPlainText(error.message);
+      final limit = RegExp(
+        r'Maximum Attachment Limit of\s+(\d+)',
+        caseSensitive: false,
+      ).firstMatch(message)?.group(1);
+      if (limit != null) {
+        return 'attachment_document_limit_reached'.trParams({'limit': limit});
+      }
+      if (message.isNotEmpty) return message;
     }
     return fallbackKey.tr;
   }

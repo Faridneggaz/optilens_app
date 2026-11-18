@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -56,8 +57,8 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
   final _removedVoiceIds = <String>{};
   TaskOptions? _options;
   List<SelectedPhoto> _photos = const [];
-  Uint8List? _voiceRecording;
-  bool _voiceDialogOpen = false;
+  List<Uint8List> _voiceRecordings = const [];
+  bool _voiceCaptureActive = false;
   bool _pickingPhoto = false;
   String _type = '';
   String _company = '';
@@ -170,16 +171,32 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
     });
   }
 
+  int? get _availableAttachmentSlots {
+    final limit = _options?.attachmentLimit;
+    if (limit == null || limit <= 0) return null;
+    final task = widget.task;
+    final attached =
+        task?.attachmentCount ??
+        ((task?.photos.length ?? 0) + (task?.voiceIds.length ?? 0));
+    return math.max(0, limit - attached + _removedVoiceIds.length);
+  }
+
   Future<void> _save() async {
     if (_saving ||
         _pickingPhoto ||
-        _voiceDialogOpen ||
+        _voiceCaptureActive ||
         !_form.currentState!.validate()) {
       return;
     }
-    final voice = _voiceRecording;
-    if (voice != null &&
-        _photos.fold(voice.length, (size, photo) => size + photo.bytes.length) >
+    final voices = _voiceRecordings;
+    final newFileCount = _photos.length + voices.length;
+    final available = _availableAttachmentSlots;
+    if (available != null && newFileCount > available) {
+      setState(() => _error = 'erp_task_attachment_slots_exceeded'.tr);
+      return;
+    }
+    if (voices.isNotEmpty &&
+        attachmentUploadBytes(_photos, voices) >
             (_options?.photoBatchMaxBytes ?? 0)) {
       setState(() => _error = 'erp_task_voice_batch_limit'.tr);
       return;
@@ -210,7 +227,7 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
         updateAssignments: _assignmentsEditable,
         issue: widget.issue,
         photos: _photos,
-        voiceRecording: voice,
+        voiceRecordings: voices,
         removedVoiceIds: _removedVoiceIds.toList(),
       );
       final saved = await widget.controller.saveTask(input, task: current);
@@ -229,7 +246,17 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
   Widget build(BuildContext context) {
     final options = _options;
     final task = widget.task;
-    final voice = _voiceRecording;
+    final available = _availableAttachmentSlots;
+    final remaining = available == null
+        ? null
+        : available - _photos.length - _voiceRecordings.length;
+    final photoMaxCount = options?.photoMaxCount ?? 0;
+    final photoCapacity = available == null
+        ? photoMaxCount
+        : math.max(
+            0,
+            math.min(photoMaxCount, available - _voiceRecordings.length),
+          );
     final companies = <String>{'', ...?options?.companies, _company}.toList();
     final priorities = <String>{...?options?.priorities, _priority}.toList();
     final canSave =
@@ -311,36 +338,6 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
                                 labelText: 'task_description'.tr,
                               ),
                             ),
-                            if (!_voiceDialogOpen &&
-                                task != null &&
-                                task.voiceIds.isNotEmpty)
-                              TaskVoicePlayer(
-                                key: ValueKey(task.name),
-                                recordingIds: task.voiceIds,
-                                loadRecording: (id) =>
-                                    widget.controller.fetchVoice(task.name, id),
-                                enabled: !_saving,
-                                pendingRemovals: _removedVoiceIds,
-                                onToggleRemoval:
-                                    canSave && options.canRemoveVoice
-                                    ? (id) => setState(() {
-                                        if (!_removedVoiceIds.remove(id)) {
-                                          _removedVoiceIds.add(id);
-                                        }
-                                      })
-                                    : null,
-                              ),
-                            if (canSave)
-                              VoiceRecordingField(
-                                maxBytes: options.voiceMaxBytes,
-                                recording: voice,
-                                dialogOpen: _voiceDialogOpen,
-                                enabled: !_saving,
-                                onChanged: (voice) =>
-                                    setState(() => _voiceRecording = voice),
-                                onDialogChanged: (open) =>
-                                    setState(() => _voiceDialogOpen = open),
-                              ),
                             const SizedBox(height: 12),
                             DropdownButtonFormField<String>(
                               initialValue: _company,
@@ -487,6 +484,28 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
                                 padding: const EdgeInsets.only(top: 8),
                                 child: Text('erp_task_reopen_assignments'.tr),
                               ),
+                            if (canSave && remaining != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 16),
+                                child: Align(
+                                  alignment: AlignmentDirectional.centerStart,
+                                  child: Text(
+                                    remaining <= 0
+                                        ? 'erp_task_attachment_slots_full'
+                                              .trParams({
+                                                'limit': options.attachmentLimit
+                                                    .toString(),
+                                              })
+                                        : 'erp_task_attachment_slots_remaining'
+                                              .trParams({
+                                                'count': remaining.toString(),
+                                              }),
+                                    style: const TextStyle(
+                                      color: AppColors.body,
+                                    ),
+                                  ),
+                                ),
+                              ),
                             if (task != null && task.photos.isNotEmpty) ...[
                               const SizedBox(height: 16),
                               Align(
@@ -509,19 +528,78 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
                                     ),
                               ),
                             ],
-                            if (canSave && options.photoMaxBytes > 0) ...[
+                            if (canSave &&
+                                options.photoMaxBytes > 0 &&
+                                (photoCapacity > 0 || _photos.isNotEmpty)) ...[
                               const SizedBox(height: 16),
                               AttachmentPhotoField(
                                 maxBytes: options.photoMaxBytes,
                                 maxBatchBytes: options.photoBatchMaxBytes,
-                                maxCount: options.photoMaxCount,
+                                maxCount: photoCapacity,
                                 photos: _photos,
-                                disabled: _saving,
+                                disabled: _saving || _voiceCaptureActive,
                                 onChanged: (photos) =>
                                     setState(() => _photos = photos),
                                 onPickingChanged: (picking) =>
                                     setState(() => _pickingPhoto = picking),
                               ),
+                            ],
+                            if ((task?.voiceIds.isNotEmpty ?? false) ||
+                                (canSave &&
+                                    options.voiceMaxBytes > 0 &&
+                                    VoiceRecordingField
+                                        .isRecordingSupported)) ...[
+                              const SizedBox(height: 16),
+                              Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Text(
+                                  'erp_task_attachment_voice'.tr,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              if (!_voiceCaptureActive &&
+                                  task != null &&
+                                  task.voiceIds.isNotEmpty)
+                                TaskVoicePlayer(
+                                  key: ValueKey(task.name),
+                                  recordingIds: task.voiceIds,
+                                  loadRecording: (id) => widget.controller
+                                      .fetchVoice(task.name, id),
+                                  enabled: !_saving,
+                                  pendingRemovals: _removedVoiceIds,
+                                  onToggleRemoval:
+                                      canSave && options.canRemoveVoice
+                                      ? (id) => setState(() {
+                                          if (!_removedVoiceIds.remove(id)) {
+                                            _removedVoiceIds.add(id);
+                                          }
+                                        })
+                                      : null,
+                                ),
+                              if (canSave)
+                                VoiceRecordingField(
+                                  maxBytes: options.voiceMaxBytes,
+                                  recordings: _voiceRecordings,
+                                  enabled: !_saving && !_pickingPhoto,
+                                  canAdd: remaining == null || remaining > 0,
+                                  onAttach: (voice) => setState(
+                                    () => _voiceRecordings = [
+                                      ..._voiceRecordings,
+                                      voice,
+                                    ],
+                                  ),
+                                  onRemove: (voice) => setState(
+                                    () => _voiceRecordings = _voiceRecordings
+                                        .where((item) => item != voice)
+                                        .toList(),
+                                  ),
+                                  onCaptureChanged: (active) => setState(
+                                    () => _voiceCaptureActive = active,
+                                  ),
+                                ),
                             ],
                             const SizedBox(height: 16),
                           ],
@@ -544,7 +622,11 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
                 child: SizedBox(
                   width: double.infinity,
                   child: FilledButton(
-                    onPressed: canSave && !_saving && !_pickingPhoto
+                    onPressed:
+                        canSave &&
+                            !_saving &&
+                            !_pickingPhoto &&
+                            !_voiceCaptureActive
                         ? _save
                         : null,
                     child: _saving

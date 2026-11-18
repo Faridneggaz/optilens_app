@@ -55,6 +55,7 @@ void main() {
                 issueName: 'ISSUE-1',
                 recordingIds: const ['FILE-1'],
                 maxBytes: 0,
+                maxBatchBytes: 0,
                 canRemove: canRemove,
               ),
             ),
@@ -65,8 +66,8 @@ void main() {
 
       await mount(canRemove: false);
       final play = find.byWidgetPredicate(
-      (widget) => widget is IconButton && widget.tooltip == 'Écouter',
-    );
+        (widget) => widget is IconButton && widget.tooltip == 'Écouter',
+      );
       expect(tester.widget<IconButton>(play).onPressed, isNotNull);
       expect(find.byTooltip('Retirer le vocal'), findsNothing);
 

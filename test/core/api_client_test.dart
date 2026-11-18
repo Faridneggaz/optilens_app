@@ -72,8 +72,7 @@ void main() {
         httpClient: MockClient((request) async {
           expect(request.method, 'POST');
           return http.Response(
-            '{"message":{"user":{"sid":"abc","email":"a@b.c","name":"Ada",'
-            '"allowed_companies":[],"allowed_warehouses":[]}}}',
+            '{"message":{"user":{"sid":"abc","email":"a@b.c","name":"Ada"}}}',
             200,
             headers: {'content-type': 'application/json'},
           );

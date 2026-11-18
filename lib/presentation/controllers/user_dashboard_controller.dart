@@ -5,7 +5,6 @@ import '../../domain/usecases/usecases.dart';
 import '../../app/routes/app_routes.dart';
 import '../../core/services/session_service.dart';
 import '../../utils/error_feedback.dart';
-import 'stock_summary_controller.dart';
 import 'material_request_controller.dart';
 import 'task_controller.dart';
 
@@ -73,9 +72,6 @@ class UserDashboardController extends GetxController {
     }
     if (i == 3 && Get.isRegistered<MaterialRequestController>()) {
       Get.find<MaterialRequestController>().onRefresh();
-    }
-    if (i == 4 && Get.isRegistered<StockSummaryController>()) {
-      Get.find<StockSummaryController>().onRefresh();
     }
     if (i == 5 && Get.isRegistered<TaskController>()) {
       Get.find<TaskController>().onRefresh();

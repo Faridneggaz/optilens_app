@@ -107,28 +107,4 @@ class SessionService extends GetxService {
       return false;
     }
   }
-
-  Future<void> saveUserPermissions(
-    List<String> companies,
-    List<String> warehouses,
-  ) async {
-    await _prefs.setStringList('allowed_companies', companies);
-    await _prefs.setStringList('allowed_warehouses', warehouses);
-  }
-
-  List<String> getAllowedCompanies() {
-    return _prefs.getStringList('allowed_companies') ?? [];
-  }
-
-  List<String> getAllowedWarehouses() {
-    return _prefs.getStringList('allowed_warehouses') ?? [];
-  }
-
-  bool hasCompanyRestriction() {
-    return getAllowedCompanies().isNotEmpty;
-  }
-
-  bool hasWarehouseRestriction() {
-    return getAllowedWarehouses().isNotEmpty;
-  }
 }

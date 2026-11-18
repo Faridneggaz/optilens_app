@@ -20,9 +20,6 @@ class MaterialRequestController extends GetxController {
   final searchQuery      = ''.obs;
   final isSearching      = false.obs;
   final selectedStatus   = 'All'.obs;
-  final warehouses       = <Map<String, String>>[].obs;
-  final companies        = <String>[].obs;
-  final priceLists       = <String>[].obs;
 
   Worker? _debounce;
   int _offset = 0;
@@ -37,7 +34,6 @@ class MaterialRequestController extends GetxController {
   void onInit() {
     super.onInit();
     fetchMaterialRequests();
-    _initLookups();
     _debounce = debounce(
       searchQuery,
       (String q) => _searchFromServer(q),
@@ -45,33 +41,21 @@ class MaterialRequestController extends GetxController {
     );
   }
 
-  Future<void> _initLookups() async {
-    await loadCompanies();
-    final company = companies.isNotEmpty ? companies.first : 'OPTILENS ALGER';
-    await loadWarehouses(company);
-  }
-
-  Future<void> loadCompanies() async {
+  Future<List<String>> loadCompanies() async {
     try {
-      final res = await _materialRequests.fetchCompanies(token: _token);
-      if (res.isNotEmpty) {
-        companies.value = res;
-        return;
-      }
+      return await _materialRequests.fetchCompanies(token: _token);
     } catch (e) {
       ErrorFeedback.snackbar(e, fallbackKey: 'error_load_material_requests');
-    }
-    final allowed = Get.find<SessionService>().getAllowedCompanies();
-    if (allowed.isNotEmpty) {
-      companies.value = allowed;
+      return [];
     }
   }
 
-  Future<void> loadPriceLists() async {
+  Future<List<String>> loadPriceLists() async {
     try {
-      priceLists.value = await _materialRequests.fetchPriceLists(token: _token);
+      return await _materialRequests.fetchPriceLists(token: _token);
     } catch (e) {
       ErrorFeedback.snackbar(e, fallbackKey: 'error_load_material_requests');
+      return [];
     }
   }
 
@@ -81,12 +65,12 @@ class MaterialRequestController extends GetxController {
     super.onClose();
   }
 
-  Future<void> loadWarehouses(String company) async {
+  Future<List<Map<String, String>>> loadWarehouses(String company) async {
     try {
-      final res = await _materialRequests.fetchWarehouses(token: _token, company: company);
-      warehouses.value = res;
+      return await _materialRequests.fetchWarehouses(token: _token, company: company);
     } catch (e) {
       ErrorFeedback.snackbar(e, fallbackKey: 'error_load_material_requests');
+      return [];
     }
   }
 

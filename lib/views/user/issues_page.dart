@@ -209,14 +209,6 @@ class _IssuesPageState extends State<IssuesPage> {
                 const SizedBox(height: 8),
               ],
               Text(plainText(issue['description'])),
-              IssueVoiceAttachments(
-                issueName: issue['name'].toString(),
-                recordingIds: (r['voice_ids'] as List? ?? const [])
-                    .cast<String>(),
-                canRemove: r['can_remove_voice'] == true,
-                maxBytes:
-                    int.tryParse(r['voice_max_bytes']?.toString() ?? '') ?? 0,
-              ),
               const SizedBox(height: 12),
               _IssuePhotos(
                 issueName: issue['name'].toString(),
@@ -231,6 +223,19 @@ class _IssuesPageState extends State<IssuesPage> {
                     0,
                 photoMaxCount:
                     int.tryParse(r['photo_max_count']?.toString() ?? '') ?? 1,
+              ),
+              IssueVoiceAttachments(
+                issueName: issue['name'].toString(),
+                recordingIds: (r['voice_ids'] as List? ?? const [])
+                    .cast<String>(),
+                canRemove: r['can_remove_voice'] == true,
+                maxBytes:
+                    int.tryParse(r['voice_max_bytes']?.toString() ?? '') ?? 0,
+                maxBatchBytes:
+                    int.tryParse(
+                      r['photo_batch_max_bytes']?.toString() ?? '',
+                    ) ??
+                    0,
               ),
               const SizedBox(height: 12),
               OutlinedButton.icon(

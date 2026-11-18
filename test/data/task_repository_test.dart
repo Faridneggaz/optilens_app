@@ -130,38 +130,47 @@ void main() {
     expect(saved.name, 'TASK-1');
   });
 
-  test('creating a Task sends the voice note with the task fields', () async {
-    final repo = TaskRepositoryImpl(
-      ApiClient(
-        httpClient: MockClient((request) async {
-          expect(request.url.path, endsWith('mobile_app.api.create_task'));
-          expect(
-            request.headers['content-type'],
-            startsWith('multipart/form-data'),
-          );
-          expect(request.body, contains('name="subject"\r\n\r\nInventory'));
-          expect(
-            request.body,
-            contains('name="voice"; filename="note-vocale.wav"'),
-          );
-          expect(request.body, contains('RIFF'));
-          expect(request.body, isNot(contains('name="photo"')));
-          return response({
-            'success': true,
-            'task': {'name': 'TASK-1', 'subject': 'Inventory'},
-          });
-        }),
-      ),
-    );
-    final saved = await repo.createTask(
-      token: 'sid',
-      input: TaskInput(
-        subject: 'Inventory',
-        voiceRecording: Uint8List.fromList(ascii.encode('RIFF')),
-      ),
-    );
-    expect(saved.name, 'TASK-1');
-  });
+  test(
+    'creating a Task sends several voice notes with the task fields',
+    () async {
+      final repo = TaskRepositoryImpl(
+        ApiClient(
+          httpClient: MockClient((request) async {
+            expect(request.url.path, endsWith('mobile_app.api.create_task'));
+            expect(
+              request.headers['content-type'],
+              startsWith('multipart/form-data'),
+            );
+            expect(request.body, contains('name="subject"\r\n\r\nInventory'));
+            expect(
+              request.body,
+              allOf(
+                contains('name="voice"; filename="note-vocale-1.wav"'),
+                contains('name="voice"; filename="note-vocale-2.wav"'),
+              ),
+            );
+            expect(request.body, contains('RIFF'));
+            expect(request.body, isNot(contains('name="photo"')));
+            return response({
+              'success': true,
+              'task': {'name': 'TASK-1', 'subject': 'Inventory'},
+            });
+          }),
+        ),
+      );
+      final saved = await repo.createTask(
+        token: 'sid',
+        input: TaskInput(
+          subject: 'Inventory',
+          voiceRecordings: [
+            Uint8List.fromList(ascii.encode('RIFF1')),
+            Uint8List.fromList(ascii.encode('RIFF2')),
+          ],
+        ),
+      );
+      expect(saved.name, 'TASK-1');
+    },
+  );
 
   test(
     'fetching a Task exposes its saved OGG voice and preserves the format',

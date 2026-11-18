@@ -86,27 +86,10 @@ class TaskDetailPage extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    if (task.descriptionText.isNotEmpty ||
-                        task.voiceIds.isNotEmpty)
+                    if (task.descriptionText.isNotEmpty)
                       _section(
                         'task_description'.tr,
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (task.descriptionText.isNotEmpty)
-                              Text(task.descriptionText),
-                            if (task.voiceIds.isNotEmpty)
-                              TaskVoicePlayer(
-                                key: ValueKey((
-                                  task.name,
-                                  task.voiceIds.join(','),
-                                )),
-                                recordingIds: task.voiceIds,
-                                loadRecording: (id) =>
-                                    c.fetchVoice(task.name, id),
-                              ),
-                          ],
-                        ),
+                        Text(task.descriptionText),
                       ),
                     if (task.photos.isNotEmpty)
                       _section(
@@ -115,6 +98,15 @@ class TaskDetailPage extends StatelessWidget {
                           photos: task.photos,
                           loadPhoto: (id, {required thumbnail}) =>
                               c.fetchPhoto(task.name, id, thumbnail: thumbnail),
+                        ),
+                      ),
+                    if (task.voiceIds.isNotEmpty)
+                      _section(
+                        'erp_task_attachment_voice'.tr,
+                        TaskVoicePlayer(
+                          key: ValueKey((task.name, task.voiceIds.join(','))),
+                          recordingIds: task.voiceIds,
+                          loadRecording: (id) => c.fetchVoice(task.name, id),
                         ),
                       ),
                     _section(

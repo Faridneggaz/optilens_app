@@ -138,14 +138,14 @@ class TaskRepositoryImpl implements TaskRepository {
     TaskInput? input,
   }) async {
     final photos = input?.photos ?? const <SelectedPhoto>[];
-    final voice = input?.voiceRecording;
-    final response = photos.isEmpty && voice == null
+    final voices = input?.voiceRecordings ?? const <Uint8List>[];
+    final response = photos.isEmpty && voices.isEmpty
         ? await _client.postMobile(method, attachToken: false, body: body)
         : await _client.postMobileAttachments(
             method,
             body: body,
             photos: photos,
-            voiceRecording: voice,
+            voiceRecordings: voices,
           );
     return TaskDetailResponseMapper.fromJson(_message(response)).task;
   }

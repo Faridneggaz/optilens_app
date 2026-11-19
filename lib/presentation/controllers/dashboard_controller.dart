@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import '../../domain/entities/sales_invoice.dart';
 import '../../domain/entities/announcement.dart';
 import '../../domain/usecases/usecases.dart';
-import 'session_controller.dart';
 import '../../utils/error_feedback.dart';
 
 class DashboardController extends GetxController {
@@ -16,7 +15,6 @@ class DashboardController extends GetxController {
 
   final InvoiceUseCases _invoices;
   final AnnouncementUseCases _announcementUseCases;
-  final _session = Get.find<SessionController>();
 
   final invoices          = <SalesInvoice>[].obs;
   final announcements     = <Announcement>[].obs;
@@ -49,8 +47,6 @@ class DashboardController extends GetxController {
     }
   }
 
-  String get _customerCode => _session.customer.value?.code ?? '';
-
   Future<void> loadInitialData() async {
     _offset          = 0;
     hasMore.value    = true;
@@ -72,7 +68,7 @@ class DashboardController extends GetxController {
   Future<void> _fetchAnnouncements() async {
     try {
       final result = await _announcementUseCases.fetchAnnouncements(
-          _customerCode, limit: _limit, offset: 0);
+          limit: _limit, offset: 0);
       announcements.value = result;
       _offset             = _limit;
       if (result.length < _limit) hasMore.value = false;
@@ -85,7 +81,7 @@ class DashboardController extends GetxController {
     isMoreLoading.value = true;
     try {
       final result = await _announcementUseCases.fetchAnnouncements(
-          _customerCode, limit: _limit, offset: _offset);
+          limit: _limit, offset: _offset);
       if (result.isEmpty) {
         hasMore.value = false;
       } else {

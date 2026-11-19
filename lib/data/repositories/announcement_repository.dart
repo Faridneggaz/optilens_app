@@ -9,21 +9,15 @@ class AnnouncementRepositoryImpl implements AnnouncementRepository {
 
   final ApiClient _client;
 
-  Future<List<Announcement>> fetchAnnouncements(
-    String customerCode, {
+  Future<List<Announcement>> fetchAnnouncements({
     int limit = 10,
     int offset = 0,
   }) async {
-    final json = await _client.postMobile(
-      'get_announcements_by_customer_code',
-      body: {
-        'code': customerCode,
-        'limit': '$limit',
-        'offset': '$offset',
-      },
-      attachToken: false,
+    final json = await _client.getCustomerMethod(
+      'get_customer_announcements',
+      query: {'limit': '$limit', 'offset': '$offset'},
     );
-    final message = json['message'];
+    final message = _client.unwrap(json);
     if (message is Map && message.containsKey('announcements')) {
       final list = message['announcements'] as List<dynamic>;
       return list

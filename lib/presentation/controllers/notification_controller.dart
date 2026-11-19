@@ -21,13 +21,11 @@ class NotificationController extends GetxController {
   Future<void> fetchNotifications() async {
     isLoading.value = true;
     try {
-      // Get customer code from session
-      final code = Get.find<SessionService>().userCode;
-      if (code.isEmpty) {
+      if (Get.find<SessionService>().userRole != 'client') {
         notifications.value = [];
         return;
       }
-      final result = await _notifications.fetchNotifications(code);
+      final result = await _notifications.fetchNotifications();
       notifications.value = result;
     } catch (e) {
       notifications.value = [];

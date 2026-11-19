@@ -5,10 +5,9 @@ class AnnouncementUseCases {
   AnnouncementUseCases(this._repo);
   final AnnouncementRepository _repo;
 
-  Future<List<Announcement>> fetchAnnouncements(
-    String customerCode, {
+  Future<List<Announcement>> fetchAnnouncements({
     int limit = 10,
     int offset = 0,
   }) =>
-      _repo.fetchAnnouncements(customerCode, limit: limit, offset: offset);
+      _repo.fetchAnnouncements(limit: limit, offset: offset);
 }

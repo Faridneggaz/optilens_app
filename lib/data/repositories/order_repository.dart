@@ -10,13 +10,9 @@ class OrderRepositoryImpl implements OrderRepository {
 
   final ApiClient _client;
 
-  Future<List<Item>> fetchItems(String customerCode) async {
-    final data = await _client.postMobile(
-      'get_items_by_customer_code',
-      attachToken: false,
-      body: {'customer_code': customerCode},
-    );
-    final msg = data['message'];
+  Future<List<Item>> fetchItems() async {
+    final data = await _client.getCustomerMethod('get_customer_items');
+    final msg = _client.unwrap(data);
     if (msg == null) throw const RepositoryException('Empty response');
     if (msg is! Map || msg['status'] != 'success') {
       throw RepositoryException(
@@ -32,31 +28,18 @@ class OrderRepositoryImpl implements OrderRepository {
 
   Future<List<Item>> searchItems({
     required String searchText,
-    required String customerCode,
   }) async {
     if (searchText.isEmpty) return [];
-    try {
-      final data = await _client.postMobile(
-        'search_items',
-        attachToken: false,
-        body: {
-          'search_text': searchText,
-          'customer_code': customerCode,
-        },
-      );
-      List rawItems = [];
-      final message = data['message'];
-      if (message is List) {
-        rawItems = message;
-      } else if (message is Map && message['items'] is List) {
-        rawItems = message['items'] as List;
-      }
-      return rawItems
-          .map((e) => ItemMapper.fromJson(Map<String, dynamic>.from(e as Map)))
-          .toList();
-    } catch (_) {
-      return [];
-    }
+    final data = await _client.getCustomerMethod(
+      'search_customer_items',
+      query: {'search_text': searchText},
+    );
+    final message = _client.unwrap(data);
+    final rows = message is Map ? message['items'] : message;
+    if (rows is! List) return [];
+    return rows
+        .map((e) => ItemMapper.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList();
   }
 
   Future<bool> submitOrder({

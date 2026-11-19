@@ -1,11 +1,10 @@
 import '../entities/item.dart';
 
 abstract class OrderRepository {
-  Future<List<Item>> fetchItems(String customerCode);
+  Future<List<Item>> fetchItems();
 
   Future<List<Item>> searchItems({
     required String searchText,
-    required String customerCode,
   });
 
   Future<bool> submitOrder({

@@ -4,13 +4,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:optilens/core/network/api_client.dart';
+import 'package:optilens/data/repositories/announcement_repository.dart';
 import 'package:optilens/data/repositories/complaint_repository.dart';
 import 'package:optilens/data/repositories/invoice_detail_repository.dart';
 import 'package:optilens/data/repositories/invoice_repository.dart';
 import 'package:optilens/data/repositories/customer_repository.dart';
 import 'package:optilens/data/repositories/login_repository.dart';
+import 'package:optilens/data/repositories/material_request_repository.dart';
+import 'package:optilens/data/repositories/notification_repository.dart';
 import 'package:optilens/data/repositories/order_repository.dart';
 import 'package:optilens/data/repositories/payment_repository.dart';
+import 'package:optilens/data/repositories/stock_entry_details_repository.dart';
 import 'package:optilens/domain/failures/failures.dart';
 import 'package:optilens/utils/api_config.dart';
 import 'package:optilens/utils/error_feedback.dart';
@@ -341,12 +345,16 @@ void main() {
       }
     });
 
-    test('fetchItems reads the success payload', () async {
+    test('fetchItems reads the customer catalog using the session header', () async {
       final client = ApiClient(
         tokenProvider: () => 'sid',
+        customerSessionProvider: () => 'customer-session',
         httpClient: MockClient((request) async {
+          expect(request.method, 'GET');
+          expect(request.url.path, '/api/method/mobile_app.api.get_customer_items');
           expect(request.url.queryParameters, isEmpty);
-          expect(jsonDecode(request.body)['customer_code'], 'C1');
+          expect(request.body, isEmpty);
+          expect(request.headers['X-Mobile-Customer-Session'], 'customer-session');
           return http.Response(
             '{"message":{"status":"success","items":['
             '{"item_code":"X","item_name":"Lens","rate":12.5}'
@@ -357,10 +365,77 @@ void main() {
         }),
       );
 
-      final items = await OrderRepositoryImpl(client).fetchItems('C1');
+      final items = await OrderRepositoryImpl(client).fetchItems();
       expect(items, hasLength(1));
       expect(items.first.itemCode, 'X');
       expect(items.first.rate, 12.5);
+    });
+  });
+
+  group('Customer communications and item search', () {
+    test('sends only the session and the requested page or search parameters', () async {
+      final client = ApiClient(
+        tokenProvider: () => 'employee-sid',
+        customerSessionProvider: () => 'customer-session',
+        httpClient: MockClient((request) async {
+          expect(request.method, 'GET');
+          expect(request.body, isEmpty);
+          expect(request.headers['X-Mobile-Customer-Session'], 'customer-session');
+          final method = request.url.path.split('.').last;
+          if (method == 'get_customer_notifications') {
+            expect(request.url.queryParameters, isEmpty);
+            return http.Response('{"message":{"notification":[{"title":"Hello"}]}}', 200);
+          }
+          if (method == 'get_customer_announcements') {
+            expect(request.url.queryParameters, {'limit': '2', 'offset': '4'});
+            return http.Response('{"message":{"announcements":[{"id":"ANN","title":"Update"}]}}', 200);
+          }
+          expect(method, 'search_customer_items');
+          expect(request.url.queryParameters, {'search_text': 'Lens'});
+          return http.Response('{"message":[{"item_code":"ITEM","standard_rate":9}]}', 200);
+        }),
+      );
+      final notes = await NotificationRepositoryImpl(client).fetchNotifications();
+      final page = await AnnouncementRepositoryImpl(client).fetchAnnouncements(limit: 2, offset: 4);
+      final items = await OrderRepositoryImpl(client).searchItems(searchText: 'Lens');
+      expect(notes.single['title'], 'Hello');
+      expect(page.single.title, 'Update');
+      expect(items.single.rate, 9);
+    });
+
+    test('expired sessions reach the caller for all four customer reads', () async {
+      final client = ApiClient(httpClient: MockClient((_) async =>
+          http.Response('{"message":{"error":"Invalid session"}}', 200)));
+      final orders = OrderRepositoryImpl(client);
+      for (final read in [
+        () => NotificationRepositoryImpl(client).fetchNotifications(),
+        () => AnnouncementRepositoryImpl(client).fetchAnnouncements(),
+        () => orders.fetchItems(),
+        () => orders.searchItems(searchText: 'Lens'),
+      ]) {
+        await expectLater(read(), throwsA(isA<InvalidSessionException>()));
+      }
+    });
+
+    test('both employee screens search with the ERP session', () async {
+      final client = ApiClient(
+        customerSessionProvider: () => 'customer-session',
+        httpClient: MockClient((request) async {
+          expect(request.url.path, '/api/method/mobile_app.api.search_employee_items');
+          expect(request.method, 'POST');
+          expect(request.url.queryParameters, isEmpty);
+          expect(request.headers.containsKey('X-Mobile-Customer-Session'), isFalse);
+          expect(jsonDecode(request.body), {'token': 'erp-sid', 'search_text': 'Lens'});
+          return http.Response('{"message":[{"item_code":"X","item_name":"Lens"}]}', 200);
+        }),
+      );
+      for (final search in [
+        StockEntryDetailsRepositoryImpl(client).searchItems,
+        MaterialRequestRepositoryImpl(client).searchItems,
+      ]) {
+        final items = await search(token: 'erp-sid', searchText: 'Lens');
+        expect(items.single, {'item_code': 'X', 'item_name': 'Lens'});
+      }
     });
   });
 

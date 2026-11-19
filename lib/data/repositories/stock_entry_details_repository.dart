@@ -86,9 +86,9 @@ class StockEntryDetailsRepositoryImpl implements StockEntryDetailsRepository {
     required String token,
     required String searchText,
   }) async {
-    final decoded = await _client.getMobile(
-      'search_items',
-      query: {'token': token, 'search_text': searchText},
+    final decoded = await _client.postMobile(
+      'search_employee_items',
+      body: {'token': token, 'search_text': searchText},
       attachToken: false,
     );
     final message = _client.unwrap(decoded);

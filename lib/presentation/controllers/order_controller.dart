@@ -1,5 +1,4 @@
 import 'package:get/get.dart';
-import '../../core/services/session_service.dart';
 import '../../domain/entities/item.dart';
 import '../../domain/entities/cart_item.dart';
 import '../../domain/failures/failures.dart';
@@ -50,16 +49,15 @@ class OrderController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    final code = Get.find<SessionService>().userCode;
-    if (code.isNotEmpty) _fetchItems(code);
+    _fetchItems();
   }
 
   // ── Item loading ─────────────────────────────────────────────────────────
 
-  Future<void> _fetchItems(String code) async {
+  Future<void> _fetchItems() async {
     isLoadingItems.value = true;
     try {
-      items.value = await _orders.fetchItems(code);
+      items.value = await _orders.fetchItems();
     } catch (e) {
       ErrorFeedback.snackbar(e, fallbackKey: 'load_error');
       items.value = [];
@@ -68,14 +66,11 @@ class OrderController extends GetxController {
     }
   }
 
-  String get _customerCode => Get.find<SessionService>().userCode;
-
   Future<List<Item>> searchItems(String searchText) async {
     if (searchText.trim().isEmpty) return [];
     try {
       return await _orders.searchItems(
         searchText: searchText.trim(),
-        customerCode: _customerCode,
       );
     } catch (e) {
       ErrorFeedback.snackbar(e, fallbackKey: 'no_item_found');

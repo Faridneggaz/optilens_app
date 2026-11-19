@@ -55,13 +55,16 @@ class SessionController extends GetxController {
         await loadUserNameIfMissing();
       } else {
         isRestoring.value = true;
+        final restoringSession = service.customerSession;
         try {
           final response = await Get.find<AuthUseCases>().fetchCustomer(
             service.userCode,
           );
-          customer.value = response.customer;
-        } catch (e) {
-          await logout();
+          if (service.customerSession == restoringSession) {
+            customer.value = response.customer;
+          }
+        } catch (_) {
+          if (service.customerSession == restoringSession) await logout();
         } finally {
           isRestoring.value = false;
         }

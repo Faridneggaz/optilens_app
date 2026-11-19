@@ -23,8 +23,8 @@ class AuthUseCases {
   Future<String> fetchUserDisplayName(String token) =>
       _login.fetchUserDisplayName(token);
 
-  Future<CustomerResponse> fetchCustomer(String code) =>
-      _customers.fetchCustomer(code);
+  Future<CustomerResponse> fetchCustomer(String storedCode) =>
+      _customers.fetchCustomer(storedCode);
 
   Future<CustomerResponse> loginCustomer(String code) async {
     final response = await _customers.loginCustomer(code);

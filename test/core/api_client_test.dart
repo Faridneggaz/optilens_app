@@ -32,13 +32,13 @@ void main() {
       );
 
       final json = await client.getMobile(
-        'get_client_by_code',
-        query: {'code': 'C001'},
+        'get_last_stock_entries',
+        query: {'limit': '5'},
       );
 
       expect(json['message'], {'ok': true});
-      expect(captured.path, '/api/method/mobile_app.api.get_client_by_code');
-      expect(captured.queryParameters['code'], 'C001');
+      expect(captured.path, '/api/method/mobile_app.api.get_last_stock_entries');
+      expect(captured.queryParameters['limit'], '5');
       expect(captured.queryParameters['token'], 'sid-123');
       expect(captured.origin, ApiConfig.baseUrl);
     });
@@ -108,6 +108,45 @@ void main() {
         () => LoginRepositoryImpl(client).login(email: 'a', password: 'b'),
         throwsA(isA<RepositoryException>()),
       );
+    });
+  });
+
+  group('Customer profile', () {
+    test('reads the profile using only the customer session and keeps the stored code local', () async {
+      final client = ApiClient(
+        tokenProvider: () => 'employee-sid',
+        customerSessionProvider: () => 'customer-session',
+        httpClient: MockClient((request) async {
+          expect(request.method, 'GET');
+          expect(request.url.path, '/api/method/mobile_app.api.get_customer_profile');
+          expect(request.url.queryParameters, isEmpty);
+          expect(request.body, isEmpty);
+          expect(request.headers['X-Mobile-Customer-Session'], 'customer-session');
+          expect(request.headers.values, isNot(contains('stored-code')));
+          return http.Response(
+            '{"message":{"customer":{"name":"Customer A","custom_debt":12.5,"mobile_no":"123"}}}',
+            200,
+          );
+        }),
+      );
+      final result = await CustomerRepositoryImpl(client).fetchCustomer('stored-code');
+      expect(result.customer.name, 'Customer A');
+      expect(result.customer.code, 'stored-code');
+      expect(result.customer.debt, 12.5);
+      expect(result.customer.mobile, '123');
+    });
+
+    test('rejects an expired session without retrying with the stored code', () async {
+      var calls = 0;
+      final client = ApiClient(httpClient: MockClient((request) async {
+        calls++;
+        return http.Response('{"message":{"error":"Invalid session"}}', 200);
+      }));
+      await expectLater(
+        CustomerRepositoryImpl(client).fetchCustomer('stored-code'),
+        throwsA(isA<InvalidSessionException>()),
+      );
+      expect(calls, 1);
     });
   });
 

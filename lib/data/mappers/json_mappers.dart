@@ -68,9 +68,9 @@ class LoginResponseMapper {
 }
 
 class CustomerMapper {
-  static Customer fromJson(Map<String, dynamic> json) => Customer(
+  static Customer fromJson(Map<String, dynamic> json, {required String code}) => Customer(
         name: json['name'],
-        code: json['custom_customer_code'],
+        code: code,
         debt: json['custom_debt'],
         email: json['email_id'],
         mobile: json['mobile_no'],
@@ -79,7 +79,7 @@ class CustomerMapper {
 }
 
 class CustomerResponseMapper {
-  static CustomerResponse fromJson(Map<String, dynamic> json) {
+  static CustomerResponse fromJson(Map<String, dynamic> json, {required String code}) {
     final customerJson = json['message']['customer'];
     if (customerJson == null) {
       throw Exception('Customer data not found');
@@ -88,6 +88,7 @@ class CustomerResponseMapper {
       sessionToken: json['message']['customer_session'] as String?,
       customer: CustomerMapper.fromJson(
         Map<String, dynamic>.from(customerJson as Map),
+        code: code,
       ),
     );
   }

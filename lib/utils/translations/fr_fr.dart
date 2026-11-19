@@ -260,7 +260,7 @@ const Map<String, String> frFR = {
   'new_password_same_as_old'  : 'Le nouveau mot de passe doit être différent',
   'fields_required'           : 'Veuillez remplir tous les champs',
   'incorrect_current_password': 'Mot de passe actuel incorrect',
-  'new_password_already_used' : 'Ce mot de passe est déjà utilisé',
+  'new_password_already_used' : 'Ce code client est déjà utilisé. Choisissez-en un autre.',
   'error_occurred'            : 'Une erreur est survenue, réessayez',
   'password_changed_successfully': 'Votre mot de passe a été modifié avec succès',
   'company'                   : 'Société',

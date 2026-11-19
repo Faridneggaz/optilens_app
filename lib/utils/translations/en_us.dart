@@ -246,7 +246,7 @@ const Map<String, String> enUS = {
   'new_password_same_as_old'  : 'New password must be different',
   'fields_required'           : 'Please fill in all fields',
   'incorrect_current_password': 'Incorrect current password',
-  'new_password_already_used' : 'This password is already in use',
+  'new_password_already_used' : 'This customer code is already in use. Choose another code.',
   'error_occurred'            : 'An error occurred, please try again',
   'password_changed_successfully': 'Your password has been changed successfully',
   'company'                   : 'Company',

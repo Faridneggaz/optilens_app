@@ -248,7 +248,7 @@ const Map<String, String> arDZ = {
   'new_password_same_as_old'  : 'يجب أن تختلف كلمة المرور الجديدة',
   'fields_required'           : 'يرجى ملء جميع الحقول',
   'incorrect_current_password': 'كلمة المرور الحالية غير صحيحة',
-  'new_password_already_used' : 'كلمة المرور هذه مستخدمة بالفعل',
+  'new_password_already_used' : 'رمز العميل هذا مستخدم بالفعل. اختر رمزًا آخر.',
   'error_occurred'            : 'حدث خطأ، يرجى المحاولة مجدداً',
   'password_changed_successfully': 'تم تغيير كلمة المرور بنجاح',
   'company'                   : 'الشركة',
